@@ -181,28 +181,42 @@ export async function POST(req) {
       period = "1948-1974",
       balcony = false,
       parking = false,
+      geo: picked, // exact location chosen via autocomplete (optional)
     } = body;
 
     if (!address || !surface) {
       return Response.json({ error: "Adresse et surface requises." }, { status: 400 });
     }
 
-    // 1) Geocode --------------------------------------------------------------
-    const geoRes = await fetch(
-      `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(address)}&limit=1`,
-      { headers: { "User-Agent": "EstimImmo/1.0" } }
-    );
-    const geo = await geoRes.json();
-    const feat = geo?.features?.[0];
-    if (!feat) {
-      return Response.json({ error: "Adresse introuvable. Precisez le numero et la ville." }, { status: 404 });
+    // 1) Resolve location -----------------------------------------------------
+    let lat, lon, insee, locationLabel, areaLabel;
+    if (picked && picked.lat && picked.lon && picked.insee) {
+      // user picked an exact address in the autocomplete -> trust it
+      lat = picked.lat;
+      lon = picked.lon;
+      insee = picked.insee;
+      locationLabel = picked.label || address;
+      areaLabel = picked.area || picked.city || address;
+    } else {
+      // fallback: geocode the free text
+      const geoRes = await fetch(
+        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(address)}&limit=1`,
+        { headers: { "User-Agent": "EstimImmo/1.0" } }
+      );
+      const geo = await geoRes.json();
+      const feat = geo?.features?.[0];
+      if (!feat) {
+        return Response.json({ error: "Adresse introuvable. Precisez le numero et la ville." }, { status: 404 });
+      }
+      const [flon, flat] = feat.geometry.coordinates;
+      const p = feat.properties;
+      lat = flat;
+      lon = flon;
+      insee = p.citycode;
+      locationLabel = p.label;
+      areaLabel = p.city + (p.context ? ` (${p.context.split(",")[0]})` : "");
     }
-    const [lon, lat] = feat.geometry.coordinates;
-    const p = feat.properties;
-    const insee = p.citycode;
     const dept = deptFromInsee(insee);
-    const locationLabel = `${p.label}`;
-    const areaLabel = p.city + (p.context ? ` (${p.context.split(",")[0]})` : "");
 
     // 2) Pull real DVF transactions for recent years -------------------------
     const currentYear = new Date().getFullYear();

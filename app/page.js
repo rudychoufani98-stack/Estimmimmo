@@ -1,6 +1,6 @@
 "use client";
 import "./globals.css";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const euro = (n) => Math.round(n).toLocaleString("fr-FR") + " EUR";
 const euro0 = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -60,7 +60,35 @@ function Estimation({ onEstimate }) {
   const [error, setError] = useState("");
   const [res, setRes] = useState(null);
 
+  // address autocomplete state
+  const [sugg, setSugg] = useState([]);
+  const [geo, setGeo] = useState(null);     // exact location once picked
+  const [openSug, setOpenSug] = useState(false);
+  const debRef = useRef(null);
+
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  function onAddressChange(val) {
+    set("address", val);
+    setGeo(null); // typing invalidates any previous selection
+    if (debRef.current) clearTimeout(debRef.current);
+    if (val.trim().length < 3) { setSugg([]); setOpenSug(false); return; }
+    debRef.current = setTimeout(async () => {
+      try {
+        const r = await fetch("/api/geocode?q=" + encodeURIComponent(val));
+        const d = await r.json();
+        setSugg(d.results || []);
+        setOpenSug((d.results || []).length > 0);
+      } catch { setSugg([]); }
+    }, 250);
+  }
+
+  function pick(s) {
+    setForm((f) => ({ ...f, address: s.label }));
+    setGeo(s);
+    setSugg([]);
+    setOpenSug(false);
+  }
 
   async function run() {
     setLoading(true);
@@ -75,6 +103,9 @@ function Estimation({ onEstimate }) {
           surface: Number(form.surface),
           floor: Number(form.floor),
           condition: Number(form.condition),
+          geo: geo
+            ? { lat: geo.lat, lon: geo.lon, insee: geo.citycode, label: geo.label, area: geo.area, city: geo.city }
+            : null,
         }),
       });
       const data = await r.json();
@@ -97,8 +128,31 @@ function Estimation({ onEstimate }) {
           <div className="sub">Adresse precise = comparables plus proches</div>
 
           <label>Adresse complete</label>
-          <input value={form.address} onChange={(e) => set("address", e.target.value)}
-                 placeholder="12 rue Victor Hugo, 69003 Lyon" />
+          <div className="autocomplete">
+            <input
+              value={form.address}
+              onChange={(e) => onAddressChange(e.target.value)}
+              onFocus={() => { if (sugg.length) setOpenSug(true); }}
+              onBlur={() => setTimeout(() => setOpenSug(false), 150)}
+              placeholder="Tapez puis choisissez : 12 rue Victor Hugo, Lyon..."
+              autoComplete="off"
+            />
+            {openSug && (
+              <ul className="sug">
+                {sugg.map((s, i) => (
+                  <li key={i} onMouseDown={() => pick(s)}>
+                    <span className="sug-l">{s.label}</span>
+                    <span className="sug-c">{s.context}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {geo ? (
+            <div className="geo-ok">✓ Localise : {geo.postcode} {geo.city}{geo.type !== "housenumber" ? " — precisez le numero pour plus de precision" : ""}</div>
+          ) : (
+            <div className="geo-warn">Choisissez une adresse dans la liste pour localiser precisement le bien.</div>
+          )}
 
           <div className="row">
             <div>
