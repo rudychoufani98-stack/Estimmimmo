@@ -402,9 +402,36 @@ function MarketBarometer() {
   );
 }
 
+// city name → Airbnb zone key
+const CITY_TO_AIRBNB = {
+  "Paris":"paris","Versailles":"versailles",
+  "Cannes":"cannes","Nice":"nice","Antibes":"antibes",
+  "Saint-Tropez":"saint_tropez","Cogolin":"saint_tropez","Grimaud":"saint_tropez",
+  "Menton":"menton",
+  "Chamonix-Mont-Blanc":"chamonix","Chamonix":"chamonix",
+  "Annecy":"annecy",
+  "Courchevel":"courchevel","Val-d'Isère":"courchevel","Méribel":"courchevel",
+  "Toulouse":"toulouse","Montpellier":"montpellier",
+  "Avignon":"avignon",
+  "Aix-en-Provence":"aix_en_provence","Marseille":"marseille",
+  "Biarritz":"biarritz",
+  "Saint-Jean-de-Luz":"saint_jean_luz","Hendaye":"saint_jean_luz",
+  "La Rochelle":"la_rochelle","Bordeaux":"bordeaux",
+  "Saint-Malo":"saint_malo","Vannes":"vannes_morbihan",
+  "Deauville":"deauville","Honfleur":"deauville","Trouville-sur-Mer":"deauville",
+  "Lyon":"lyon","Strasbourg":"strasbourg",
+  "Nantes":"nantes","Rennes":"rennes","Lille":"lille",
+};
+
 export default function Page() {
   const [tab, setTab] = useState("estim");
   const [estValue, setEstValue] = useState(0);
+  const [estCity, setEstCity] = useState(null); // city name from geocoder
+
+  function handleEstimate(val, city) {
+    setEstValue(val);
+    if (city) setEstCity(city);
+  }
 
   return (
     <>
@@ -426,8 +453,8 @@ export default function Page() {
           </button>
         </div>
 
-        {tab === "estim" && <Estimation onEstimate={setEstValue} />}
-        {tab === "renta" && <Rentabilite estValue={estValue} />}
+        {tab === "estim" && <Estimation onEstimate={handleEstimate} />}
+        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} />}
         {tab === "sources" && <Sources />}
 
         <button className="btn-print" onClick={() => window.print()}>
@@ -459,6 +486,7 @@ function Estimation({ onEstimate }) {
     cave: false,
     vue: "standard",
     occupation: "libre",
+    prixDemande: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -516,7 +544,7 @@ function Estimation({ onEstimate }) {
       const data = await r.json();
       if (!r.ok) { setError(data.error || "Erreur."); return; }
       setRes(data);
-      onEstimate(data.estimate);
+      onEstimate(data.estimate, geo?.city || null);
     } catch (e) {
       setError("Connexion impossible : " + e.message);
     } finally {
@@ -679,6 +707,14 @@ function Estimation({ onEstimate }) {
               </select>
             </div>
           </div>
+          <label>Prix demandé par le vendeur <span style={{color:"#64748b",fontWeight:400}}>(optionnel — pour analyser la marge de négociation)</span></label>
+          <div className="unit">
+            <input type="number" value={form.prixDemande}
+              onChange={(e) => set("prixDemande", e.target.value)}
+              placeholder="ex: 320000" />
+            <small>EUR</small>
+          </div>
+
           <MarketBarometer />
 
           <button className="btn" onClick={run} disabled={loading}>
@@ -695,15 +731,24 @@ function Estimation({ onEstimate }) {
           <h2>Resultat de l'estimation</h2>
           {!res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables reels s'afficheront ici.</div>}
           {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3b82f6',borderColor:'#2a3650'}}/><br/>Recuperation des transactions DVF...</div>}
-          {res && <EstimResult res={res} surface={Number(form.surface)} />}
+          {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} />}
         </div>
       </div>
     </div>
   );
 }
 
-function EstimResult({ res, surface }) {
+function fraisNotaire(prix, period) {
+  const neuf = period === "apres 2000" || period === "2010-2023" || period === "2024+";
+  const taux = neuf ? 0.025 : 0.075;
+  return { montant: Math.round(prix * taux), taux, neuf };
+}
+
+function EstimResult({ res, surface, prixDemande, period }) {
   const confColor = res.confidence === "Elevee" ? "g" : res.confidence === "Moyenne" ? "w" : "b";
+  const fn = fraisNotaire(res.estimate, period);
+  const gap = prixDemande ? Math.round(((prixDemande - res.estimate) / res.estimate) * 100) : null;
+
   return (
     <>
       <div className="hero">
@@ -713,10 +758,35 @@ function EstimResult({ res, surface }) {
         <div className="loc">{res.location.area} &middot; {euro0(res.adjustedPm2)} EUR/m2</div>
       </div>
 
+      {gap !== null && (
+        <div className={"nego-signal " + (gap <= -5 ? "nego-good" : gap <= 5 ? "nego-ok" : "nego-bad")}>
+          {gap <= -5 && <><b>✅ Bonne affaire</b> — prix demandé {Math.abs(gap)} % <b>sous</b> l'estimation de marché.<br/>Marge de négociation : {euro(res.estimate - prixDemande)} EUR disponible.</>}
+          {gap > -5 && gap <= 5 && <><b>🟡 Prix dans la norme</b> — écart de {gap >= 0 ? "+" : ""}{gap} % vs estimation. Négociation possible de 2 à 5 %.</>}
+          {gap > 5 && <><b>⚠️ Bien surcoté</b> — prix demandé {gap} % <b>au-dessus</b> du marché.<br/>Surcote estimée : {euro(prixDemande - res.estimate)} EUR. Négociez ou passez votre chemin.</>}
+          <div style={{marginTop:6, fontSize:12, color:"#94a3b8"}}>
+            Prix demandé : {euro(prixDemande)} &nbsp;|&nbsp; Estimé : {euro(res.estimate)}
+          </div>
+        </div>
+      )}
+
       <div className="kpis">
         <div className="kpi"><div className="k">Prix/m2 du marche local</div><div className="v">{euro0(res.basePm2)}</div></div>
         <div className="kpi"><div className="k">Prix/m2 ajuste au bien</div><div className="v">{euro0(res.adjustedPm2)}</div></div>
         <div className="kpi"><div className="k">Fiabilite</div><div className={"v " + confColor}>{res.confidence}</div></div>
+      </div>
+
+      <div className="notaire-box">
+        <div className="notaire-title">🏛️ Frais de notaire estimés ({fn.neuf ? "bien neuf ~2,5%" : "bien ancien ~7,5%"})</div>
+        <div className="notaire-row">
+          <span>Frais de notaire</span><b>{euro(fn.montant)}</b>
+        </div>
+        <div className="notaire-row">
+          <span>Budget total acquisition</span><b>{euro(res.estimate + fn.montant)}</b>
+        </div>
+        <div className="notaire-row">
+          <span>Avec frais d'agence estimés (3 %)</span><b>{euro(res.estimate + fn.montant + Math.round(res.estimate * 0.03))}</b>
+        </div>
+        <p style={{fontSize:11,color:"#64748b",margin:"6px 0 0"}}>Les frais de notaire comprennent les droits d'enregistrement, honoraires du notaire et débours. Estimation indicative.</p>
       </div>
 
       <div className="badge g">{res.compCount} ventes comparables retenues &middot; {res.totalSales} ventes analysees ({res.yearsUsed.join(", ")})</div>
@@ -845,7 +915,7 @@ function pmt(principal, annualRate, years) {
   return (principal * r) / (1 - Math.pow(1 + r, -n));
 }
 
-function Rentabilite({ estValue }) {
+function Rentabilite({ estValue, estCity }) {
   const [rentaTab, setRentaTab] = useState("classique");
   const [f, setF] = useState({
     price: estValue || 300000,
@@ -937,7 +1007,7 @@ function Rentabilite({ estValue }) {
         </button>
       </div>
       {rentaTab === "airbnb" ? (
-        <RentabiliteAirbnb estValue={estValue} classicYieldGross={yieldGross} classicCashflowAT={mCashflowAT} />
+        <RentabiliteAirbnb estValue={estValue} estCity={estCity} classicYieldGross={yieldGross} classicCashflowAT={mCashflowAT} />
       ) : (
       <div className="grid">
       {/* inputs */}
@@ -1130,7 +1200,7 @@ function Rentabilite({ estValue }) {
 }
 
 /* ======================= AIRBNB / SAISONNIER ============================= */
-function RentabiliteAirbnb({ estValue, classicYieldGross, classicCashflowAT }) {
+function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashflowAT }) {
   const [f, setF] = useState({
     zone: "paris",
     isPrimary: true,
@@ -1158,6 +1228,13 @@ function RentabiliteAirbnb({ estValue, classicYieldGross, classicCashflowAT }) {
   if (!synced && estValue && f.price !== estValue) {
     setF((x) => ({ ...x, price: estValue }));
     setSynced(true);
+  }
+
+  // auto-sync city from estimation tab
+  const [citySynced, setCitySynced] = useState(false);
+  if (!citySynced && estCity && AIRBNB_ZONES[estCity] && f.zone !== estCity) {
+    setF((x) => ({ ...x, zone: estCity }));
+    setCitySynced(true);
   }
 
   const setV = (k, v) => setF((s) => ({ ...s, [k]: isNaN(Number(v)) || v === "" ? v : Number(v) }));

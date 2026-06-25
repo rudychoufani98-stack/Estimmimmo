@@ -205,6 +205,19 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .ab-neu{background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
 .auto-badge b{margin-left:4px}
 
+/* Negotiation signal box */
+.nego-signal{margin:14px 0;padding:14px 16px;border-radius:12px;font-size:14px;line-height:1.55}
+.nego-good{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.35);color:#4ade80}
+.nego-ok{background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.30);color:var(--warn)}
+.nego-bad{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#f87171}
+
+/* Frais de notaire box */
+.notaire-box{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.notaire-title{font-size:13px;font-weight:700;color:var(--txt);margin-bottom:10px}
+.notaire-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13.5px;border-bottom:1px solid var(--line)}
+.notaire-row:last-of-type{border-bottom:none;color:var(--accent);font-weight:700}
+.notaire-row b{color:var(--txt)}
+
 /* Sources tab */
 .sources-wrap{max-width:860px;margin:0 auto}
 .src-intro p{margin:6px 0 12px;color:var(--muted);font-size:14px}
