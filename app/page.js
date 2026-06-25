@@ -469,6 +469,130 @@ export default function Page() {
   );
 }
 
+/* ======================= AMORTISSEMENT ===================================== */
+function buildAmortization(loan, annualRate, durationYears, mInsurance) {
+  const n = durationYears * 12;
+  const r = annualRate / 100 / 12;
+  const mPayment = r > 0 ? loan * r / (1 - Math.pow(1 + r, -n)) : loan / n;
+  const rows = [];
+  let balance = loan;
+  for (let m = 1; m <= n; m++) {
+    const interest = balance * r;
+    const principal = mPayment - interest;
+    balance = Math.max(0, balance - principal);
+    rows.push({ m, year: Math.ceil(m / 12), interest, principal, insurance: mInsurance, payment: mPayment + mInsurance, balance });
+  }
+  return rows;
+}
+
+function TableauAmortissement({ loan, rate, duration, mInsurance }) {
+  const [view, setView] = useState("annual"); // "annual" | "monthly"
+  const [open, setOpen] = useState(false);
+
+  if (loan <= 0) return null;
+
+  const rows = buildAmortization(loan, rate, duration, mInsurance);
+
+  // aggregate by year
+  const years = [];
+  for (let y = 1; y <= duration; y++) {
+    const yRows = rows.filter((r) => r.year === y);
+    const last = yRows[yRows.length - 1];
+    years.push({
+      year: y,
+      totalPayment: yRows.reduce((s, r) => s + r.payment, 0),
+      totalInterest: yRows.reduce((s, r) => s + r.interest, 0),
+      totalPrincipal: yRows.reduce((s, r) => s + r.principal, 0),
+      totalInsurance: yRows.reduce((s, r) => s + r.insurance, 0),
+      balance: last.balance,
+    });
+  }
+
+  const totalInterest = rows.reduce((s, r) => s + r.interest, 0);
+  const totalInsurance = rows.reduce((s, r) => s + r.insurance, 0);
+  const totalCost = rows.reduce((s, r) => s + r.payment, 0);
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <button className="amort-toggle" onClick={() => setOpen((o) => !o)}>
+        📊 {open ? "Masquer le" : "Afficher le"} tableau d'amortissement
+      </button>
+
+      {open && (
+        <div className="amort-wrap">
+          <div className="amort-summary">
+            <div className="amort-sum-item"><span>Capital emprunté</span><b>{euro(loan)}</b></div>
+            <div className="amort-sum-item"><span>Total intérêts</span><b className="neg">{euro(Math.round(totalInterest))}</b></div>
+            <div className="amort-sum-item"><span>Total assurance</span><b className="neg">{euro(Math.round(totalInsurance))}</b></div>
+            <div className="amort-sum-item"><span>Coût total crédit</span><b>{euro(Math.round(totalCost))}</b></div>
+          </div>
+
+          <div className="amort-view-toggle">
+            <button className={"avt" + (view === "annual" ? " avt-active" : "")} onClick={() => setView("annual")}>Par année</button>
+            <button className={"avt" + (view === "monthly" ? " avt-active" : "")} onClick={() => setView("monthly")}>Par mois</button>
+          </div>
+
+          <div className="amort-scroll">
+            <table className="amort-table">
+              <thead>
+                <tr>
+                  <th>{view === "annual" ? "Année" : "Mois"}</th>
+                  <th className="num">Mensualité</th>
+                  <th className="num">Capital</th>
+                  <th className="num">Intérêts</th>
+                  <th className="num">Assurance</th>
+                  <th className="num">Capital restant</th>
+                  <th className="num">% remboursé</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view === "annual" ? years.map((y) => {
+                  const pctPaid = Math.round(((loan - y.balance) / loan) * 100);
+                  return (
+                    <tr key={y.year}>
+                      <td><b>An {y.year}</b></td>
+                      <td className="num">{euro0(Math.round(y.totalPayment / 12))}/m</td>
+                      <td className="num pos">{euro0(Math.round(y.totalPrincipal))}</td>
+                      <td className="num neg">{euro0(Math.round(y.totalInterest))}</td>
+                      <td className="num neg">{euro0(Math.round(y.totalInsurance))}</td>
+                      <td className="num"><b>{euro(Math.round(y.balance))}</b></td>
+                      <td className="num">
+                        <div className="amort-bar-wrap">
+                          <div className="amort-bar-fill" style={{ width: pctPaid + "%" }} />
+                          <span>{pctPaid} %</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }) : rows.map((r) => {
+                  const pctPaid = Math.round(((loan - r.balance) / loan) * 100);
+                  return (
+                    <tr key={r.m} className={r.m % 12 === 0 ? "amort-year-end" : ""}>
+                      <td>M{r.m}{r.m % 12 === 0 ? <b> ★ An {r.year}</b> : ""}</td>
+                      <td className="num">{euro0(Math.round(r.payment))}</td>
+                      <td className="num pos">{euro0(Math.round(r.principal))}</td>
+                      <td className="num neg">{euro0(Math.round(r.interest))}</td>
+                      <td className="num neg">{euro0(Math.round(r.insurance))}</td>
+                      <td className="num">{euro(Math.round(r.balance))}</td>
+                      <td className="num">
+                        <div className="amort-bar-wrap">
+                          <div className="amort-bar-fill" style={{ width: pctPaid + "%" }} />
+                          <span>{pctPaid} %</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="hint" style={{ marginTop: 8 }}>Tableau indicatif — taux fixe, amortissement constant. Les mensualités réelles peuvent varier si taux révisable ou remboursement anticipé.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ======================= TAB 1 : ESTIMATION ============================== */
 function Estimation({ onEstimate }) {
   const [form, setForm] = useState({
@@ -1157,6 +1281,8 @@ function Rentabilite({ estValue, estCity }) {
             <div className="li total"><span>Mensualite totale</span><span className="v">{euro(mPayment)}</span></div>
             <div className="li"><span className="lbl">Cout total des interets</span><span>{euro(totalInterest)}</span></div>
           </div>
+
+          <TableauAmortissement loan={loan} rate={v("rate")} duration={v("duration")} mInsurance={mLoanIns} />
 
           <div className="section-t">Flux annuel (apres credit)</div>
           <div className="line-items">
