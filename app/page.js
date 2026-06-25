@@ -121,6 +121,8 @@ function Estimation({ onEstimate }) {
     period: "1948-1974",
     balcony: false,
     parking: false,
+    cave: false,
+    vue: "standard",
     sentiment: 0,
   });
   const [loading, setLoading] = useState(false);
@@ -290,6 +292,25 @@ function Estimation({ onEstimate }) {
 
           <div className="row">
             <div>
+              <label>Cave</label>
+              <select value={form.cave ? "1" : "0"} onChange={(e) => set("cave", e.target.value === "1")}>
+                <option value="0">Sans cave</option>
+                <option value="1">Avec cave (+1,5%)</option>
+              </select>
+            </div>
+            <div>
+              <label>Vue / vis-a-vis</label>
+              <select value={form.vue} onChange={(e) => set("vue", e.target.value)}>
+                <option value="exceptionnelle">Vue exceptionnelle (+8%)</option>
+                <option value="degagee">Vue degagee (+4%)</option>
+                <option value="standard">Standard</option>
+                <option value="visavis">Vis-a-vis / sombre (-4%)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="row">
+            <div>
               <label>Stationnement</label>
               <select value={form.parking ? "1" : "0"} onChange={(e) => set("parking", e.target.value === "1")}>
                 <option value="0">Sans parking</option>
@@ -348,6 +369,14 @@ function EstimResult({ res, surface }) {
       </div>
 
       <div className="badge g">{res.compCount} ventes comparables retenues &middot; {res.totalSales} ventes analysees ({res.yearsUsed.join(", ")})</div>
+
+      {res.transit && (
+        <div className="transit-info">
+          {res.transit.dist != null
+            ? <>Transport le plus proche : <b>{res.transit.name}</b> a {res.transit.dist} m</>
+            : <>Aucun transport ferre a moins de 1,2 km</>}
+        </div>
+      )}
 
       {res.marketTrend && res.marketTrend.annualPct != null && (
         <div className="trend">

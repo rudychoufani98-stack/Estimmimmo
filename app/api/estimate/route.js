@@ -78,6 +78,41 @@ function splitCsvLine(line) {
   return out;
 }
 
+// Nearest rail transit (metro/RER/train/tram) via OpenStreetMap Overpass.
+// Returns { dist, name } if found, { dist: null } if none within radius, null on error.
+async function nearestTransit(lat, lon) {
+  const r = 1200;
+  const q = `[out:json][timeout:8];(` +
+    `node(around:${r},${lat},${lon})[railway=station];` +
+    `node(around:${r},${lat},${lon})[station=subway];` +
+    `node(around:${r},${lat},${lon})[railway=subway_entrance];` +
+    `node(around:${r},${lat},${lon})[railway=tram_stop];` +
+    `);out body;`;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 7000);
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "EstimImmo/1.0" },
+      body: "data=" + encodeURIComponent(q),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const j = await res.json();
+    const els = j.elements || [];
+    if (!els.length) return { dist: null, name: null }; // searched, nothing nearby
+    let best = null;
+    for (const e of els) {
+      const d = haversine(lat, lon, e.lat, e.lon);
+      if (!best || d < best.dist) best = { dist: Math.round(d), name: (e.tags && (e.tags.name || e.tags.ref)) || "arret" };
+    }
+    return best;
+  } catch {
+    return null; // API down -> no adjustment
+  }
+}
+
 async function fetchDvfYear(year, dept, insee) {
   const url = `https://files.data.gouv.fr/geo-dvf/latest/csv/${year}/communes/${dept}/${insee}.csv`;
   try {
@@ -202,6 +237,8 @@ export async function POST(req) {
       period = "1948-1974",
       balcony = false,
       parking = false,
+      cave = false,
+      vue = "standard",
       sentiment = 0, // conjoncture choisie par l'utilisateur (ex: 0.02 / -0.02)
       geo: picked, // exact location chosen via autocomplete (optional)
     } = body;
@@ -302,6 +339,9 @@ export async function POST(req) {
     const rawBasePm2 = median(comps.map((m) => m.pm2)); // before indexing
     const marketPm2 = median(muts.map((m) => m.pm2)); // whole-commune reference
 
+    // Nearest public transport (best-effort, non blocking on failure)
+    const transit = await nearestTransit(lat, lon);
+
     // 5) Qualitative adjustments ---------------------------------------------
     const adj = [];
     let factor = 1;
@@ -330,6 +370,21 @@ export async function POST(req) {
 
     if (balcony) add("Balcon / terrasse", 0.03);
     if (parking) add("Parking / box", 0.02);
+    if (cave) add("Cave", 0.015);
+
+    // vue
+    const vueMap = { exceptionnelle: 0.08, degagee: 0.04, standard: 0, visavis: -0.04 };
+    const vueLbl = { exceptionnelle: "Vue exceptionnelle", degagee: "Vue degagee", visavis: "Vis-a-vis rapproche / sombre" };
+    if (vueMap[vue]) add(vueLbl[vue], vueMap[vue]);
+
+    // transports (Overpass) - computed earlier
+    if (transit) {
+      if (transit.dist == null) add("Transports eloignes (>1,2 km)", -0.02);
+      else if (transit.dist <= 300) add(`Transports a ${transit.dist}m (${transit.name})`, 0.03);
+      else if (transit.dist <= 600) add(`Transports a ${transit.dist}m (${transit.name})`, 0.015);
+      // 600-1200 m : neutre (affiche pour info uniquement)
+    }
+
     if (sentiment) add("Conjoncture de marche (confiance/demande)", Number(sentiment));
 
     const adjustedPm2 = basePm2 * factor;
@@ -358,6 +413,7 @@ export async function POST(req) {
       },
       adjustments: adj,
       confidence,
+      transit,
       yearsUsed,
       compCount: comps.length,
       totalSales: muts.length,
