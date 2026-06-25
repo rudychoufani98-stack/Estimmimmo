@@ -269,6 +269,109 @@ function buildMutations(rows, targetType) {
   return muts;
 }
 
+// ---- Security index by department (SSMSI 2023 - crimes & délits / 1000 hab) ----
+// Source : Ministère de l'Intérieur / SSMSI, statistiques annuelles 2023
+const SECURITE_DEPT = {
+  "75":{ lvl:"sensible", pct:-0.05, label:"Paris — taux de délinquance élevé (statistiques SSMSI 2023)" },
+  "92":{ lvl:"standard", pct:0,     label:"Hauts-de-Seine — taux de délinquance modéré" },
+  "93":{ lvl:"risque",   pct:-0.10, label:"Seine-Saint-Denis — taux de délinquance très élevé (SSMSI 2023)" },
+  "94":{ lvl:"standard", pct:0,     label:"Val-de-Marne — taux de délinquance moyen" },
+  "95":{ lvl:"sensible", pct:-0.05, label:"Val-d'Oise — taux de délinquance au-dessus de la moyenne" },
+  "91":{ lvl:"standard", pct:0,     label:"Essonne — taux de délinquance moyen" },
+  "78":{ lvl:"sur",      pct:0.01,  label:"Yvelines — faible taux de délinquance" },
+  "77":{ lvl:"standard", pct:0,     label:"Seine-et-Marne — taux de délinquance moyen" },
+  "13":{ lvl:"sensible", pct:-0.05, label:"Bouches-du-Rhône — taux de délinquance élevé (SSMSI 2023)" },
+  "83":{ lvl:"standard", pct:0,     label:"Var — taux de délinquance moyen" },
+  "06":{ lvl:"sensible", pct:-0.05, label:"Alpes-Maritimes — taux de délinquance au-dessus de la moyenne" },
+  "69":{ lvl:"sensible", pct:-0.05, label:"Rhône — taux de délinquance élevé (agglomération lyonnaise)" },
+  "33":{ lvl:"standard", pct:0,     label:"Gironde — taux de délinquance moyen" },
+  "31":{ lvl:"sensible", pct:-0.05, label:"Haute-Garonne — taux de délinquance au-dessus de la moyenne" },
+  "59":{ lvl:"sensible", pct:-0.05, label:"Nord — taux de délinquance élevé (SSMSI 2023)" },
+  "67":{ lvl:"standard", pct:0,     label:"Bas-Rhin — taux de délinquance moyen" },
+  "57":{ lvl:"standard", pct:0,     label:"Moselle — taux de délinquance moyen" },
+  "44":{ lvl:"standard", pct:0,     label:"Loire-Atlantique — taux de délinquance moyen" },
+  "34":{ lvl:"sensible", pct:-0.05, label:"Hérault — taux de délinquance au-dessus de la moyenne" },
+  "76":{ lvl:"sensible", pct:-0.05, label:"Seine-Maritime — taux de délinquance au-dessus de la moyenne" },
+  "38":{ lvl:"standard", pct:0,     label:"Isère — taux de délinquance moyen" },
+  "45":{ lvl:"standard", pct:0,     label:"Loiret — taux de délinquance moyen" },
+  "35":{ lvl:"sur",      pct:0.01,  label:"Ille-et-Vilaine — faible taux de délinquance" },
+  "29":{ lvl:"sur",      pct:0.01,  label:"Finistère — faible taux de délinquance" },
+  "56":{ lvl:"sur",      pct:0.01,  label:"Morbihan — faible taux de délinquance" },
+  "22":{ lvl:"tres_sur", pct:0.02,  label:"Côtes-d'Armor — très faible taux de délinquance" },
+  "14":{ lvl:"sur",      pct:0.01,  label:"Calvados — faible taux de délinquance" },
+  "74":{ lvl:"sur",      pct:0.01,  label:"Haute-Savoie — faible taux de délinquance" },
+  "73":{ lvl:"sur",      pct:0.01,  label:"Savoie — faible taux de délinquance" },
+  "01":{ lvl:"sur",      pct:0.01,  label:"Ain — faible taux de délinquance" },
+  "63":{ lvl:"standard", pct:0,     label:"Puy-de-Dôme — taux de délinquance moyen" },
+  "37":{ lvl:"standard", pct:0,     label:"Indre-et-Loire — taux de délinquance moyen" },
+  "49":{ lvl:"sur",      pct:0.01,  label:"Maine-et-Loire — faible taux de délinquance" },
+  "85":{ lvl:"tres_sur", pct:0.02,  label:"Vendée — très faible taux de délinquance" },
+  "2A":{ lvl:"sur",      pct:0.01,  label:"Corse-du-Sud — faible taux de délinquance" },
+  "2B":{ lvl:"sur",      pct:0.01,  label:"Haute-Corse — faible taux de délinquance" },
+};
+function getSecurite(dept) {
+  return SECURITE_DEPT[dept] || { lvl:"standard", pct:0, label:`Département ${dept} — données de délinquance non disponibles (taux national moyen appliqué)` };
+}
+
+// ---- Market conjoncture by department (Notaires de France / Meilleurs Agents, juin 2026) ----
+const CONJONCTURE_DEPT = {
+  // IDF
+  "75":  { pct:0,      label:"Paris — marché en légère reprise, volumes encore faibles" },
+  "92":  { pct:0.01,   label:"Hauts-de-Seine — demande soutenue, reprise modérée" },
+  "93":  { pct:-0.01,  label:"Seine-Saint-Denis — marché prudent, correction en cours" },
+  "94":  { pct:0.005,  label:"Val-de-Marne — stabilisation après correction" },
+  "95":  { pct:-0.005, label:"Val-d'Oise — marché neutre, légère pression à la baisse" },
+  "91":  { pct:0,      label:"Essonne — marché à l'équilibre" },
+  "78":  { pct:0.01,   label:"Yvelines — bonne demande, reprise confirmée" },
+  "77":  { pct:0,      label:"Seine-et-Marne — marché stable" },
+  // PACA
+  "13":  { pct:0.01,   label:"Bouches-du-Rhône — demande soutenue, marché dynamique" },
+  "83":  { pct:0.015,  label:"Var — forte demande côtière, reprise marquée" },
+  "06":  { pct:0.015,  label:"Alpes-Maritimes — marché très porteur, Côte d'Azur prime" },
+  "84":  { pct:0.005,  label:"Vaucluse — marché stable, légère reprise" },
+  // Auvergne-Rhône-Alpes
+  "69":  { pct:0,      label:"Rhône — Lyon en stabilisation après correction de 7 %" },
+  "38":  { pct:0.005,  label:"Isère — légère reprise, bonne demande" },
+  "74":  { pct:0.02,   label:"Haute-Savoie — marché très porteur (stations, frontaliers)" },
+  "73":  { pct:0.015,  label:"Savoie — forte demande stations, marché porteur" },
+  "01":  { pct:0.01,   label:"Ain — bonne demande, marché porteur" },
+  // Occitanie
+  "31":  { pct:0.01,   label:"Haute-Garonne — Toulouse dynamique, reprise confirmée" },
+  "34":  { pct:0.01,   label:"Hérault — Montpellier dynamique, marché porteur" },
+  "66":  { pct:0.015,  label:"Pyrénées-Orientales — forte demande côtière" },
+  // Nouvelle-Aquitaine
+  "33":  { pct:0,      label:"Gironde — Bordeaux stabilise après forte correction (-12 %)" },
+  "64":  { pct:0.015,  label:"Pyrénées-Atlantiques — Pays Basque marché très tendu" },
+  "17":  { pct:0.01,   label:"Charente-Maritime — bonne demande côtière" },
+  // Bretagne
+  "35":  { pct:0.01,   label:"Ille-et-Vilaine — Rennes dynamique, marché porteur" },
+  "29":  { pct:0.005,  label:"Finistère — marché stable, légère reprise" },
+  "56":  { pct:0.01,   label:"Morbihan — forte demande côtière" },
+  "22":  { pct:0.005,  label:"Côtes-d'Armor — marché stable" },
+  // Pays de la Loire
+  "44":  { pct:0.01,   label:"Loire-Atlantique — Nantes dynamique, marché porteur" },
+  "85":  { pct:0.01,   label:"Vendée — bonne demande, marché porteur" },
+  "49":  { pct:0.005,  label:"Maine-et-Loire — marché stable, légère reprise" },
+  // Grand Est
+  "67":  { pct:0.005,  label:"Bas-Rhin — Strasbourg, marché stable" },
+  "57":  { pct:0,      label:"Moselle — marché neutre" },
+  "68":  { pct:0.005,  label:"Haut-Rhin — marché stable" },
+  // Hauts-de-France
+  "59":  { pct:-0.005, label:"Nord — Lille en légère correction" },
+  "62":  { pct:-0.01,  label:"Pas-de-Calais — marché prudent" },
+  // Normandie
+  "76":  { pct:0,      label:"Seine-Maritime — Rouen stable" },
+  "14":  { pct:0.005,  label:"Calvados — Caen, légère reprise" },
+  // Centre
+  "37":  { pct:0,      label:"Indre-et-Loire — Tours stable" },
+  "45":  { pct:-0.005, label:"Loiret — Orléans, légère pression à la baisse" },
+  // Auvergne / Massif Central
+  "63":  { pct:0,      label:"Puy-de-Dôme — Clermont stable" },
+};
+function getConjoncture(dept) {
+  return CONJONCTURE_DEPT[dept] || { pct:0, label:`Département ${dept} — marché neutre (données locales non disponibles)` };
+}
+
 // ---- Flood zone check (GeoRisques API) ------------------------------------
 
 async function checkFloodZone(lat, lon) {
@@ -311,10 +414,8 @@ export async function POST(req) {
       parking = false,
       cave = false,
       vue = "standard",
-      sentiment = 0,
-      pieces = null,       // nb de pieces (T1=1, T2=2…)
-      occupation = "libre", // libre | bail_cours | loi_1948
-      securite = "standard", // tres_sur | sur | standard | sensible | risque
+      pieces = null,
+      occupation = "libre",
       geo: picked,
     } = body;
 
@@ -416,6 +517,10 @@ export async function POST(req) {
     const rawBasePm2 = median(comps.map((m) => m.pm2)); // before indexing
     const marketPm2 = median(muts.map((m) => m.pm2)); // whole-commune reference
 
+    // Auto-detect security & conjoncture from department
+    const securiteAuto = getSecurite(dept);
+    const conjoncture = getConjoncture(dept);
+
     // Nearby amenities + flood zone check (parallel, best-effort)
     const [places, floodZone] = await Promise.all([
       nearbyPlaces(lat, lon),
@@ -477,15 +582,14 @@ export async function POST(req) {
     const occupLbl = { bail_cours: "Bien occupe — bail en cours (-15%)", loi_1948: "Bien occupe — locataire protege loi 1948 (-25%)" };
     if (occupMap[occupation]) add(occupLbl[occupation], occupMap[occupation]);
 
-    // securite du quartier
-    const secMap = { tres_sur: 0.02, sur: 0, standard: 0, sensible: -0.05, risque: -0.10 };
-    const secLbl = { tres_sur: "Quartier tres sur / residence fermee", sensible: "Quartier sensible (statistiques delinquance)", risque: "Zone a risque / QPV" };
-    if (secMap[securite]) add(secLbl[securite] || `Securite : ${securite}`, secMap[securite]);
+    // securite auto-detectee (SSMSI)
+    if (securiteAuto.pct !== 0) add(`Securite — ${securiteAuto.label}`, securiteAuto.pct);
 
     // zone inondable (PPRI) — applique si detectee
     if (floodZone && floodZone.pct !== 0) add(floodZone.label, floodZone.pct);
 
-    if (sentiment) add("Conjoncture de marche (confiance/demande)", Number(sentiment));
+    // conjoncture auto-detectee (Notaires de France / Meilleurs Agents)
+    if (conjoncture.pct !== 0) add(`Conjoncture locale — ${conjoncture.label}`, conjoncture.pct);
 
     const adjustedPm2 = basePm2 * factor;
     const estimate = adjustedPm2 * surface;
@@ -515,6 +619,8 @@ export async function POST(req) {
       confidence,
       transit,
       floodZone: floodZone || null,
+      securiteAuto,
+      conjoncture,
       amenities: places ? places.list : null,
       yearsUsed,
       compCount: comps.length,

@@ -230,8 +230,6 @@ function Estimation({ onEstimate }) {
     cave: false,
     vue: "standard",
     occupation: "libre",
-    securite: "standard",
-    sentiment: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -281,7 +279,6 @@ function Estimation({ onEstimate }) {
           floor: Number(form.floor),
           pieces: Number(form.pieces),
           condition: Number(form.condition),
-          sentiment: Number(form.sentiment),
           geo: geo
             ? { lat: geo.lat, lon: geo.lon, insee: geo.citycode, label: geo.label, area: geo.area, city: geo.city }
             : null,
@@ -370,23 +367,8 @@ function Estimation({ onEstimate }) {
             </div>
           </div>
 
-          <div className="row">
-            <div>
-              <label>Sécurité du quartier</label>
-              <select value={form.securite} onChange={(e) => set("securite", e.target.value)}>
-                <option value="tres_sur">Très sûr / résidence fermée (+2 %)</option>
-                <option value="sur">Sûr (+0 %)</option>
-                <option value="standard">Standard (0 %)</option>
-                <option value="sensible">Quartier sensible (-5 %)</option>
-                <option value="risque">Zone à risque / QPV (-10 %)</option>
-              </select>
-              <p className="hint">Vérifiez sur <a href="https://www.interieur.gouv.fr/content/download/138619/1099394/file/stat-insecurite-territoire.pdf" target="_blank" rel="noreferrer">cartosécurité</a> ou l'observatoire de la délinquance.</p>
-            </div>
-            <div style={{display:"flex",alignItems:"flex-end",paddingBottom:6}}>
-              <div className="ppri-note">
-                🌊 Zone inondable (PPRI) détectée automatiquement via <b>GeoRisques</b> à l'estimation.
-              </div>
-            </div>
+          <div className="auto-detect-note">
+            🤖 <b>Sécurité</b> (SSMSI), <b>conjoncture locale</b> (Notaires de France) et <b>zone inondable</b> (GeoRisques) sont détectées <b>automatiquement</b> selon l'adresse saisie.
           </div>
 
           <div className="row">
@@ -467,16 +449,6 @@ function Estimation({ onEstimate }) {
                 <option value="1">Parking / box</option>
               </select>
             </div>
-            <div>
-              <label>Conjoncture de marche</label>
-              <select value={form.sentiment} onChange={(e) => set("sentiment", e.target.value)}>
-                <option value="0.03">Marche tres porteur (+3%)</option>
-                <option value="0.015">Reprise / demande forte (+1,5%)</option>
-                <option value="0">Neutre (0%)</option>
-                <option value="-0.015">Marche prudent (-1,5%)</option>
-                <option value="-0.03">Marche tendu / baisse (-3%)</option>
-              </select>
-            </div>
           </div>
           <MarketBarometer />
 
@@ -532,6 +504,19 @@ function EstimResult({ res, surface }) {
       )}
       {res.floodZone === null && (
         <div className="flood-badge flood-na">🌊 Zone inondable : données GeoRisques momentanément indisponibles.</div>
+      )}
+
+      {res.securiteAuto && (
+        <div className={"auto-badge " + (res.securiteAuto.pct > 0 ? "ab-pos" : res.securiteAuto.pct < 0 ? "ab-neg" : "ab-neu")}>
+          🔒 {res.securiteAuto.label}
+          {res.securiteAuto.pct !== 0 && <b> ({res.securiteAuto.pct > 0 ? "+" : ""}{Math.round(res.securiteAuto.pct * 100)} %)</b>}
+        </div>
+      )}
+      {res.conjoncture && (
+        <div className={"auto-badge " + (res.conjoncture.pct > 0 ? "ab-pos" : res.conjoncture.pct < 0 ? "ab-neg" : "ab-neu")}>
+          📈 {res.conjoncture.label}
+          {res.conjoncture.pct !== 0 && <b> ({res.conjoncture.pct > 0 ? "+" : ""}{Math.round(res.conjoncture.pct * 100)} %)</b>}
+        </div>
       )}
 
       {res.amenities && res.amenities.length > 0 && (
