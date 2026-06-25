@@ -394,6 +394,9 @@ function EstimResult({ res, surface }) {
           </div>
         </>
       )}
+      {res.amenities === null && (
+        <p className="hint" style={{ marginTop: 10 }}>Commodites a proximite momentanement indisponibles (service cartographique sature). L'estimation reste valable ; reessayez dans un instant pour les afficher.</p>
+      )}
 
       {res.marketTrend && res.marketTrend.annualPct != null && (
         <div className="trend">

@@ -96,20 +96,40 @@ async function nearbyPlaces(lat, lon) {
     `node(around:800,${lat},${lon})[amenity=cafe];` +
     `way(around:800,${lat},${lon})[leisure=park];` +
     `);out center tags;`;
-  try {
+
+  // Try several Overpass mirrors - the public one is often rate-limited/slow.
+  const endpoints = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+  ];
+  const fetchOne = async (url) => {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 9000);
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "EstimImmo/1.0" },
-      body: "data=" + encodeURIComponent(q),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    const j = await res.json();
-    const els = j.elements || [];
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "EstimImmo/1.0" },
+        body: "data=" + encodeURIComponent(q),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error("status " + res.status);
+      const j = await res.json();
+      return j.elements || [];
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
+  // Query all mirrors in parallel, keep the first that answers.
+  let els = null;
+  try {
+    els = await Promise.any(endpoints.map(fetchOne));
+  } catch {
+    return null; // every mirror failed/timed out
+  }
+
+  try {
     const cats = {};
     const bucket = (k, label) => (cats[k] = cats[k] || { key: k, label, count: 0, nearest: null });
     for (const e of els) {
