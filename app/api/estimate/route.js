@@ -30,6 +30,27 @@ function median(arr) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
+// Local market trend: median price/m2 per year -> annualised growth rate.
+// Data-driven momentum used to re-index older sales to today's value.
+function localTrend(muts) {
+  const byYear = new Map();
+  for (const m of muts) {
+    const y = m.date.slice(0, 4);
+    if (!byYear.has(y)) byYear.set(y, []);
+    byYear.get(y).push(m.pm2);
+  }
+  const points = [];
+  for (const [y, arr] of [...byYear.entries()].sort()) {
+    if (arr.length >= 10) points.push({ year: parseInt(y), med: Math.round(median(arr)) });
+  }
+  if (points.length < 2) return { annual: null, points };
+  const first = points[0], last = points[points.length - 1];
+  const span = last.year - first.year || 1;
+  let annual = Math.pow(last.med / first.med, 1 / span) - 1;
+  annual = Math.max(-0.08, Math.min(0.08, annual)); // clamp to sane bounds
+  return { annual, points };
+}
+
 // Departement code from INSEE city code (handles Corsica + DOM)
 function deptFromInsee(insee) {
   if (/^(2A|2B)/i.test(insee)) return insee.slice(0, 2).toUpperCase();
@@ -181,6 +202,7 @@ export async function POST(req) {
       period = "1948-1974",
       balcony = false,
       parking = false,
+      sentiment = 0, // conjoncture choisie par l'utilisateur (ex: 0.02 / -0.02)
       geo: picked, // exact location chosen via autocomplete (optional)
     } = body;
 
@@ -267,8 +289,17 @@ export async function POST(req) {
     if (comps.length < 8) comps = muts.slice(0, 25);
     comps = comps.slice(0, 40);
 
-    // 4) Base price/m2 (robust = median of selected comparables) --------------
-    const basePm2 = median(comps.map((m) => m.pm2));
+    // 4) Local market trend -> re-index older sales to today ------------------
+    const trend = localTrend(muts);
+    const tr = trend.annual; // annual growth rate (null if not enough data)
+    for (const m of comps) {
+      const yearsAgo = m.monthsAgo / 12;
+      m.pm2Indexed = tr != null ? m.pm2 * Math.pow(1 + tr, yearsAgo) : m.pm2;
+    }
+
+    // Base price/m2 (robust = median of comparables re-indexed to present)
+    const basePm2 = median(comps.map((m) => m.pm2Indexed));
+    const rawBasePm2 = median(comps.map((m) => m.pm2)); // before indexing
     const marketPm2 = median(muts.map((m) => m.pm2)); // whole-commune reference
 
     // 5) Qualitative adjustments ---------------------------------------------
@@ -299,6 +330,7 @@ export async function POST(req) {
 
     if (balcony) add("Balcon / terrasse", 0.03);
     if (parking) add("Parking / box", 0.02);
+    if (sentiment) add("Conjoncture de marche (confiance/demande)", Number(sentiment));
 
     const adjustedPm2 = basePm2 * factor;
     const estimate = adjustedPm2 * surface;
@@ -317,8 +349,13 @@ export async function POST(req) {
       low,
       high,
       basePm2: Math.round(basePm2),
+      rawBasePm2: Math.round(rawBasePm2),
       adjustedPm2: Math.round(adjustedPm2),
       marketPm2: Math.round(marketPm2),
+      marketTrend: {
+        annualPct: tr != null ? Math.round(tr * 1000) / 10 : null,
+        points: trend.points, // [{year, med}]
+      },
       adjustments: adj,
       confidence,
       yearsUsed,

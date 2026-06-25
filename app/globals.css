@@ -60,6 +60,25 @@ input:focus,select:focus{border-color:var(--accent)}
 .geo-ok{font-size:12px;color:var(--green);margin-top:7px}
 .geo-warn{font-size:12px;color:var(--warn);margin-top:7px}
 
+/* national barometer */
+.barometre{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.baro-head{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.baro-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.baro-grid>div{font-size:12.5px;color:var(--txt)}
+.baro-grid>div span{display:inline-block;min-width:74px;color:var(--muted)}
+.baro-note{font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.45}
+.baro-src{font-size:10.5px;color:var(--muted);margin:6px 0 0;opacity:.8}
+
+/* local trend mini chart */
+.trend{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.trend-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin-bottom:12px}
+.trend-head b{font-size:16px}
+.trend-bars{display:flex;gap:10px;align-items:flex-end;height:110px}
+.trend-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.tb-fill{width:60%;background:linear-gradient(180deg,#3b82f6,#1e3a8a);border-radius:5px 5px 0 0;min-height:4px;transition:height .4s}
+.tb-val{font-size:11px;color:var(--txt);margin-top:6px}
+.tb-year{font-size:11px;color:var(--muted)}
+
 button{cursor:pointer;font-family:inherit}
 .btn{background:var(--accent);color:#fff;border:none;padding:13px;border-radius:10px;
   font-size:15px;font-weight:600;width:100%;margin-top:18px}

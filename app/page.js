@@ -6,6 +6,31 @@ const euro = (n) => Math.round(n).toLocaleString("fr-FR") + " EUR";
 const euro0 = (n) => Math.round(n).toLocaleString("fr-FR");
 const pct = (n) => n.toFixed(2).replace(".", ",") + " %";
 
+// National market barometer - refreshed from public sources (Notaires de France,
+// Banque de France, Meilleurs Agents). Update the figures + date periodically.
+const BAROMETRE = {
+  date: "juin 2026",
+  prix: "+0,5 a +1 %/an (notaires : +1,4 % appartements anciens)",
+  taux: "~3,4 % sur 20 ans",
+  demande: "acheteurs +3,2 % depuis janvier 2026, volumes encore -25 % vs 2021",
+  resume: "Marche a l'equilibre mais fragile : reprise moderee, soutenue par la detente des taux et une offre limitee. Forte prime aux bons DPE.",
+};
+
+function MarketBarometer() {
+  return (
+    <div className="barometre">
+      <div className="baro-head">Barometre national &middot; {BAROMETRE.date}</div>
+      <div className="baro-grid">
+        <div><span>Prix</span>{BAROMETRE.prix}</div>
+        <div><span>Taux</span>{BAROMETRE.taux}</div>
+        <div><span>Demande</span>{BAROMETRE.demande}</div>
+      </div>
+      <p className="baro-note">{BAROMETRE.resume}</p>
+      <p className="baro-src">Sources : Notaires de France, Banque de France, Meilleurs Agents.</p>
+    </div>
+  );
+}
+
 export default function Page() {
   const [tab, setTab] = useState("estim");
   // shared: estimated value flows from Estimation -> Rentabilite
@@ -55,6 +80,7 @@ function Estimation({ onEstimate }) {
     period: "1948-1974",
     balcony: false,
     parking: false,
+    sentiment: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -103,6 +129,7 @@ function Estimation({ onEstimate }) {
           surface: Number(form.surface),
           floor: Number(form.floor),
           condition: Number(form.condition),
+          sentiment: Number(form.sentiment),
           geo: geo
             ? { lat: geo.lat, lon: geo.lon, insee: geo.citycode, label: geo.label, area: geo.area, city: geo.city }
             : null,
@@ -220,11 +247,26 @@ function Estimation({ onEstimate }) {
             </div>
           </div>
 
-          <label>Stationnement</label>
-          <select value={form.parking ? "1" : "0"} onChange={(e) => set("parking", e.target.value === "1")}>
-            <option value="0">Sans parking</option>
-            <option value="1">Parking / box</option>
-          </select>
+          <div className="row">
+            <div>
+              <label>Stationnement</label>
+              <select value={form.parking ? "1" : "0"} onChange={(e) => set("parking", e.target.value === "1")}>
+                <option value="0">Sans parking</option>
+                <option value="1">Parking / box</option>
+              </select>
+            </div>
+            <div>
+              <label>Conjoncture de marche</label>
+              <select value={form.sentiment} onChange={(e) => set("sentiment", e.target.value)}>
+                <option value="0.03">Marche tres porteur (+3%)</option>
+                <option value="0.015">Reprise / demande forte (+1,5%)</option>
+                <option value="0">Neutre (0%)</option>
+                <option value="-0.015">Marche prudent (-1,5%)</option>
+                <option value="-0.03">Marche tendu / baisse (-3%)</option>
+              </select>
+            </div>
+          </div>
+          <MarketBarometer />
 
           <button className="btn" onClick={run} disabled={loading}>
             {loading ? <><span className="spinner" />Analyse des transactions...</> : "Estimer avec les donnees reelles"}
@@ -265,6 +307,30 @@ function EstimResult({ res, surface }) {
       </div>
 
       <div className="badge g">{res.compCount} ventes comparables retenues &middot; {res.totalSales} ventes analysees ({res.yearsUsed.join(", ")})</div>
+
+      {res.marketTrend && res.marketTrend.annualPct != null && (
+        <div className="trend">
+          <div className="trend-head">
+            <span>Tendance locale du marche</span>
+            <b className={res.marketTrend.annualPct >= 0 ? "pos" : "neg"}>
+              {res.marketTrend.annualPct >= 0 ? "+" : ""}{res.marketTrend.annualPct.toString().replace(".", ",")} %/an
+            </b>
+          </div>
+          <div className="trend-bars">
+            {res.marketTrend.points.map((p, i) => {
+              const max = Math.max(...res.marketTrend.points.map((x) => x.med));
+              return (
+                <div key={i} className="trend-bar">
+                  <div className="tb-fill" style={{ height: Math.round((p.med / max) * 100) + "%" }} />
+                  <div className="tb-val">{euro0(p.med)}</div>
+                  <div className="tb-year">{p.year}</div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="hint">Prix/m2 median par annee dans la commune. Les ventes anciennes sont reindexees a aujourd'hui selon cette tendance, pour refleter la demande actuelle.</p>
+        </div>
+      )}
 
       {res.adjustments.length > 0 && (
         <>
