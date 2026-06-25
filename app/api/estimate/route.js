@@ -371,6 +371,8 @@ export async function POST(req) {
         adresse: m.adresse,
         commune: m.commune,
         type: m.type,
+        lat: m.lat,
+        lon: m.lon,
       })),
     });
   } catch (e) {

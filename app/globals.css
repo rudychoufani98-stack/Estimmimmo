@@ -79,6 +79,13 @@ input:focus,select:focus{border-color:var(--accent)}
 .tb-val{font-size:11px;color:var(--txt);margin-top:6px}
 .tb-year{font-size:11px;color:var(--muted)}
 
+/* comparables map */
+.map{height:320px;width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-top:8px;background:#0f1729}
+.leaflet-popup-content{font-size:12px;line-height:1.4}
+.dot-green,.dot-blue{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:3px}
+.dot-green{background:var(--green);border:2px solid #fff}
+.dot-blue{background:var(--accent)}
+
 button{cursor:pointer;font-family:inherit}
 .btn{background:var(--accent);color:#fff;border:none;padding:13px;border-radius:10px;
   font-size:15px;font-weight:600;width:100%;margin-top:18px}

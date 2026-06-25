@@ -1,6 +1,7 @@
 "use client";
 import "./globals.css";
-import { useState, useRef } from "react";
+import "leaflet/dist/leaflet.css";
+import { useState, useRef, useEffect } from "react";
 
 const euro = (n) => Math.round(n).toLocaleString("fr-FR") + " EUR";
 const euro0 = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -15,6 +16,46 @@ const BAROMETRE = {
   demande: "acheteurs +3,2 % depuis janvier 2026, volumes encore -25 % vs 2021",
   resume: "Marche a l'equilibre mais fragile : reprise moderee, soutenue par la detente des taux et une offre limitee. Forte prime aux bons DPE.",
 };
+
+// Interactive map of the subject property + comparable sales (Leaflet + OSM).
+function CompMap({ center, comps }) {
+  const ref = useRef(null);
+  const mapRef = useRef(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !ref.current) return;
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+      const map = L.map(ref.current, { scrollWheelZoom: false }).setView([center.lat, center.lon], 15);
+      mapRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(map);
+
+      const pts = [[center.lat, center.lon]];
+      L.circleMarker([center.lat, center.lon], {
+        radius: 10, color: "#fff", weight: 3, fillColor: "#22c55e", fillOpacity: 1,
+      }).addTo(map).bindPopup("<b>Bien estime</b>");
+
+      comps.forEach((c) => {
+        if (!c.lat || !c.lon) return;
+        pts.push([c.lat, c.lon]);
+        L.circleMarker([c.lat, c.lon], {
+          radius: 6, color: "#1e3a8a", weight: 1, fillColor: "#3b82f6", fillOpacity: 0.85,
+        }).addTo(map).bindPopup(
+          `${c.adresse || c.commune}<br>${c.surface} m2 &middot; ${c.prix.toLocaleString("fr-FR")} EUR<br><b>${c.pm2.toLocaleString("fr-FR")} EUR/m2</b> &middot; a ${c.dist} m`
+        );
+      });
+      if (pts.length > 1) map.fitBounds(pts, { padding: [30, 30], maxZoom: 16 });
+      setTimeout(() => map.invalidateSize(), 100);
+    })();
+    return () => { cancelled = true; };
+  }, [center.lat, center.lon, comps.length]);
+
+  return <div ref={ref} className="map" />;
+}
 
 function MarketBarometer() {
   return (
@@ -346,6 +387,10 @@ function EstimResult({ res, surface }) {
         </>
       )}
 
+      <div className="section-t">Localisation des comparables</div>
+      <CompMap center={res.location} comps={res.comparables} />
+      <p className="hint"><span className="dot-green" /> Bien estime &nbsp; <span className="dot-blue" /> Ventes comparables (cliquez un point pour le detail).</p>
+
       <div className="section-t">Transactions reelles comparables ({res.comparables.length})</div>
       <div className="tbl-scroll">
         <table>
@@ -394,6 +439,8 @@ function Rentabilite({ estValue }) {
     duration: 20,
     rate: 3.5,
     loanInsurance: 0.34,
+    regime: "microbic",
+    tmi: 0.3,
   });
   // keep price synced when arriving from estimation
   const [synced, setSynced] = useState(false);
@@ -430,13 +477,31 @@ function Rentabilite({ estValue }) {
   const mCashflow = annualCashflow / 12;
   const cashOnCash = v("apport") > 0 ? (annualCashflow / v("apport")) * 100 : 0;
 
+  // ---- fiscalite (impot sur les revenus locatifs) ----
+  const PS = 0.172; // prelevements sociaux
+  const taxRate = v("tmi") + PS;
+  const annualInterest = loan * (v("rate") / 100);        // approx interets annee 1
+  const loanInsAnnual = loan * (v("loanInsurance") / 100);
+  const deductible = nonRecovCopro + v("taxe") + v("insurancePNO") + mgmtCost + annualInterest + loanInsAnnual;
+  const amort = (price * 0.85) / 30 + v("works") / 10;    // amortissement LMNP (approx)
+  const regime = f.regime;
+  let taxableBase, regimeLabel;
+  if (regime === "microfoncier") { taxableBase = annualRentGross * 0.7; regimeLabel = "Nu - Micro-foncier (abattement 30%)"; }
+  else if (regime === "microbic") { taxableBase = annualRentGross * 0.5; regimeLabel = "Meuble - Micro-BIC (abattement 50%)"; }
+  else if (regime === "reel") { taxableBase = Math.max(0, annualRentNet - deductible); regimeLabel = "Nu - Reel (charges deduites)"; }
+  else { taxableBase = Math.max(0, annualRentNet - deductible - amort); regimeLabel = "Meuble - LMNP reel (amortissement)"; }
+  const incomeTax = Math.max(0, taxableBase) * taxRate;
+  const cashflowAfterTax = annualCashflow - incomeTax;
+  const mCashflowAT = cashflowAfterTax / 12;
+  const yieldNetNet = totalCost > 0 ? ((annualRentNet - annualOperating - incomeTax) / totalCost) * 100 : 0;
+
   const yClass = (y) => (y >= 5 ? "g" : y >= 3 ? "w" : "b");
   const cClass = (x) => (x >= 0 ? "g" : "b");
 
   let verdict, vClass;
-  if (annualCashflow >= 0) { verdict = "Rentable : les loyers couvrent le credit et toutes les charges. Cashflow positif."; vClass = "g"; }
-  else if (mCashflow >= -200) { verdict = "Equilibre : effort d'epargne mensuel modere. A arbitrer selon la plus-value attendue."; vClass = "w"; }
-  else { verdict = "Non rentable en l'etat : effort d'epargne mensuel important. Renegociez le prix, l'apport ou le loyer."; vClass = "b"; }
+  if (cashflowAfterTax >= 0) { verdict = "Rentable : apres impot, les loyers couvrent le credit et toutes les charges. Cashflow positif."; vClass = "g"; }
+  else if (mCashflowAT >= -200) { verdict = "Equilibre : effort d'epargne mensuel modere apres impot. A arbitrer selon la plus-value attendue."; vClass = "w"; }
+  else { verdict = "Non rentable en l'etat : effort d'epargne mensuel important apres impot. Renegociez le prix, l'apport, le loyer ou changez de regime fiscal."; vClass = "b"; }
 
   return (
     <div className="grid">
@@ -534,6 +599,27 @@ function Rentabilite({ estValue }) {
             </div>
           </div>
         </div>
+
+        <div className="card">
+          <h2>Fiscalite</h2>
+          <div className="sub">Impot sur les revenus locatifs (IR + prelevements sociaux 17,2%)</div>
+          <label>Regime fiscal</label>
+          <select value={f.regime} onChange={(e) => setF((s) => ({ ...s, regime: e.target.value }))}>
+            <option value="microbic">Meuble - Micro-BIC (abattement 50%)</option>
+            <option value="lmnp">Meuble - LMNP reel (amortissement)</option>
+            <option value="microfoncier">Nu - Micro-foncier (abattement 30%)</option>
+            <option value="reel">Nu - Reel (deduction des charges)</option>
+          </select>
+          <label>Tranche marginale d'imposition (TMI)</label>
+          <select value={f.tmi} onChange={(e) => set("tmi", e.target.value)}>
+            <option value="0">0% (non imposable)</option>
+            <option value="0.11">11%</option>
+            <option value="0.3">30%</option>
+            <option value="0.41">41%</option>
+            <option value="0.45">45%</option>
+          </select>
+          <p className="hint">LMNP reel : l'amortissement du bien efface souvent l'impot pendant des annees (estimation simplifiee). Le reel deduit interets et charges. A confirmer avec un comptable.</p>
+        </div>
       </div>
 
       {/* results */}
@@ -577,9 +663,24 @@ function Rentabilite({ estValue }) {
           </div>
 
           <div className="kpis" style={{ marginTop: 14 }}>
-            <div className="kpi"><div className="k">Cashflow / mois</div><div className={"v " + cClass(mCashflow)}>{mCashflow >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflow))} EUR</div></div>
+            <div className="kpi"><div className="k">Cashflow / mois (av. impot)</div><div className={"v " + cClass(mCashflow)}>{mCashflow >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflow))} EUR</div></div>
             <div className="kpi"><div className="k">Effort d'epargne / mois</div><div className={"v " + (mCashflow >= 0 ? "g" : "w")}>{mCashflow >= 0 ? "0 EUR" : euro0(-mCashflow) + " EUR"}</div></div>
             <div className="kpi"><div className="k">Mensualite</div><div className="v">{euro0(mPayment)} EUR</div></div>
+          </div>
+
+          <div className="section-t">Impot &amp; rentabilite nette-nette</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Regime</span><span style={{ fontSize: 12.5 }}>{regimeLabel}</span></div>
+            <div className="li"><span className="lbl">Base imposable / an</span><span>{euro(taxableBase)}</span></div>
+            <div className="li"><span className="lbl">Impot estime (IR {Math.round(v("tmi") * 100)}% + PS 17,2%)</span><span className="neg">- {euro(incomeTax)}/an</span></div>
+            <div className="li total"><span>Cashflow apres impot</span>
+              <span className={cashflowAfterTax >= 0 ? "pos" : "neg"}>{cashflowAfterTax >= 0 ? "+ " : "- "}{euro(Math.abs(cashflowAfterTax))}/an</span></div>
+          </div>
+
+          <div className="kpis" style={{ marginTop: 14 }}>
+            <div className="kpi"><div className="k">Rentabilite nette-nette</div><div className={"v " + yClass(yieldNetNet)}>{pct(yieldNetNet)}</div></div>
+            <div className="kpi"><div className="k">Cashflow / mois (ap. impot)</div><div className={"v " + cClass(mCashflowAT)}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} EUR</div></div>
+            <div className="kpi"><div className="k">Impot / mois</div><div className="v w">{euro0(incomeTax / 12)} EUR</div></div>
           </div>
 
           <div className={"badge " + vClass}>{verdict}</div>
