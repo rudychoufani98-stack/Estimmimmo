@@ -12,6 +12,102 @@ const AM_ICON = {
   pharmacie: "💊", ecole: "🏫", restaurant: "🍽️", parc: "🌳",
 };
 
+const MONTH_NAMES = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
+
+// Airbnb seasonal data & local regulations per zone
+// taux = occupancy rate, mult = price multiplier vs base rate
+const AIRBNB_ZONES = {
+  paris: {
+    label: "Paris",
+    saisons: [
+      {taux:0.60,mult:0.85},{taux:0.65,mult:0.90},{taux:0.72,mult:1.00},
+      {taux:0.80,mult:1.15},{taux:0.82,mult:1.20},{taux:0.78,mult:1.08},
+      {taux:0.85,mult:1.25},{taux:0.88,mult:1.30},{taux:0.80,mult:1.15},
+      {taux:0.82,mult:1.20},{taux:0.70,mult:0.95},{taux:0.78,mult:1.10},
+    ],
+    loi: { limite: 120, enregistrement: true, taxeSejour: 5.20,
+      info: "Paris : résidence principale limitée à 120 nuits/an (loi ELAN). Numéro d'enregistrement en mairie obligatoire. Taxe de séjour ~5,20 EUR/nuit/pers (collectée et reversée à la Ville par Airbnb)." },
+  },
+  cote_azur: {
+    label: "Côte d'Azur (Nice, Cannes, Antibes…)",
+    saisons: [
+      {taux:0.35,mult:0.65},{taux:0.38,mult:0.70},{taux:0.45,mult:0.78},
+      {taux:0.60,mult:0.92},{taux:0.75,mult:1.15},{taux:0.85,mult:1.30},
+      {taux:0.95,mult:1.70},{taux:0.98,mult:1.90},{taux:0.80,mult:1.25},
+      {taux:0.52,mult:0.82},{taux:0.35,mult:0.65},{taux:0.42,mult:0.75},
+    ],
+    loi: { limite: null, enregistrement: true, taxeSejour: 3.00,
+      info: "Côte d'Azur : pas de limite de nuits pour résidence secondaire. Enregistrement obligatoire dans communes > 200 000 hab. (Nice). Taxe de séjour ~3 EUR/nuit/pers." },
+  },
+  alpes: {
+    label: "Alpes — station de ski (Chamonix, Méribel…)",
+    saisons: [
+      {taux:0.88,mult:1.60},{taux:0.92,mult:1.80},{taux:0.85,mult:1.55},
+      {taux:0.38,mult:0.70},{taux:0.22,mult:0.52},{taux:0.30,mult:0.60},
+      {taux:0.80,mult:1.35},{taux:0.88,mult:1.50},{taux:0.28,mult:0.58},
+      {taux:0.22,mult:0.50},{taux:0.32,mult:0.62},{taux:0.80,mult:1.45},
+    ],
+    loi: { limite: null, enregistrement: true, taxeSejour: 2.50,
+      info: "Alpes (stations) : résidence secondaire — pas de plafond de nuits. Enregistrement en mairie obligatoire. Taxe de séjour ~2,50 EUR/nuit/pers." },
+  },
+  bretagne: {
+    label: "Bretagne (Saint-Malo, Quimper, Brest…)",
+    saisons: [
+      {taux:0.28,mult:0.58},{taux:0.28,mult:0.58},{taux:0.35,mult:0.65},
+      {taux:0.52,mult:0.84},{taux:0.62,mult:0.95},{taux:0.75,mult:1.10},
+      {taux:0.95,mult:1.55},{taux:0.98,mult:1.70},{taux:0.65,mult:0.95},
+      {taux:0.40,mult:0.70},{taux:0.25,mult:0.55},{taux:0.28,mult:0.58},
+    ],
+    loi: { limite: null, enregistrement: false, taxeSejour: 1.50,
+      info: "Bretagne : pas de contrainte hors grandes villes. Déclaration en mairie recommandée si meublé tourisme. Taxe de séjour ~1,50 EUR/nuit/pers." },
+  },
+  bordeaux: {
+    label: "Bordeaux & Gironde",
+    saisons: [
+      {taux:0.52,mult:0.78},{taux:0.52,mult:0.78},{taux:0.58,mult:0.85},
+      {taux:0.68,mult:1.00},{taux:0.73,mult:1.05},{taux:0.78,mult:1.15},
+      {taux:0.85,mult:1.30},{taux:0.88,mult:1.35},{taux:0.78,mult:1.18},
+      {taux:0.68,mult:1.00},{taux:0.52,mult:0.78},{taux:0.62,mult:0.90},
+    ],
+    loi: { limite: 120, enregistrement: true, taxeSejour: 2.00,
+      info: "Bordeaux : limite 120 nuits/an résidence principale. Numéro d'enregistrement obligatoire depuis 2022. Taxe de séjour ~2 EUR/nuit/pers." },
+  },
+  lyon: {
+    label: "Lyon & Métropole",
+    saisons: [
+      {taux:0.58,mult:0.82},{taux:0.60,mult:0.85},{taux:0.65,mult:0.93},
+      {taux:0.70,mult:1.00},{taux:0.73,mult:1.05},{taux:0.75,mult:1.08},
+      {taux:0.68,mult:0.98},{taux:0.58,mult:0.82},{taux:0.73,mult:1.05},
+      {taux:0.70,mult:1.00},{taux:0.72,mult:1.02},{taux:0.73,mult:1.05},
+    ],
+    loi: { limite: 120, enregistrement: true, taxeSejour: 3.00,
+      info: "Lyon : limite 120 nuits/an résidence principale. Numéro d'enregistrement obligatoire en ligne. Taxe de séjour ~3 EUR/nuit/pers (zone A)." },
+  },
+  marseille: {
+    label: "Marseille & Provence",
+    saisons: [
+      {taux:0.45,mult:0.72},{taux:0.48,mult:0.75},{taux:0.55,mult:0.82},
+      {taux:0.65,mult:0.95},{taux:0.72,mult:1.05},{taux:0.82,mult:1.22},
+      {taux:0.90,mult:1.50},{taux:0.92,mult:1.55},{taux:0.78,mult:1.18},
+      {taux:0.60,mult:0.88},{taux:0.45,mult:0.72},{taux:0.50,mult:0.78},
+    ],
+    loi: { limite: 120, enregistrement: true, taxeSejour: 2.50,
+      info: "Marseille : limite 120 nuits/an résidence principale. Enregistrement obligatoire depuis 2020. Taxe de séjour ~2,50 EUR/nuit/pers." },
+  },
+  autre: {
+    label: "Autre ville / zone rurale",
+    saisons: [
+      {taux:0.38,mult:0.78},{taux:0.38,mult:0.78},{taux:0.42,mult:0.82},
+      {taux:0.52,mult:0.92},{taux:0.58,mult:0.98},{taux:0.63,mult:1.05},
+      {taux:0.80,mult:1.32},{taux:0.85,mult:1.42},{taux:0.60,mult:1.00},
+      {taux:0.45,mult:0.85},{taux:0.32,mult:0.72},{taux:0.38,mult:0.80},
+    ],
+    loi: { limite: null, enregistrement: false, taxeSejour: 1.00,
+      info: "Zone hors grandes villes : réglementation plus souple. Déclaration en mairie recommandée si meublé tourisme. Taxe de séjour variable (~1 EUR/nuit/pers)." },
+  },
+};
+
 // National market barometer - refreshed from public sources (Notaires de France,
 // Banque de France, Meilleurs Agents). Update the figures + date periodically.
 const BAROMETRE = {
@@ -473,6 +569,7 @@ function pmt(principal, annualRate, years) {
 }
 
 function Rentabilite({ estValue }) {
+  const [rentaTab, setRentaTab] = useState("classique");
   const [f, setF] = useState({
     price: estValue || 300000,
     notaryRate: 0.075,
@@ -553,7 +650,19 @@ function Rentabilite({ estValue }) {
   else { verdict = "Non rentable en l'etat : effort d'epargne mensuel important apres impot. Renegociez le prix, l'apport, le loyer ou changez de regime fiscal."; vClass = "b"; }
 
   return (
-    <div className="grid">
+    <>
+      <div className="subtabs">
+        <button className={"subtab" + (rentaTab === "classique" ? " active" : "")} onClick={() => setRentaTab("classique")}>
+          📋 Location classique
+        </button>
+        <button className={"subtab" + (rentaTab === "airbnb" ? " active" : "")} onClick={() => setRentaTab("airbnb")}>
+          🏠 Airbnb / Saisonnier
+        </button>
+      </div>
+      {rentaTab === "airbnb" ? (
+        <RentabiliteAirbnb estValue={estValue} classicYieldGross={yieldGross} classicCashflowAT={mCashflowAT} />
+      ) : (
+      <div className="grid">
       {/* inputs */}
       <div>
         <div className="card">
@@ -734,6 +843,352 @@ function Rentabilite({ estValue }) {
 
           <div className={"badge " + vClass}>{verdict}</div>
         </div>
+      </div>
+    </div>
+      )}
+    </>
+  );
+}
+
+/* ======================= AIRBNB / SAISONNIER ============================= */
+function RentabiliteAirbnb({ estValue, classicYieldGross, classicCashflowAT }) {
+  const [f, setF] = useState({
+    zone: "paris",
+    isPrimary: true,
+    tarifBase: 120,
+    nPersonnes: 4,
+    cleaningFee: 60,
+    avgStay: 3,
+    platformFee: 0.15,
+    mgmt: 0,
+    insuranceAirbnb: 350,
+    price: estValue || 300000,
+    notaryRate: 0.075,
+    works: 0,
+    apport: 40000,
+    duration: 20,
+    rate: 3.5,
+    loanInsurance: 0.34,
+    taxe: 1100,
+    chargesCopro: 2400,
+    tmi: 0.3,
+    regime: "microbic",
+  });
+
+  const [synced, setSynced] = useState(false);
+  if (!synced && estValue && f.price !== estValue) {
+    setF((x) => ({ ...x, price: estValue }));
+    setSynced(true);
+  }
+
+  const setV = (k, v) => setF((s) => ({ ...s, [k]: isNaN(Number(v)) || v === "" ? v : Number(v) }));
+  const setS = (k, v) => setF((s) => ({ ...s, [k]: v }));
+
+  const zone = AIRBNB_ZONES[f.zone];
+  const loi = zone.loi;
+
+  // Monthly revenue simulation
+  const months = zone.saisons.map((s, i) => {
+    const days = DAYS_IN_MONTH[i];
+    const nuits = Math.round(days * s.taux);
+    const tarif = Math.round(f.tarifBase * s.mult);
+    const sejours = Math.max(1, Math.round(nuits / Math.max(1, f.avgStay)));
+    const revenueGross = nuits * tarif;
+    const platformCut = revenueGross * f.platformFee;
+    const netHost = revenueGross - platformCut;
+    return {
+      name: MONTH_NAMES[i], days, nuits, tarif, sejours, revenueGross, platformCut, netHost,
+      isHaute: s.mult >= 1.2, isMoyenne: s.mult >= 1.0 && s.mult < 1.2, taux: s.taux,
+    };
+  });
+
+  const totalNuits = months.reduce((a, m) => a + m.nuits, 0);
+  const annualRevenueGross = months.reduce((a, m) => a + m.revenueGross, 0);
+  const annualPlatformFee = months.reduce((a, m) => a + m.platformCut, 0);
+  const annualNetAirbnb = months.reduce((a, m) => a + m.netHost, 0);
+
+  const isCapped = f.isPrimary && loi.limite && totalNuits > loi.limite;
+  const ratio = isCapped ? loi.limite / totalNuits : 1;
+  const annualRevenueCapped = annualNetAirbnb * ratio;
+  const effectiveNuits = isCapped ? loi.limite : totalNuits;
+
+  const annualMgmt = annualRevenueCapped * f.mgmt;
+  const annualInsurance = f.insuranceAirbnb;
+  const annualCopro = f.chargesCopro;
+  const annualTaxe = f.taxe;
+  const annualOperating = annualMgmt + annualInsurance + annualCopro + annualTaxe;
+
+  const price = Number(f.price) || 0;
+  const notaire = price * f.notaryRate;
+  const totalCost = price + notaire + Number(f.works);
+  const loan = Math.max(0, totalCost - Number(f.apport));
+  const mPrincipal = pmt(loan, Number(f.rate), Number(f.duration));
+  const mLoanIns = (loan * (Number(f.loanInsurance) / 100)) / 12;
+  const mPayment = mPrincipal + mLoanIns;
+  const annualLoan = mPayment * 12;
+
+  const annualCashflow = annualRevenueCapped - annualOperating - annualLoan;
+
+  const abatt = f.regime === "microbic71" ? 0.71 : 0.50;
+  const taxableBase = Math.max(0, annualRevenueCapped * (1 - abatt));
+  const PS = 0.172;
+  const incomeTax = taxableBase * (Number(f.tmi) + PS);
+  const cashflowAfterTax = annualCashflow - incomeTax;
+  const mCashflowAT = cashflowAfterTax / 12;
+
+  const yieldGross = price > 0 ? (annualRevenueGross / price) * 100 : 0;
+  const yieldNet = totalCost > 0 ? ((annualRevenueCapped - annualOperating) / totalCost) * 100 : 0;
+  const yieldNetNet = totalCost > 0 ? ((annualRevenueCapped - annualOperating - incomeTax) / totalCost) * 100 : 0;
+
+  const yClass = (y) => (y >= 6 ? "g" : y >= 4 ? "w" : "b");
+  const cClass = (x) => (x >= 0 ? "g" : "b");
+
+  return (
+    <div className="grid">
+      {/* --- INPUTS --- */}
+      <div>
+        <div className="card">
+          <h2>Zone &amp; type de location</h2>
+          <label>Ville / Région</label>
+          <select value={f.zone} onChange={(e) => setS("zone", e.target.value)}>
+            {Object.entries(AIRBNB_ZONES).map(([k, z]) => (
+              <option key={k} value={k}>{z.label}</option>
+            ))}
+          </select>
+          <label>Type de résidence</label>
+          <select value={f.isPrimary ? "1" : "0"} onChange={(e) => setV("isPrimary", e.target.value === "1" ? 1 : 0)}>
+            <option value="1">Résidence principale</option>
+            <option value="0">Résidence secondaire / investissement</option>
+          </select>
+          <div className={"loi-alert " + (loi.limite && f.isPrimary ? "warn" : "ok")}>
+            <div className="loi-title">⚖️ Réglementation locale</div>
+            <p style={{margin:"6px 0 0",fontSize:12.5}}>{loi.info}</p>
+            {loi.limite && f.isPrimary && (
+              <p style={{margin:"8px 0 0",fontSize:12.5}} className={isCapped ? "neg" : "pos"}>
+                {isCapped
+                  ? `⚠️ Votre calendrier (${totalNuits} nuits) dépasse la limite légale de ${loi.limite} nuits. Revenus plafonnés automatiquement.`
+                  : `✓ Votre calendrier (${totalNuits} nuits) respecte la limite de ${loi.limite} nuits.`}
+              </p>
+            )}
+            {loi.enregistrement && (
+              <p style={{margin:"6px 0 0",fontSize:12}} className="warn">
+                📋 Numéro d'enregistrement obligatoire — à demander en mairie avant toute mise en location.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Tarification &amp; séjours</h2>
+          <div className="row">
+            <div>
+              <label>Tarif nuit de base (basse saison)</label>
+              <div className="unit"><input type="number" value={f.tarifBase} onChange={(e) => setV("tarifBase", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Capacité</label>
+              <div className="unit"><input type="number" value={f.nPersonnes} onChange={(e) => setV("nPersonnes", e.target.value)} /><small>pers.</small></div>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Durée moyenne séjour</label>
+              <div className="unit"><input type="number" value={f.avgStay} onChange={(e) => setV("avgStay", e.target.value)} /><small>jours</small></div>
+            </div>
+            <div>
+              <label>Frais de ménage / séjour</label>
+              <div className="unit"><input type="number" value={f.cleaningFee} onChange={(e) => setV("cleaningFee", e.target.value)} /><small>EUR</small></div>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Commission plateforme</label>
+              <select value={f.platformFee} onChange={(e) => setV("platformFee", e.target.value)}>
+                <option value="0.03">3 % — frais hôte split (Airbnb)</option>
+                <option value="0.15">15 % — frais hôte seul (Airbnb)</option>
+                <option value="0.20">20 % — Booking / autres</option>
+              </select>
+            </div>
+            <div>
+              <label>Conciergerie / gestion</label>
+              <select value={f.mgmt} onChange={(e) => setV("mgmt", e.target.value)}>
+                <option value="0">Gestion perso (0 %)</option>
+                <option value="0.15">Conciergerie (15 %)</option>
+                <option value="0.20">Conciergerie premium (20 %)</option>
+                <option value="0.25">Full-service (25 %)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Calendrier saisonnier — {zone.label}</h2>
+          <div className="sub">Taux d'occupation et tarif estimés par mois selon la zone</div>
+          <div className="season-grid">
+            {months.map((m, i) => (
+              <div key={i} className={"season-cell " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
+                <div className="sc-month">{m.name}</div>
+                <div className="sc-tarif">{m.tarif}€</div>
+                <div className="sc-taux">{Math.round(m.taux * 100)}%</div>
+                <div className="sc-nuits">{m.nuits}n</div>
+              </div>
+            ))}
+          </div>
+          <div className="season-legend">
+            <span className="sl haute">■ Haute saison</span>
+            <span className="sl moyenne">■ Moyenne</span>
+            <span className="sl basse">■ Basse saison</span>
+          </div>
+          <p className="hint">Tarif = base × multiplicateur saisonnier. Occupation = taux d'occupation estimé par nuit.</p>
+        </div>
+
+        <div className="card">
+          <h2>Charges annuelles</h2>
+          <div className="row">
+            <div>
+              <label>Charges de copro / an</label>
+              <div className="unit"><input type="number" value={f.chargesCopro} onChange={(e) => setV("chargesCopro", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Taxe foncière / an</label>
+              <div className="unit"><input type="number" value={f.taxe} onChange={(e) => setV("taxe", e.target.value)} /><small>EUR</small></div>
+            </div>
+          </div>
+          <label>Assurance PNO + loc. saisonnière / an</label>
+          <div className="unit"><input type="number" value={f.insuranceAirbnb} onChange={(e) => setV("insuranceAirbnb", e.target.value)} /><small>EUR</small></div>
+          <p className="hint">Airbnb fournit AirCover (protection hôte), mais une assurance dédiée courte durée est fortement recommandée.</p>
+        </div>
+
+        <div className="card">
+          <h2>Acquisition &amp; financement</h2>
+          <div className="row">
+            <div>
+              <label>Prix d'achat</label>
+              <div className="unit"><input type="number" value={f.price} onChange={(e) => setV("price", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Frais de notaire</label>
+              <select value={f.notaryRate} onChange={(e) => setV("notaryRate", e.target.value)}>
+                <option value="0.075">Ancien (~7,5 %)</option>
+                <option value="0.025">Neuf (~2,5 %)</option>
+              </select>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Apport</label>
+              <div className="unit"><input type="number" value={f.apport} onChange={(e) => setV("apport", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Durée crédit</label>
+              <div className="unit"><input type="number" value={f.duration} onChange={(e) => setV("duration", e.target.value)} /><small>ans</small></div>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Taux d'intérêt</label>
+              <div className="unit"><input type="number" step="0.01" value={f.rate} onChange={(e) => setV("rate", e.target.value)} /><small>%</small></div>
+            </div>
+            <div>
+              <label>Assurance emprunteur</label>
+              <div className="unit"><input type="number" step="0.01" value={f.loanInsurance} onChange={(e) => setV("loanInsurance", e.target.value)} /><small>%/an</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Fiscalité</h2>
+          <div className="sub">Location Airbnb = meublé = régime BIC (jamais micro-foncier)</div>
+          <label>Régime fiscal</label>
+          <select value={f.regime} onChange={(e) => setS("regime", e.target.value)}>
+            <option value="microbic">Micro-BIC — abattement 50 %</option>
+            <option value="microbic71">Micro-BIC meublé tourisme classé — abattement 71 %</option>
+            <option value="lmnp">LMNP réel (amortissement — estimation indicative)</option>
+          </select>
+          <label>Tranche marginale d'imposition (TMI)</label>
+          <select value={f.tmi} onChange={(e) => setV("tmi", e.target.value)}>
+            <option value="0">0 % (non imposable)</option>
+            <option value="0.11">11 %</option>
+            <option value="0.3">30 %</option>
+            <option value="0.41">41 %</option>
+            <option value="0.45">45 %</option>
+          </select>
+          <p className="hint">LMNP réel : l'amortissement peut effacer l'impôt plusieurs années. Consultez un expert-comptable pour une simulation précise.</p>
+        </div>
+      </div>
+
+      {/* --- RESULTS --- */}
+      <div>
+        <div className="card">
+          <h2>Analyse Airbnb / Saisonnier</h2>
+          <div className="sub">{zone.label} &mdash; {effectiveNuits} nuits louées / an{isCapped ? " (plafonnées)" : ""}</div>
+
+          <div className="kpis">
+            <div className="kpi"><div className="k">Rendement brut</div><div className={"v " + yClass(yieldGross)}>{pct(yieldGross)}</div></div>
+            <div className="kpi"><div className="k">Rendement net</div><div className={"v " + yClass(yieldNet)}>{pct(yieldNet)}</div></div>
+            <div className="kpi"><div className="k">Rendement net-net</div><div className={"v " + yClass(yieldNetNet)}>{pct(yieldNetNet)}</div></div>
+          </div>
+
+          <div className="section-t">Revenus annuels</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Revenu brut nuits</span><span className="pos">+ {euro(annualRevenueGross * ratio)}</span></div>
+            <div className="li"><span className="lbl">Commission plateforme ({Math.round(f.platformFee * 100)} %)</span><span className="neg">- {euro(annualPlatformFee * ratio)}</span></div>
+            <div className="li total"><span>Revenu net hôte</span><span className="v">{euro(annualRevenueCapped)}</span></div>
+          </div>
+
+          <div className="section-t">Charges &amp; crédit</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Charges copro (100 % propriétaire)</span><span className="neg">- {euro(annualCopro)}</span></div>
+            <div className="li"><span className="lbl">Taxe foncière</span><span className="neg">- {euro(annualTaxe)}</span></div>
+            <div className="li"><span className="lbl">Assurance</span><span className="neg">- {euro(annualInsurance)}</span></div>
+            {f.mgmt > 0 && <div className="li"><span className="lbl">Conciergerie ({Math.round(f.mgmt * 100)} %)</span><span className="neg">- {euro(annualMgmt)}</span></div>}
+            <div className="li"><span className="lbl">Remboursement crédit / an</span><span className="neg">- {euro(annualLoan)}</span></div>
+            <div className="li total"><span>Cashflow annuel (av. impôt)</span>
+              <span className={annualCashflow >= 0 ? "pos" : "neg"}>{annualCashflow >= 0 ? "+ " : "- "}{euro(Math.abs(annualCashflow))}</span>
+            </div>
+          </div>
+
+          <div className="section-t">Fiscalité</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Base imposable / an</span><span>{euro(taxableBase)}</span></div>
+            <div className="li"><span className="lbl">Impôt (IR {Math.round(f.tmi * 100)} % + PS 17,2 %)</span><span className="neg">- {euro(incomeTax)}/an</span></div>
+            <div className="li total"><span>Cashflow après impôt</span>
+              <span className={cashflowAfterTax >= 0 ? "pos" : "neg"}>{cashflowAfterTax >= 0 ? "+ " : "- "}{euro(Math.abs(cashflowAfterTax))}/an</span>
+            </div>
+          </div>
+
+          <div className="kpis" style={{ marginTop: 14 }}>
+            <div className="kpi"><div className="k">Cashflow / mois (ap. impôt)</div><div className={"v " + cClass(mCashflowAT)}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} EUR</div></div>
+            <div className="kpi"><div className="k">Mensualité crédit</div><div className="v">{euro0(mPayment)} EUR</div></div>
+            <div className="kpi"><div className="k">Impôt / mois</div><div className="v w">{euro0(incomeTax / 12)} EUR</div></div>
+          </div>
+        </div>
+
+        {classicYieldGross !== undefined && (
+          <div className="card">
+            <h2>Comparaison : Classique vs Airbnb</h2>
+            <div className="sub">Même bien, même financement</div>
+            <div className="compare-grid">
+              <div className="cmp-col">
+                <div className="cmp-head">📋 Location classique</div>
+                <div className="cmp-row"><span>Rendement brut</span><span className={classicYieldGross >= 5 ? "pos" : classicYieldGross < 3 ? "neg" : "warn"}>{pct(classicYieldGross)}</span></div>
+                <div className="cmp-row"><span>Cashflow / mois</span><span className={classicCashflowAT >= 0 ? "pos" : "neg"}>{classicCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(classicCashflowAT))} EUR</span></div>
+                <div className="cmp-row"><span>Gestion</span><span>Simple</span></div>
+                <div className="cmp-row"><span>Vacance</span><span>Faible</span></div>
+                <div className="cmp-row"><span>Réglementation</span><span className="pos">Stable</span></div>
+              </div>
+              <div className="cmp-col">
+                <div className="cmp-head airbnb">🏠 Airbnb / Saisonnier</div>
+                <div className="cmp-row"><span>Rendement brut</span><span className={yieldGross >= 5 ? "pos" : yieldGross < 3 ? "neg" : "warn"}>{pct(yieldGross)}</span></div>
+                <div className="cmp-row"><span>Cashflow / mois</span><span className={mCashflowAT >= 0 ? "pos" : "neg"}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} EUR</span></div>
+                <div className="cmp-row"><span>Gestion</span><span className="warn">Intensive</span></div>
+                <div className="cmp-row"><span>Vacance</span><span className="warn">Saisonnière</span></div>
+                <div className="cmp-row"><span>Réglementation</span><span className={loi.limite ? "warn" : "pos"}>{loi.limite ? `⚠️ ${loi.limite} n/an max` : "✓ Souple"}</span></div>
+              </div>
+            </div>
+            <p className="hint">Les revenus Airbnb sont estimatifs et dépendent de la qualité de l'annonce, des avis, et d'une gestion active du calendrier.</p>
+          </div>
+        )}
       </div>
     </div>
   );
