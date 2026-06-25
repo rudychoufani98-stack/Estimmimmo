@@ -153,6 +153,38 @@ th{color:var(--muted);font-weight:500;position:sticky;top:0;background:var(--pan
 footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40px}
 .src{font-size:11px;color:var(--muted);margin-top:6px;text-align:center}
 
+/* PDF / Print button */
+.btn-print{
+  display:block;margin:18px auto 0;background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);padding:10px 28px;border-radius:30px;font-size:14px;font-weight:600;
+  cursor:pointer;transition:.15s;
+}
+.btn-print:hover{color:var(--txt);border-color:var(--accent)}
+
+/* Print styles */
+@media print{
+  body{background:#fff !important;color:#000 !important}
+  header.top{padding:10px 0 4px}
+  header.top h1,header.top p{color:#000 !important}
+  header.top h1 span{color:#2563eb !important}
+  .tabs,.subtabs,.btn,.btn-print,.autocomplete .sug,.geo-warn,.geo-ok{display:none !important}
+  .wrap{padding:0 8px}
+  .card{border:1px solid #ccc !important;background:#fff !important;break-inside:avoid;margin-bottom:12px}
+  .card h2,.card .sub,.section-t,.li,.kpi{color:#000 !important}
+  .kpi{background:#f1f5f9 !important;border:1px solid #cbd5e1 !important}
+  .kpi .k,.kpi .v,.li .lbl{color:#374151 !important}
+  .pos{color:#16a34a !important}.neg{color:#dc2626 !important}.warn{color:#d97706 !important}
+  .badge{border:1px solid #ccc !important;color:#000 !important;background:#f1f5f9 !important}
+  .map{display:none !important}
+  .grid{grid-template-columns:1fr !important}
+  .loi-alert{border:1px solid #ccc !important;background:#f9fafb !important;color:#000 !important}
+  .season-cell{border:1px solid #ccc !important;background:#f1f5f9 !important}
+  .sc-month,.sc-tarif,.sc-taux,.sc-nuits{color:#000 !important}
+  .compare-grid{grid-template-columns:1fr 1fr !important}
+  .cmp-col{background:#f9fafb !important;border:1px solid #ccc !important}
+  footer{color:#666 !important}
+}
+
 /* Sub-tabs (inside Rentabilite) */
 .subtabs{display:flex;gap:8px;justify-content:center;margin:0 0 20px}
 .subtab{

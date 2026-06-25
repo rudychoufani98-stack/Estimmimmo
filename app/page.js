@@ -200,6 +200,10 @@ export default function Page() {
         ) : (
           <Rentabilite estValue={estValue} />
         )}
+
+        <button className="btn-print" onClick={() => window.print()}>
+          ⬇ Télécharger / Imprimer PDF
+        </button>
       </div>
 
       <footer>
@@ -576,7 +580,7 @@ function Rentabilite({ estValue }) {
     works: 0,
     rent: 1150,           // loyer mensuel hors charges (HC)
     chargesProvision: 150,// charges mensuelles refacturees au locataire
-    vacancy: 0.04,
+    vacancy: 0.04,        // scenario realiste par defaut
     chargesCopro: 2400,   // charges de copropriete annuelles TOTALES
     taxe: 1100,           // taxe fonciere / an
     mgmt: 0.06,           // frais de gestion (% loyers)
@@ -716,10 +720,12 @@ function Rentabilite({ estValue }) {
             <div>
               <label>Vacance locative</label>
               <select value={f.vacancy} onChange={(e) => set("vacancy", e.target.value)}>
-                <option value="0">0%</option>
-                <option value="0.04">~4% (1 mois/an)</option>
-                <option value="0.08">~8% (2 mois/an)</option>
+                <option value="0.02">✅ Optimiste — 2 % (grandes villes tendues)</option>
+                <option value="0.04">⚖️ Réaliste — 4 % (~15 jours/an)</option>
+                <option value="0.08">⚠️ Prudent — 8 % (1 mois/an)</option>
+                <option value="0.125">🔴 Pessimiste — 12,5 % (1,5 mois/an)</option>
               </select>
+              <p className="hint">Paris/Lyon/Bordeaux : souvent 2–4 %. Villes moyennes : 6–10 %. Zones rurales : 10–15 %.</p>
             </div>
             <div>
               <label>Gestion locative</label>
