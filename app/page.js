@@ -317,9 +317,10 @@ function Rentabilite({ estValue }) {
     price: estValue || 300000,
     notaryRate: 0.075,
     works: 0,
-    rent: 1150,
+    rent: 1150,           // loyer mensuel hors charges (HC)
+    chargesProvision: 150,// charges mensuelles refacturees au locataire
     vacancy: 0.04,
-    charges: 1800,        // charges copro non recuperables / an
+    chargesCopro: 2400,   // charges de copropriete annuelles TOTALES
     taxe: 1100,           // taxe fonciere / an
     mgmt: 0.06,           // frais de gestion (% loyers)
     insurancePNO: 180,    // assurance PNO / an
@@ -348,10 +349,12 @@ function Rentabilite({ estValue }) {
   const mPayment = mPrincipal + mLoanIns;
   const totalInterest = mPrincipal * v("duration") * 12 - loan;
 
-  const annualRentGross = v("rent") * 12;
+  const annualRentGross = v("rent") * 12;                  // loyer HC annuel = revenu reel
+  const recoveredCharges = v("chargesProvision") * 12;     // refacture au locataire (pass-through)
+  const nonRecovCopro = Math.max(0, v("chargesCopro") - recoveredCharges); // reste a votre charge
   const annualRentNet = annualRentGross * (1 - v("vacancy"));
   const mgmtCost = annualRentNet * v("mgmt");
-  const annualOperating = v("charges") + v("taxe") + v("insurancePNO") + mgmtCost;
+  const annualOperating = nonRecovCopro + v("taxe") + v("insurancePNO") + mgmtCost;
 
   const yieldGross = price > 0 ? (annualRentGross / price) * 100 : 0;
   const yieldNet = totalCost > 0 ? ((annualRentNet - annualOperating) / totalCost) * 100 : 0;
@@ -397,9 +400,30 @@ function Rentabilite({ estValue }) {
           <h2>Revenus &amp; charges</h2>
           <div className="row">
             <div>
-              <label>Loyer mensuel (hors charges)</label>
+              <label>Loyer mensuel hors charges (HC)</label>
               <div className="unit"><input type="number" value={f.rent} onChange={(e) => set("rent", e.target.value)} /><small>EUR</small></div>
             </div>
+            <div>
+              <label>Charges mensuelles (locataire)</label>
+              <div className="unit"><input type="number" value={f.chargesProvision} onChange={(e) => set("chargesProvision", e.target.value)} /><small>EUR</small></div>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Charges de copro / an (total)</label>
+              <div className="unit"><input type="number" value={f.chargesCopro} onChange={(e) => set("chargesCopro", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Taxe fonciere / an</label>
+              <div className="unit"><input type="number" value={f.taxe} onChange={(e) => set("taxe", e.target.value)} /><small>EUR</small></div>
+            </div>
+          </div>
+          <p className="hint">
+            Loyer charges comprises encaisse : <b>{euro0(v("rent") + v("chargesProvision"))} EUR/mois</b>.
+            Sur les {euro0(v("chargesCopro"))} EUR de copro annuels, {euro0(recoveredCharges)} EUR sont refactures au locataire ;
+            <b> {euro0(nonRecovCopro)} EUR/an restent a votre charge</b> (charges non recuperables).
+          </p>
+          <div className="row">
             <div>
               <label>Vacance locative</label>
               <select value={f.vacancy} onChange={(e) => set("vacancy", e.target.value)}>
@@ -408,18 +432,6 @@ function Rentabilite({ estValue }) {
                 <option value="0.08">~8% (2 mois/an)</option>
               </select>
             </div>
-          </div>
-          <div className="row">
-            <div>
-              <label>Charges copro / an</label>
-              <div className="unit"><input type="number" value={f.charges} onChange={(e) => set("charges", e.target.value)} /><small>EUR</small></div>
-            </div>
-            <div>
-              <label>Taxe fonciere / an</label>
-              <div className="unit"><input type="number" value={f.taxe} onChange={(e) => set("taxe", e.target.value)} /><small>EUR</small></div>
-            </div>
-          </div>
-          <div className="row">
             <div>
               <label>Gestion locative</label>
               <select value={f.mgmt} onChange={(e) => set("mgmt", e.target.value)}>
@@ -428,11 +440,9 @@ function Rentabilite({ estValue }) {
                 <option value="0.08">Agence (~8%)</option>
               </select>
             </div>
-            <div>
-              <label>Assurance PNO / an</label>
-              <div className="unit"><input type="number" value={f.insurancePNO} onChange={(e) => set("insurancePNO", e.target.value)} /><small>EUR</small></div>
-            </div>
           </div>
+          <label>Assurance PNO / an</label>
+          <div className="unit"><input type="number" value={f.insurancePNO} onChange={(e) => set("insurancePNO", e.target.value)} /><small>EUR</small></div>
         </div>
 
         <div className="card">
@@ -491,8 +501,10 @@ function Rentabilite({ estValue }) {
 
           <div className="section-t">Flux annuel (apres credit)</div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Loyers encaisses</span><span className="pos">+ {euro(annualRentNet)}</span></div>
-            <div className="li"><span className="lbl">Charges, taxe, gestion, PNO</span><span className="neg">- {euro(annualOperating)}</span></div>
+            <div className="li"><span className="lbl">Loyers HC encaisses</span><span className="pos">+ {euro(annualRentNet)}</span></div>
+            <div className="li"><span className="lbl">Charges copro non recuperables</span><span className="neg">- {euro(nonRecovCopro)}</span></div>
+            <div className="li"><span className="lbl">Taxe fonciere</span><span className="neg">- {euro(v("taxe"))}</span></div>
+            <div className="li"><span className="lbl">Gestion + assurance PNO</span><span className="neg">- {euro(mgmtCost + v("insurancePNO"))}</span></div>
             <div className="li"><span className="lbl">Remboursement credit</span><span className="neg">- {euro(annualLoan)}</span></div>
             <div className="li total"><span>Cashflow annuel</span>
               <span className={annualCashflow >= 0 ? "pos" : "neg"}>{annualCashflow >= 0 ? "+ " : "- "}{euro(Math.abs(annualCashflow))}</span></div>
