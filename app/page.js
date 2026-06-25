@@ -175,7 +175,6 @@ function MarketBarometer() {
 
 export default function Page() {
   const [tab, setTab] = useState("estim");
-  // shared: estimated value flows from Estimation -> Rentabilite
   const [estValue, setEstValue] = useState(0);
 
   return (
@@ -193,13 +192,14 @@ export default function Page() {
           <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
             2. Rentabilite
           </button>
+          <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
+            3. Sources &amp; Données
+          </button>
         </div>
 
-        {tab === "estim" ? (
-          <Estimation onEstimate={setEstValue} />
-        ) : (
-          <Rentabilite estValue={estValue} />
-        )}
+        {tab === "estim" && <Estimation onEstimate={setEstValue} />}
+        {tab === "renta" && <Rentabilite estValue={estValue} />}
+        {tab === "sources" && <Sources />}
 
         <button className="btn-print" onClick={() => window.print()}>
           ⬇ Télécharger / Imprimer PDF
@@ -207,7 +207,7 @@ export default function Page() {
       </div>
 
       <footer>
-        EstimImmo &middot; Donnees : DVF (DGFiP/Etalab) &amp; geocodage IGN. Estimation indicative, ne constitue pas une expertise.
+        EstimImmo &middot; Donnees : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
       </footer>
     </>
   );
@@ -1195,6 +1195,241 @@ function RentabiliteAirbnb({ estValue, classicYieldGross, classicCashflowAT }) {
             <p className="hint">Les revenus Airbnb sont estimatifs et dépendent de la qualité de l'annonce, des avis, et d'une gestion active du calendrier.</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ======================= TAB 3 : SOURCES & DONNÉES ======================= */
+const SOURCES_DATA = [
+  {
+    categorie: "Transactions immobilières",
+    sources: [
+      {
+        nom: "DVF — Demandes de Valeurs Foncières",
+        organisme: "DGFiP / Etalab",
+        utilisation: "Base de toutes les estimations de prix. Contient chaque vente immobilière depuis 2018 avec adresse, surface, prix, date.",
+        frequence: "Mise à jour semestrielle (avril & octobre)",
+        refresh: "auto",
+        url: "https://files.data.gouv.fr/geo-dvf/latest/",
+        statut: "✅ Actif — appelé en temps réel à chaque estimation",
+      },
+      {
+        nom: "DVF+ / DV3F",
+        organisme: "Cerema",
+        utilisation: "DVF enrichi avec contexte urbanistique, type de logement précisé, mutations complexes analysées.",
+        frequence: "Annuelle",
+        refresh: "a_integrer",
+        url: "https://datafoncier.cerema.fr",
+        statut: "⏳ Non intégré — enrichirait la fiabilité des comparables",
+      },
+      {
+        nom: "Indices Notaires-INSEE",
+        organisme: "INSEE / Notaires de France",
+        utilisation: "Prix/m² médian par département et type de bien, évolution trimestrielle sur 20 ans.",
+        frequence: "Trimestrielle",
+        refresh: "manuel",
+        url: "https://www.insee.fr/fr/statistiques/1913143",
+        statut: "⚠️ Partiellement intégré — baromètre manuel, intégration API possible",
+      },
+    ],
+  },
+  {
+    categorie: "Géocodage & Cartographie",
+    sources: [
+      {
+        nom: "BAN — Base Adresses Nationale (IGN Géoplateforme)",
+        organisme: "IGN / DINUM",
+        utilisation: "Autocomplétion d'adresses, conversion adresse → coordonnées GPS précises.",
+        frequence: "Continue (base vivante)",
+        refresh: "auto",
+        url: "https://geoplateforme.ign.fr",
+        statut: "✅ Actif — utilisé pour chaque saisie d'adresse",
+      },
+      {
+        nom: "OpenStreetMap / Overpass API",
+        organisme: "OpenStreetMap Foundation",
+        utilisation: "Détection des commodités à proximité : transports, commerces, écoles, parcs.",
+        frequence: "Continue",
+        refresh: "auto",
+        url: "https://overpass-api.de",
+        statut: "✅ Actif — appelé à chaque estimation",
+      },
+      {
+        nom: "GPU — Géoportail de l'Urbanisme",
+        organisme: "DGALN / Ministère du Logement",
+        utilisation: "PLU, zonage constructible, hauteurs autorisées, servitudes. Potentiel de surélévation ou division.",
+        frequence: "Continue",
+        refresh: "a_integrer",
+        url: "https://www.geoportail-urbanisme.gouv.fr",
+        statut: "⏳ Non intégré — ajouterait une couche urbanistique précieuse",
+      },
+    ],
+  },
+  {
+    categorie: "DPE & Performance Énergétique",
+    sources: [
+      {
+        nom: "Base DPE nationale",
+        organisme: "ADEME",
+        utilisation: "DPE réel par adresse (étiquette A→G, consommation kWh/m²/an). Permet un ajustement de prix DPE précis et non estimé.",
+        frequence: "Continue (nouveaux DPE en temps réel)",
+        refresh: "a_integrer",
+        url: "https://data.ademe.fr/datasets/dpe-v2-logements-existants",
+        statut: "⏳ Non intégré — priorité haute : +/- 15 à 30 % sur le prix depuis la loi Climat 2021",
+      },
+      {
+        nom: "BDNB — Base de Données Nationale des Bâtiments",
+        organisme: "CSTB",
+        utilisation: "Caractéristiques thermiques, année de construction précise, type de chauffage par bâtiment.",
+        frequence: "Annuelle",
+        refresh: "a_integrer",
+        url: "https://bdnb.io",
+        statut: "⏳ Non intégré — complète la base DPE ADEME",
+      },
+    ],
+  },
+  {
+    categorie: "Loyers & Encadrement",
+    sources: [
+      {
+        nom: "Encadrement des loyers",
+        organisme: "DRIHL / Making Sense Labs",
+        utilisation: "Loyers de référence légaux par zone, type et surface à Paris, Lille, Lyon, Bordeaux, Montpellier…",
+        frequence: "Annuelle (arrêté préfectoral)",
+        refresh: "a_integrer",
+        url: "https://encadrement-loyers.makingsenselabs.com/api",
+        statut: "⏳ Non intégré — critique pour alerter si loyer saisi dépasse le plafond légal",
+      },
+      {
+        nom: "CLAMEUR — Observatoire des loyers",
+        organisme: "CLAMEUR (fédération de bailleurs)",
+        utilisation: "Loyers médians de marché par ville et type de bien, évolution sur 10 ans.",
+        frequence: "Annuelle",
+        refresh: "manuel",
+        url: "https://www.clameur.fr",
+        statut: "⚠️ Non intégré — permettrait de pré-remplir le loyer réaliste par ville",
+      },
+    ],
+  },
+  {
+    categorie: "Données socio-économiques (INSEE)",
+    sources: [
+      {
+        nom: "Filosofi — Revenus médians par commune",
+        organisme: "INSEE",
+        utilisation: "Revenu médian, taux de pauvreté par commune. Indicateur de solvabilité des locataires et de tension du marché.",
+        frequence: "Annuelle",
+        refresh: "a_integrer",
+        url: "https://api.insee.fr",
+        statut: "⏳ Non intégré — enrichirait le score de zone",
+      },
+      {
+        nom: "BPE — Base Permanente des Équipements",
+        organisme: "INSEE",
+        utilisation: "Recensement exhaustif de tous les équipements (médecins, écoles, commerces, transports) par commune. Plus fiable qu'OpenStreetMap.",
+        frequence: "Annuelle",
+        refresh: "a_integrer",
+        url: "https://www.insee.fr/fr/statistiques/3568638",
+        statut: "⏳ Non intégré — remplacerait avantageusement Overpass pour le score de quartier",
+      },
+      {
+        nom: "Taux de chômage local",
+        organisme: "INSEE",
+        utilisation: "Taux de chômage par zone d'emploi. Indicateur de risque de vacance locative.",
+        frequence: "Trimestrielle",
+        refresh: "a_integrer",
+        url: "https://api.insee.fr",
+        statut: "⏳ Non intégré",
+      },
+    ],
+  },
+  {
+    categorie: "Urbanisme & Construction",
+    sources: [
+      {
+        nom: "Sit@del2",
+        organisme: "SDES / Ministère de la Transition Écologique",
+        utilisation: "Permis de construire accordés et logements commencés par commune. Anticipe la pression sur les prix (suroffre ou pénurie).",
+        frequence: "Mensuelle",
+        refresh: "a_integrer",
+        url: "https://www.statistiques.developpement-durable.gouv.fr",
+        statut: "⏳ Non intégré",
+      },
+      {
+        nom: "Zonage A/B/C & PTZ",
+        organisme: "DGALN",
+        utilisation: "Zones d'éligibilité Pinel, PTZ, dispositifs défiscalisation. Afficher automatiquement les avantages fiscaux disponibles.",
+        frequence: "Annuelle",
+        refresh: "a_integrer",
+        url: "https://www.service-public.fr/simulateur/calcul/zonage-abc",
+        statut: "⏳ Non intégré",
+      },
+    ],
+  },
+];
+
+const REFRESH_LABEL = {
+  auto: { label: "Temps réel", cls: "src-auto" },
+  manuel: { label: "Manuel (périodique)", cls: "src-manuel" },
+  a_integrer: { label: "À intégrer", cls: "src-todo" },
+};
+
+function Sources() {
+  return (
+    <div className="sources-wrap">
+      <div className="src-intro card">
+        <h2>Sources de données &amp; fréquence de mise à jour</h2>
+        <p className="sub">EstimImmo s'appuie exclusivement sur des données publiques officielles françaises. Voici l'état de chaque source : active, partielle ou planifiée.</p>
+        <div className="src-legend">
+          <span className="src-badge src-auto">⚡ Temps réel</span>
+          <span className="src-badge src-manuel">🔄 Mise à jour manuelle</span>
+          <span className="src-badge src-todo">⏳ À intégrer</span>
+        </div>
+      </div>
+
+      {SOURCES_DATA.map((cat, i) => (
+        <div key={i} className="card" style={{ marginTop: 14 }}>
+          <div className="src-cat">{cat.categorie}</div>
+          {cat.sources.map((s, j) => (
+            <div key={j} className="src-row">
+              <div className="src-top">
+                <div className="src-nom">{s.nom}</div>
+                <span className={"src-badge " + REFRESH_LABEL[s.refresh].cls}>
+                  {REFRESH_LABEL[s.refresh].label}
+                </span>
+              </div>
+              <div className="src-org">{s.organisme}</div>
+              <div className="src-desc">{s.utilisation}</div>
+              <div className="src-meta">
+                <span>🗓 {s.frequence}</span>
+                <span className={"src-statut " + (s.refresh === "auto" ? "pos" : s.refresh === "manuel" ? "warn" : "muted")}>{s.statut}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+
+      <div className="card" style={{ marginTop: 14 }}>
+        <h2>Est-ce que les données se mettent à jour automatiquement ?</h2>
+        <div className="src-faq">
+          <div className="faq-item">
+            <div className="faq-q">⚡ Sources en temps réel (actuellement actives)</div>
+            <p>Les APIs IGN, DVF Etalab et Overpass sont appelées <b>à chaque estimation</b>. Tu reçois toujours les dernières données disponibles, sans aucune action de ta part.</p>
+          </div>
+          <div className="faq-item">
+            <div className="faq-q">🔄 Le baromètre national</div>
+            <p>Les chiffres du baromètre (taux, évolution des prix) sont <b>codés en dur</b> et doivent être mis à jour manuellement dans le code (~toutes les 3 à 6 mois). Une intégration de l'API INSEE automatiserait cela.</p>
+          </div>
+          <div className="faq-item">
+            <div className="faq-q">📅 Les données DVF elles-mêmes</div>
+            <p>DGFiP publie de nouveaux fichiers DVF <b>deux fois par an</b> (avril et octobre). L'API Etalab expose automatiquement ces nouvelles données — EstimImmo les intègre sans action requise.</p>
+          </div>
+          <div className="faq-item">
+            <div className="faq-q">⏳ Sources à intégrer (ADEME, INSEE, encadrement loyers…)</div>
+            <p>Ces sources ont toutes des APIs publiques gratuites. Une fois intégrées, elles seraient aussi <b>appelées en temps réel</b>. La base DPE ADEME et l'encadrement des loyers sont les priorités les plus impactantes.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

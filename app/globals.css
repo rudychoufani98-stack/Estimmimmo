@@ -185,6 +185,30 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
   footer{color:#666 !important}
 }
 
+/* Sources tab */
+.sources-wrap{max-width:860px;margin:0 auto}
+.src-intro p{margin:6px 0 12px;color:var(--muted);font-size:14px}
+.src-legend{display:flex;gap:10px;flex-wrap:wrap}
+.src-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:14px}
+.src-row{border-top:1px solid var(--line);padding:14px 0}
+.src-row:first-of-type{border-top:none;padding-top:0}
+.src-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px}
+.src-nom{font-size:14.5px;font-weight:700;color:var(--txt)}
+.src-org{font-size:12px;color:var(--muted);margin-bottom:5px}
+.src-desc{font-size:13px;color:var(--txt);line-height:1.5;margin-bottom:7px}
+.src-meta{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.src-statut{font-size:12px}
+.src-statut.muted{color:var(--muted)}
+.src-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.src-auto{background:rgba(34,197,94,.15);color:var(--green)}
+.src-manuel{background:rgba(245,158,11,.15);color:var(--warn)}
+.src-todo{background:rgba(148,163,184,.1);color:var(--muted)}
+.src-faq{display:flex;flex-direction:column;gap:14px;margin-top:8px}
+.faq-item{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px}
+.faq-q{font-size:13.5px;font-weight:700;margin-bottom:6px;color:var(--txt)}
+.faq-item p{margin:0;font-size:13px;color:var(--muted);line-height:1.55}
+.faq-item p b{color:var(--txt)}
+
 /* Sub-tabs (inside Rentabilite) */
 .subtabs{display:flex;gap:8px;justify-content:center;margin:0 0 20px}
 .subtab{
