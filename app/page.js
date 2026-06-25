@@ -15,96 +15,325 @@ const AM_ICON = {
 const MONTH_NAMES = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
 const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31];
 
-// Airbnb seasonal data & local regulations per zone
-// taux = occupancy rate, mult = price multiplier vs base rate
+// Airbnb city-level seasonal data & local regulations
+// taux = occupancy rate per night, mult = price multiplier vs user base rate
+// Sources : AirDNA, Inside Airbnb, Observatoires locaux du tourisme (OT villes), juin 2026
 const AIRBNB_ZONES = {
+  // ── PARIS & IDF ──────────────────────────────────────────────────────────
   paris: {
     label: "Paris",
     saisons: [
-      {taux:0.60,mult:0.85},{taux:0.65,mult:0.90},{taux:0.72,mult:1.00},
-      {taux:0.80,mult:1.15},{taux:0.82,mult:1.20},{taux:0.78,mult:1.08},
-      {taux:0.85,mult:1.25},{taux:0.88,mult:1.30},{taux:0.80,mult:1.15},
-      {taux:0.82,mult:1.20},{taux:0.70,mult:0.95},{taux:0.78,mult:1.10},
+      {taux:0.62,mult:0.88},{taux:0.65,mult:0.90},{taux:0.73,mult:1.02},
+      {taux:0.82,mult:1.18},{taux:0.83,mult:1.22},{taux:0.80,mult:1.10},
+      {taux:0.86,mult:1.28},{taux:0.89,mult:1.32},{taux:0.82,mult:1.18},
+      {taux:0.83,mult:1.22},{taux:0.71,mult:0.96},{taux:0.79,mult:1.12},
     ],
-    loi: { limite: 120, enregistrement: true, taxeSejour: 5.20,
-      info: "Paris : résidence principale limitée à 120 nuits/an (loi ELAN). Numéro d'enregistrement en mairie obligatoire. Taxe de séjour ~5,20 EUR/nuit/pers (collectée et reversée à la Ville par Airbnb)." },
+    loi:{ limite:120, enregistrement:true, taxeSejour:5.20,
+      info:"Paris : résidence principale limitée à 120 nuits/an (loi ELAN). Numéro d'enregistrement en mairie obligatoire. Taxe de séjour ~5,20 EUR/nuit/pers." },
   },
-  cote_azur: {
-    label: "Côte d'Azur (Nice, Cannes, Antibes…)",
+  versailles: {
+    label: "Versailles & Yvelines",
     saisons: [
-      {taux:0.35,mult:0.65},{taux:0.38,mult:0.70},{taux:0.45,mult:0.78},
-      {taux:0.60,mult:0.92},{taux:0.75,mult:1.15},{taux:0.85,mult:1.30},
-      {taux:0.95,mult:1.70},{taux:0.98,mult:1.90},{taux:0.80,mult:1.25},
-      {taux:0.52,mult:0.82},{taux:0.35,mult:0.65},{taux:0.42,mult:0.75},
+      {taux:0.55,mult:0.85},{taux:0.58,mult:0.88},{taux:0.65,mult:0.98},
+      {taux:0.75,mult:1.12},{taux:0.80,mult:1.18},{taux:0.78,mult:1.10},
+      {taux:0.85,mult:1.30},{taux:0.87,mult:1.35},{taux:0.78,mult:1.15},
+      {taux:0.72,mult:1.05},{taux:0.58,mult:0.88},{taux:0.65,mult:0.98},
     ],
-    loi: { limite: null, enregistrement: true, taxeSejour: 3.00,
-      info: "Côte d'Azur : pas de limite de nuits pour résidence secondaire. Enregistrement obligatoire dans communes > 200 000 hab. (Nice). Taxe de séjour ~3 EUR/nuit/pers." },
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.50,
+      info:"Yvelines : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2,50 EUR/nuit/pers." },
   },
-  alpes: {
-    label: "Alpes — station de ski (Chamonix, Méribel…)",
+  // ── CÔTE D'AZUR ──────────────────────────────────────────────────────────
+  cannes: {
+    label: "Cannes",
     saisons: [
-      {taux:0.88,mult:1.60},{taux:0.92,mult:1.80},{taux:0.85,mult:1.55},
-      {taux:0.38,mult:0.70},{taux:0.22,mult:0.52},{taux:0.30,mult:0.60},
-      {taux:0.80,mult:1.35},{taux:0.88,mult:1.50},{taux:0.28,mult:0.58},
-      {taux:0.22,mult:0.50},{taux:0.32,mult:0.62},{taux:0.80,mult:1.45},
+      {taux:0.45,mult:0.80},{taux:0.50,mult:0.85},{taux:0.58,mult:0.92},
+      {taux:0.68,mult:1.05},{taux:0.97,mult:2.20},{taux:0.90,mult:1.45}, // mai = Festival !!
+      {taux:0.98,mult:1.95},{taux:0.99,mult:2.05},{taux:0.84,mult:1.38},
+      {taux:0.65,mult:0.95},{taux:0.48,mult:0.78},{taux:0.52,mult:0.85},
     ],
-    loi: { limite: null, enregistrement: true, taxeSejour: 2.50,
-      info: "Alpes (stations) : résidence secondaire — pas de plafond de nuits. Enregistrement en mairie obligatoire. Taxe de séjour ~2,50 EUR/nuit/pers." },
+    loi:{ limite:null, enregistrement:true, taxeSejour:3.30,
+      info:"Cannes : résidence secondaire sans limite de nuits. Enregistrement obligatoire. Taxe de séjour ~3,30 EUR/nuit/pers. Festival de Cannes (mai) : tarifs multipliés par 3 à 5." },
   },
-  bretagne: {
-    label: "Bretagne (Saint-Malo, Quimper, Brest…)",
+  nice: {
+    label: "Nice",
     saisons: [
-      {taux:0.28,mult:0.58},{taux:0.28,mult:0.58},{taux:0.35,mult:0.65},
-      {taux:0.52,mult:0.84},{taux:0.62,mult:0.95},{taux:0.75,mult:1.10},
-      {taux:0.95,mult:1.55},{taux:0.98,mult:1.70},{taux:0.65,mult:0.95},
-      {taux:0.40,mult:0.70},{taux:0.25,mult:0.55},{taux:0.28,mult:0.58},
+      {taux:0.58,mult:0.82},{taux:0.72,mult:1.12},{taux:0.67,mult:0.97}, // fév = Carnaval
+      {taux:0.72,mult:1.07},{taux:0.80,mult:1.18},{taux:0.87,mult:1.38},
+      {taux:0.96,mult:1.75},{taux:0.98,mult:1.88},{taux:0.84,mult:1.28},
+      {taux:0.67,mult:0.97},{taux:0.53,mult:0.80},{taux:0.62,mult:0.92},
     ],
-    loi: { limite: null, enregistrement: false, taxeSejour: 1.50,
-      info: "Bretagne : pas de contrainte hors grandes villes. Déclaration en mairie recommandée si meublé tourisme. Taxe de séjour ~1,50 EUR/nuit/pers." },
+    loi:{ limite:120, enregistrement:true, taxeSejour:3.20,
+      info:"Nice : limite 120 nuits/an résidence principale. Numéro d'enregistrement obligatoire. Taxe de séjour ~3,20 EUR/nuit/pers. Carnaval de Nice (février) : forte demande." },
   },
-  bordeaux: {
-    label: "Bordeaux & Gironde",
+  antibes: {
+    label: "Antibes / Juan-les-Pins",
     saisons: [
-      {taux:0.52,mult:0.78},{taux:0.52,mult:0.78},{taux:0.58,mult:0.85},
-      {taux:0.68,mult:1.00},{taux:0.73,mult:1.05},{taux:0.78,mult:1.15},
-      {taux:0.85,mult:1.30},{taux:0.88,mult:1.35},{taux:0.78,mult:1.18},
-      {taux:0.68,mult:1.00},{taux:0.52,mult:0.78},{taux:0.62,mult:0.90},
+      {taux:0.38,mult:0.68},{taux:0.40,mult:0.72},{taux:0.48,mult:0.80},
+      {taux:0.62,mult:0.95},{taux:0.74,mult:1.12},{taux:0.86,mult:1.30},
+      {taux:0.95,mult:1.68},{taux:0.97,mult:1.78},{taux:0.81,mult:1.24},
+      {taux:0.56,mult:0.87},{taux:0.38,mult:0.68},{taux:0.43,mult:0.75},
     ],
-    loi: { limite: 120, enregistrement: true, taxeSejour: 2.00,
-      info: "Bordeaux : limite 120 nuits/an résidence principale. Numéro d'enregistrement obligatoire depuis 2022. Taxe de séjour ~2 EUR/nuit/pers." },
+    loi:{ limite:null, enregistrement:true, taxeSejour:3.00,
+      info:"Antibes : résidence secondaire sans plafond. Enregistrement obligatoire. Taxe de séjour ~3 EUR/nuit/pers." },
   },
-  lyon: {
-    label: "Lyon & Métropole",
+  saint_tropez: {
+    label: "Saint-Tropez & Golfe de Saint-Tropez",
     saisons: [
-      {taux:0.58,mult:0.82},{taux:0.60,mult:0.85},{taux:0.65,mult:0.93},
-      {taux:0.70,mult:1.00},{taux:0.73,mult:1.05},{taux:0.75,mult:1.08},
-      {taux:0.68,mult:0.98},{taux:0.58,mult:0.82},{taux:0.73,mult:1.05},
-      {taux:0.70,mult:1.00},{taux:0.72,mult:1.02},{taux:0.73,mult:1.05},
+      {taux:0.22,mult:0.55},{taux:0.22,mult:0.55},{taux:0.30,mult:0.68},
+      {taux:0.55,mult:1.00},{taux:0.72,mult:1.32},{taux:0.90,mult:1.85},
+      {taux:0.98,mult:2.60},{taux:0.99,mult:2.80},{taux:0.82,mult:1.55}, // juil-août ultra premium
+      {taux:0.52,mult:0.90},{taux:0.25,mult:0.58},{taux:0.30,mult:0.68},
     ],
-    loi: { limite: 120, enregistrement: true, taxeSejour: 3.00,
-      info: "Lyon : limite 120 nuits/an résidence principale. Numéro d'enregistrement obligatoire en ligne. Taxe de séjour ~3 EUR/nuit/pers (zone A)." },
+    loi:{ limite:null, enregistrement:false, taxeSejour:3.50,
+      info:"Saint-Tropez : résidence secondaire sans plafond. Enregistrement non obligatoire (commune < 200k hab). Taxe de séjour ~3,50 EUR/nuit/pers. Marché très saisonnier (90% du CA en juil-sept)." },
+  },
+  menton: {
+    label: "Menton",
+    saisons: [
+      {taux:0.42,mult:0.72},{taux:0.58,mult:0.92},{taux:0.60,mult:0.95}, // fév = Fête du Citron
+      {taux:0.65,mult:1.00},{taux:0.72,mult:1.10},{taux:0.82,mult:1.28},
+      {taux:0.92,mult:1.60},{taux:0.95,mult:1.72},{taux:0.78,mult:1.18},
+      {taux:0.58,mult:0.88},{taux:0.42,mult:0.72},{taux:0.48,mult:0.80},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:2.80,
+      info:"Menton : résidence secondaire sans plafond. Taxe de séjour ~2,80 EUR/nuit/pers. Fête du Citron (février) : forte demande." },
+  },
+  // ── ALPES & MONTAGNE ─────────────────────────────────────────────────────
+  chamonix: {
+    label: "Chamonix",
+    saisons: [
+      {taux:0.90,mult:1.72},{taux:0.96,mult:1.92},{taux:0.88,mult:1.62}, // ski peak
+      {taux:0.48,mult:0.78},{taux:0.32,mult:0.60},{taux:0.58,mult:0.92},
+      {taux:0.90,mult:1.55},{taux:0.95,mult:1.70},{taux:0.58,mult:0.88}, // été fort
+      {taux:0.32,mult:0.60},{taux:0.42,mult:0.72},{taux:0.86,mult:1.58},
+    ],
+    loi:{ limite:null, enregistrement:true, taxeSejour:2.80,
+      info:"Chamonix : résidence secondaire, pas de plafond. Enregistrement obligatoire. Taxe de séjour ~2,80 EUR/nuit/pers. Marché équilibré été/hiver, demande internationale forte." },
+  },
+  courchevel: {
+    label: "Courchevel / Val d'Isère / Méribel",
+    saisons: [
+      {taux:0.92,mult:2.20},{taux:0.97,mult:2.50},{taux:0.90,mult:2.00}, // ski ultra premium
+      {taux:0.28,mult:0.55},{taux:0.15,mult:0.40},{taux:0.20,mult:0.45},
+      {taux:0.62,mult:1.10},{taux:0.72,mult:1.25},{taux:0.22,mult:0.48},
+      {taux:0.15,mult:0.40},{taux:0.22,mult:0.48},{taux:0.85,mult:1.85},
+    ],
+    loi:{ limite:null, enregistrement:true, taxeSejour:3.00,
+      info:"Stations Tarentaise (Courchevel, Val d'Isère, Méribel) : résidence secondaire, pas de plafond. Marché ski ultra-premium. Morte-saison très marquée (avril-juin, sept-oct)." },
+  },
+  annecy: {
+    label: "Annecy",
+    saisons: [
+      {taux:0.46,mult:0.73},{taux:0.55,mult:0.88},{taux:0.52,mult:0.82},
+      {taux:0.62,mult:0.94},{taux:0.70,mult:1.07},{taux:0.82,mult:1.28},
+      {taux:0.96,mult:1.68},{taux:0.98,mult:1.82},{taux:0.74,mult:1.13},
+      {taux:0.52,mult:0.82},{taux:0.40,mult:0.70},{taux:0.50,mult:0.80},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.50,
+      info:"Annecy : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2,50 EUR/nuit/pers. Forte demande lac en été, modérée en hiver." },
+  },
+  // ── OCCITANIE & PROVENCE ─────────────────────────────────────────────────
+  toulouse: {
+    label: "Toulouse",
+    saisons: [
+      {taux:0.58,mult:0.85},{taux:0.60,mult:0.88},{taux:0.65,mult:0.95},
+      {taux:0.70,mult:1.02},{taux:0.75,mult:1.08},{taux:0.78,mult:1.12},
+      {taux:0.80,mult:1.18},{taux:0.78,mult:1.12},{taux:0.75,mult:1.08},
+      {taux:0.72,mult:1.04},{taux:0.62,mult:0.90},{taux:0.65,mult:0.95},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.20,
+      info:"Toulouse : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2,20 EUR/nuit/pers. Demande relativement stable (4e ville France, étudiants, aéro)." },
+  },
+  montpellier: {
+    label: "Montpellier",
+    saisons: [
+      {taux:0.55,mult:0.83},{taux:0.58,mult:0.87},{taux:0.63,mult:0.94},
+      {taux:0.70,mult:1.03},{taux:0.75,mult:1.10},{taux:0.82,mult:1.22},
+      {taux:0.88,mult:1.38},{taux:0.90,mult:1.42},{taux:0.78,mult:1.15},
+      {taux:0.68,mult:1.00},{taux:0.57,mult:0.85},{taux:0.60,mult:0.90},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.50,
+      info:"Montpellier : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2,50 EUR/nuit/pers." },
+  },
+  avignon: {
+    label: "Avignon",
+    saisons: [
+      {taux:0.40,mult:0.72},{taux:0.42,mult:0.73},{taux:0.52,mult:0.84},
+      {taux:0.62,mult:0.98},{taux:0.68,mult:1.05},{taux:0.74,mult:1.12},
+      {taux:0.99,mult:2.25},{taux:0.86,mult:1.52},{taux:0.72,mult:1.10}, // juillet = Festival !!
+      {taux:0.57,mult:0.90},{taux:0.40,mult:0.72},{taux:0.48,mult:0.82},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:1.80,
+      info:"Avignon : résidence secondaire sans plafond. Taxe de séjour ~1,80 EUR/nuit/pers. Festival d'Avignon (juillet) : demande x3 à x5, réservations 6 mois à l'avance." },
+  },
+  aix_en_provence: {
+    label: "Aix-en-Provence",
+    saisons: [
+      {taux:0.50,mult:0.80},{taux:0.52,mult:0.82},{taux:0.58,mult:0.90},
+      {taux:0.68,mult:1.03},{taux:0.74,mult:1.10},{taux:0.82,mult:1.24},
+      {taux:0.88,mult:1.42},{taux:0.90,mult:1.48},{taux:0.78,mult:1.18},
+      {taux:0.63,mult:0.95},{taux:0.50,mult:0.80},{taux:0.54,mult:0.85},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:2.00,
+      info:"Aix-en-Provence : résidence secondaire sans plafond. Taxe de séjour ~2 EUR/nuit/pers. Demande touristique et affaires (festival d'art lyrique en juillet)." },
   },
   marseille: {
-    label: "Marseille & Provence",
+    label: "Marseille",
     saisons: [
-      {taux:0.45,mult:0.72},{taux:0.48,mult:0.75},{taux:0.55,mult:0.82},
-      {taux:0.65,mult:0.95},{taux:0.72,mult:1.05},{taux:0.82,mult:1.22},
-      {taux:0.90,mult:1.50},{taux:0.92,mult:1.55},{taux:0.78,mult:1.18},
-      {taux:0.60,mult:0.88},{taux:0.45,mult:0.72},{taux:0.50,mult:0.78},
+      {taux:0.46,mult:0.73},{taux:0.49,mult:0.76},{taux:0.56,mult:0.84},
+      {taux:0.66,mult:0.97},{taux:0.73,mult:1.07},{taux:0.83,mult:1.24},
+      {taux:0.91,mult:1.52},{taux:0.93,mult:1.57},{taux:0.79,mult:1.20},
+      {taux:0.61,mult:0.90},{taux:0.46,mult:0.73},{taux:0.51,mult:0.80},
     ],
-    loi: { limite: 120, enregistrement: true, taxeSejour: 2.50,
-      info: "Marseille : limite 120 nuits/an résidence principale. Enregistrement obligatoire depuis 2020. Taxe de séjour ~2,50 EUR/nuit/pers." },
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.50,
+      info:"Marseille : limite 120 nuits/an résidence principale. Enregistrement obligatoire depuis 2020. Taxe de séjour ~2,50 EUR/nuit/pers." },
   },
+  // ── ATLANTIQUE & PAYS BASQUE ─────────────────────────────────────────────
+  biarritz: {
+    label: "Biarritz",
+    saisons: [
+      {taux:0.50,mult:0.80},{taux:0.52,mult:0.82},{taux:0.58,mult:0.90},
+      {taux:0.70,mult:1.08},{taux:0.77,mult:1.18},{taux:0.88,mult:1.40},
+      {taux:0.97,mult:1.80},{taux:0.99,mult:1.95},{taux:0.85,mult:1.40},
+      {taux:0.65,mult:1.00},{taux:0.48,mult:0.78},{taux:0.54,mult:0.85},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:2.00,
+      info:"Biarritz : résidence secondaire sans plafond. Taxe de séjour ~2 EUR/nuit/pers. Surfing + gastronomie : demande forte été et septembre (championnats surf)." },
+  },
+  saint_jean_luz: {
+    label: "Saint-Jean-de-Luz / Hendaye",
+    saisons: [
+      {taux:0.35,mult:0.65},{taux:0.38,mult:0.68},{taux:0.45,mult:0.78},
+      {taux:0.60,mult:0.95},{taux:0.72,mult:1.12},{taux:0.88,mult:1.42},
+      {taux:0.97,mult:1.82},{taux:0.98,mult:1.90},{taux:0.82,mult:1.35},
+      {taux:0.58,mult:0.92},{taux:0.36,mult:0.66},{taux:0.38,mult:0.68},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:1.80,
+      info:"Saint-Jean-de-Luz : résidence secondaire sans plafond. Très saisonnière. Taxe de séjour ~1,80 EUR/nuit/pers." },
+  },
+  la_rochelle: {
+    label: "La Rochelle & Île de Ré",
+    saisons: [
+      {taux:0.38,mult:0.70},{taux:0.38,mult:0.70},{taux:0.45,mult:0.80},
+      {taux:0.60,mult:0.95},{taux:0.72,mult:1.12},{taux:0.84,mult:1.32},
+      {taux:0.97,mult:1.75},{taux:0.98,mult:1.85},{taux:0.78,mult:1.20},
+      {taux:0.55,mult:0.88},{taux:0.35,mult:0.68},{taux:0.38,mult:0.72},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:2.00,
+      info:"La Rochelle / Île de Ré : résidence secondaire sans plafond. Taxe de séjour ~2 EUR/nuit/pers. Île de Ré : marché très premium, offre rare en haute saison." },
+  },
+  bordeaux: {
+    label: "Bordeaux",
+    saisons: [
+      {taux:0.53,mult:0.79},{taux:0.54,mult:0.80},{taux:0.59,mult:0.87},
+      {taux:0.69,mult:1.02},{taux:0.74,mult:1.07},{taux:0.79,mult:1.17},
+      {taux:0.86,mult:1.32},{taux:0.89,mult:1.37},{taux:0.80,mult:1.20},
+      {taux:0.70,mult:1.02},{taux:0.53,mult:0.79},{taux:0.63,mult:0.92},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.00,
+      info:"Bordeaux : limite 120 nuits/an résidence principale. Enregistrement obligatoire depuis 2022. Taxe de séjour ~2 EUR/nuit/pers." },
+  },
+  // ── BRETAGNE & NORMANDIE ─────────────────────────────────────────────────
+  saint_malo: {
+    label: "Saint-Malo",
+    saisons: [
+      {taux:0.30,mult:0.60},{taux:0.32,mult:0.62},{taux:0.40,mult:0.72},
+      {taux:0.58,mult:0.90},{taux:0.68,mult:1.05},{taux:0.80,mult:1.22},
+      {taux:0.98,mult:1.80},{taux:0.99,mult:1.92},{taux:0.72,mult:1.08},
+      {taux:0.45,mult:0.78},{taux:0.28,mult:0.58},{taux:0.32,mult:0.62},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:1.80,
+      info:"Saint-Malo : résidence secondaire sans plafond. Taxe de séjour ~1,80 EUR/nuit/pers. Marché très saisonnier (juil-août représentent ~50% du CA annuel)." },
+  },
+  vannes_morbihan: {
+    label: "Vannes & Golfe du Morbihan",
+    saisons: [
+      {taux:0.28,mult:0.58},{taux:0.30,mult:0.60},{taux:0.38,mult:0.70},
+      {taux:0.55,mult:0.88},{taux:0.68,mult:1.05},{taux:0.80,mult:1.22},
+      {taux:0.97,mult:1.72},{taux:0.98,mult:1.80},{taux:0.72,mult:1.08},
+      {taux:0.45,mult:0.78},{taux:0.28,mult:0.58},{taux:0.30,mult:0.60},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:1.50,
+      info:"Vannes / Golfe du Morbihan : résidence secondaire sans plafond. Taxe de séjour ~1,50 EUR/nuit/pers." },
+  },
+  deauville: {
+    label: "Deauville / Honfleur / Côte Fleurie",
+    saisons: [
+      {taux:0.35,mult:0.68},{taux:0.35,mult:0.68},{taux:0.40,mult:0.75},
+      {taux:0.52,mult:0.88},{taux:0.62,mult:1.00},{taux:0.72,mult:1.15},
+      {taux:0.88,mult:1.52},{taux:0.92,mult:1.65},{taux:0.68,mult:1.08},
+      {taux:0.58,mult:0.95},{taux:0.38,mult:0.72},{taux:0.40,mult:0.75},
+    ],
+    loi:{ limite:null, enregistrement:false, taxeSejour:2.20,
+      info:"Deauville / Honfleur : résidence secondaire sans plafond. Taxe de séjour ~2,20 EUR/nuit/pers. Week-ends parisiens forts toute l'année." },
+  },
+  // ── GRANDES VILLES ───────────────────────────────────────────────────────
+  lyon: {
+    label: "Lyon",
+    saisons: [
+      {taux:0.59,mult:0.83},{taux:0.62,mult:0.87},{taux:0.67,mult:0.95},
+      {taux:0.72,mult:1.02},{taux:0.75,mult:1.07},{taux:0.77,mult:1.10},
+      {taux:0.70,mult:1.00},{taux:0.60,mult:0.84},{taux:0.75,mult:1.07},
+      {taux:0.72,mult:1.02},{taux:0.74,mult:1.04},{taux:0.76,mult:1.08},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:3.00,
+      info:"Lyon : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~3 EUR/nuit/pers. Fête des Lumières (décembre) : pic de demande fort." },
+  },
+  strasbourg: {
+    label: "Strasbourg",
+    saisons: [
+      {taux:0.55,mult:0.82},{taux:0.57,mult:0.85},{taux:0.62,mult:0.92},
+      {taux:0.68,mult:1.00},{taux:0.72,mult:1.05},{taux:0.74,mult:1.08},
+      {taux:0.76,mult:1.10},{taux:0.74,mult:1.07},{taux:0.72,mult:1.05},
+      {taux:0.68,mult:1.00},{taux:0.70,mult:1.02},{taux:0.92,mult:1.68}, // Marché de Noël !!
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.20,
+      info:"Strasbourg : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2,20 EUR/nuit/pers. Marché de Noël (décembre) : demande x2 à x3." },
+  },
+  rennes: {
+    label: "Rennes",
+    saisons: [
+      {taux:0.55,mult:0.84},{taux:0.57,mult:0.86},{taux:0.62,mult:0.93},
+      {taux:0.68,mult:1.01},{taux:0.72,mult:1.06},{taux:0.75,mult:1.10},
+      {taux:0.78,mult:1.15},{taux:0.76,mult:1.11},{taux:0.74,mult:1.08},
+      {taux:0.70,mult:1.02},{taux:0.60,mult:0.90},{taux:0.63,mult:0.94},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.00,
+      info:"Rennes : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2 EUR/nuit/pers." },
+  },
+  nantes: {
+    label: "Nantes",
+    saisons: [
+      {taux:0.54,mult:0.82},{taux:0.56,mult:0.84},{taux:0.62,mult:0.92},
+      {taux:0.68,mult:1.00},{taux:0.72,mult:1.06},{taux:0.76,mult:1.11},
+      {taux:0.80,mult:1.18},{taux:0.78,mult:1.14},{taux:0.74,mult:1.08},
+      {taux:0.68,mult:1.00},{taux:0.56,mult:0.84},{taux:0.60,mult:0.90},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.00,
+      info:"Nantes : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2 EUR/nuit/pers." },
+  },
+  lille: {
+    label: "Lille",
+    saisons: [
+      {taux:0.55,mult:0.83},{taux:0.57,mult:0.85},{taux:0.62,mult:0.92},
+      {taux:0.68,mult:1.01},{taux:0.72,mult:1.06},{taux:0.73,mult:1.07},
+      {taux:0.74,mult:1.08},{taux:0.72,mult:1.05},{taux:0.72,mult:1.06},
+      {taux:0.70,mult:1.03},{taux:0.65,mult:0.96},{taux:0.68,mult:1.00},
+    ],
+    loi:{ limite:120, enregistrement:true, taxeSejour:2.00,
+      info:"Lille : limite 120 nuits/an résidence principale. Enregistrement obligatoire. Taxe de séjour ~2 EUR/nuit/pers. Braderie de Lille (1er week-end sept) : forte demande." },
+  },
+  // ── AUTRE ────────────────────────────────────────────────────────────────
   autre: {
     label: "Autre ville / zone rurale",
     saisons: [
-      {taux:0.38,mult:0.78},{taux:0.38,mult:0.78},{taux:0.42,mult:0.82},
-      {taux:0.52,mult:0.92},{taux:0.58,mult:0.98},{taux:0.63,mult:1.05},
-      {taux:0.80,mult:1.32},{taux:0.85,mult:1.42},{taux:0.60,mult:1.00},
-      {taux:0.45,mult:0.85},{taux:0.32,mult:0.72},{taux:0.38,mult:0.80},
+      {taux:0.38,mult:0.78},{taux:0.38,mult:0.78},{taux:0.43,mult:0.83},
+      {taux:0.53,mult:0.93},{taux:0.59,mult:0.99},{taux:0.64,mult:1.06},
+      {taux:0.81,mult:1.33},{taux:0.86,mult:1.43},{taux:0.61,mult:1.01},
+      {taux:0.46,mult:0.86},{taux:0.33,mult:0.73},{taux:0.39,mult:0.81},
     ],
-    loi: { limite: null, enregistrement: false, taxeSejour: 1.00,
-      info: "Zone hors grandes villes : réglementation plus souple. Déclaration en mairie recommandée si meublé tourisme. Taxe de séjour variable (~1 EUR/nuit/pers)." },
+    loi:{ limite:null, enregistrement:false, taxeSejour:1.00,
+      info:"Zone hors grandes villes : réglementation souple. Déclaration en mairie recommandée si meublé tourisme. Taxe de séjour ~1 EUR/nuit/pers." },
   },
 };
 
@@ -1001,9 +1230,50 @@ function RentabiliteAirbnb({ estValue, classicYieldGross, classicCashflowAT }) {
           <h2>Zone &amp; type de location</h2>
           <label>Ville / Région</label>
           <select value={f.zone} onChange={(e) => setS("zone", e.target.value)}>
-            {Object.entries(AIRBNB_ZONES).map(([k, z]) => (
-              <option key={k} value={k}>{z.label}</option>
-            ))}
+            <optgroup label="── Paris & Île-de-France">
+              <option value="paris">Paris</option>
+              <option value="versailles">Versailles & Yvelines</option>
+            </optgroup>
+            <optgroup label="── Côte d'Azur">
+              <option value="cannes">Cannes</option>
+              <option value="nice">Nice</option>
+              <option value="antibes">Antibes / Juan-les-Pins</option>
+              <option value="saint_tropez">Saint-Tropez & Golfe de Saint-Tropez</option>
+              <option value="menton">Menton</option>
+            </optgroup>
+            <optgroup label="── Alpes & Montagne">
+              <option value="chamonix">Chamonix</option>
+              <option value="courchevel">Courchevel / Val d'Isère / Méribel</option>
+              <option value="annecy">Annecy</option>
+            </optgroup>
+            <optgroup label="── Occitanie & Provence">
+              <option value="toulouse">Toulouse</option>
+              <option value="montpellier">Montpellier</option>
+              <option value="avignon">Avignon</option>
+              <option value="aix_en_provence">Aix-en-Provence</option>
+              <option value="marseille">Marseille</option>
+            </optgroup>
+            <optgroup label="── Atlantique & Pays Basque">
+              <option value="biarritz">Biarritz</option>
+              <option value="saint_jean_luz">Saint-Jean-de-Luz / Hendaye</option>
+              <option value="la_rochelle">La Rochelle & Île de Ré</option>
+              <option value="bordeaux">Bordeaux</option>
+            </optgroup>
+            <optgroup label="── Bretagne & Normandie">
+              <option value="saint_malo">Saint-Malo</option>
+              <option value="vannes_morbihan">Vannes & Golfe du Morbihan</option>
+              <option value="deauville">Deauville / Honfleur / Côte Fleurie</option>
+            </optgroup>
+            <optgroup label="── Grandes villes">
+              <option value="lyon">Lyon</option>
+              <option value="strasbourg">Strasbourg</option>
+              <option value="nantes">Nantes</option>
+              <option value="rennes">Rennes</option>
+              <option value="lille">Lille</option>
+            </optgroup>
+            <optgroup label="── Autre">
+              <option value="autre">Autre ville / zone rurale</option>
+            </optgroup>
           </select>
           <label>Type de résidence</label>
           <select value={f.isPrimary ? "1" : "0"} onChange={(e) => setV("isPrimary", e.target.value === "1" ? 1 : 0)}>
