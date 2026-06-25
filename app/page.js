@@ -7,6 +7,11 @@ const euro = (n) => Math.round(n).toLocaleString("fr-FR") + " EUR";
 const euro0 = (n) => Math.round(n).toLocaleString("fr-FR");
 const pct = (n) => n.toFixed(2).replace(".", ",") + " %";
 
+const AM_ICON = {
+  rail: "🚇", bus: "🚌", supermarche: "🛒", boulangerie: "🥖",
+  pharmacie: "💊", ecole: "🏫", restaurant: "🍽️", parc: "🌳",
+};
+
 // National market barometer - refreshed from public sources (Notaires de France,
 // Banque de France, Meilleurs Agents). Update the figures + date periodically.
 const BAROMETRE = {
@@ -370,12 +375,24 @@ function EstimResult({ res, surface }) {
 
       <div className="badge g">{res.compCount} ventes comparables retenues &middot; {res.totalSales} ventes analysees ({res.yearsUsed.join(", ")})</div>
 
-      {res.transit && (
-        <div className="transit-info">
-          {res.transit.dist != null
-            ? <>Transport le plus proche : <b>{res.transit.name}</b> a {res.transit.dist} m</>
-            : <>Aucun transport ferre a moins de 1,2 km</>}
-        </div>
+      {res.amenities && res.amenities.length > 0 && (
+        <>
+          <div className="section-t">Commodites a proximite</div>
+          <div className="amenities">
+            {res.amenities.map((a) => (
+              <div className="amenity" key={a.key}>
+                <span className="am-ico">{AM_ICON[a.key] || "•"}</span>
+                <div className="am-body">
+                  <div className="am-label">{a.label}</div>
+                  <div className="am-meta">
+                    {a.nearest ? <><b>{a.nearest.dist} m</b> &middot; {a.nearest.name}</> : "-"}
+                    {a.count > 1 && <span className="am-count">{a.count} a proximite</span>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {res.marketTrend && res.marketTrend.annualPct != null && (

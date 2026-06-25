@@ -78,19 +78,27 @@ function splitCsvLine(line) {
   return out;
 }
 
-// Nearest rail transit (metro/RER/train/tram) via OpenStreetMap Overpass.
-// Returns { dist, name } if found, { dist: null } if none within radius, null on error.
-async function nearestTransit(lat, lon) {
-  const r = 1200;
-  const q = `[out:json][timeout:8];(` +
-    `node(around:${r},${lat},${lon})[railway=station];` +
-    `node(around:${r},${lat},${lon})[station=subway];` +
-    `node(around:${r},${lat},${lon})[railway=subway_entrance];` +
-    `node(around:${r},${lat},${lon})[railway=tram_stop];` +
-    `);out body;`;
+// Nearby amenities (transports + commerces) via OpenStreetMap Overpass.
+// Returns { list, rail } or null on error. `rail` = nearest metro/tram/train for valuation.
+async function nearbyPlaces(lat, lon) {
+  const q = `[out:json][timeout:12];(` +
+    `node(around:1200,${lat},${lon})[railway=station];` +
+    `node(around:1200,${lat},${lon})[station=subway];` +
+    `node(around:1200,${lat},${lon})[railway=tram_stop];` +
+    `node(around:1200,${lat},${lon})[railway=subway_entrance];` +
+    `node(around:400,${lat},${lon})[highway=bus_stop];` +
+    `node(around:800,${lat},${lon})[shop=supermarket];` +
+    `node(around:800,${lat},${lon})[shop=convenience];` +
+    `node(around:800,${lat},${lon})[shop=bakery];` +
+    `node(around:800,${lat},${lon})[amenity=pharmacy];` +
+    `node(around:800,${lat},${lon})[amenity=school];` +
+    `node(around:800,${lat},${lon})[amenity=restaurant];` +
+    `node(around:800,${lat},${lon})[amenity=cafe];` +
+    `way(around:800,${lat},${lon})[leisure=park];` +
+    `);out center tags;`;
   try {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 7000);
+    const timer = setTimeout(() => ctrl.abort(), 9000);
     const res = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "EstimImmo/1.0" },
@@ -101,15 +109,35 @@ async function nearestTransit(lat, lon) {
     if (!res.ok) return null;
     const j = await res.json();
     const els = j.elements || [];
-    if (!els.length) return { dist: null, name: null }; // searched, nothing nearby
-    let best = null;
+
+    const cats = {};
+    const bucket = (k, label) => (cats[k] = cats[k] || { key: k, label, count: 0, nearest: null });
     for (const e of els) {
-      const d = haversine(lat, lon, e.lat, e.lon);
-      if (!best || d < best.dist) best = { dist: Math.round(d), name: (e.tags && (e.tags.name || e.tags.ref)) || "arret" };
+      const t = e.tags || {};
+      const plat = e.lat != null ? e.lat : e.center && e.center.lat;
+      const plon = e.lon != null ? e.lon : e.center && e.center.lon;
+      if (plat == null || plon == null) continue;
+      const dist = Math.round(haversine(lat, lon, plat, plon));
+      let k, label;
+      if (t.railway === "station" || t.station === "subway" || t.railway === "subway_entrance" || t.railway === "tram_stop") { k = "rail"; label = "Metro / Tram / Train"; }
+      else if (t.highway === "bus_stop") { k = "bus"; label = "Bus"; }
+      else if (t.shop === "supermarket" || t.shop === "convenience") { k = "supermarche"; label = "Supermarche / superette"; }
+      else if (t.shop === "bakery") { k = "boulangerie"; label = "Boulangerie"; }
+      else if (t.amenity === "pharmacy") { k = "pharmacie"; label = "Pharmacie"; }
+      else if (t.amenity === "school") { k = "ecole"; label = "Ecole"; }
+      else if (t.amenity === "restaurant" || t.amenity === "cafe") { k = "restaurant"; label = "Restaurant / cafe"; }
+      else if (t.leisure === "park") { k = "parc"; label = "Parc / jardin"; }
+      else continue;
+      const c = bucket(k, label);
+      c.count++;
+      const name = t.name || label;
+      if (!c.nearest || dist < c.nearest.dist) c.nearest = { name, dist };
     }
-    return best;
+    const order = ["rail", "bus", "supermarche", "boulangerie", "pharmacie", "ecole", "restaurant", "parc"];
+    const list = order.map((k) => cats[k]).filter(Boolean);
+    return { list, rail: cats.rail ? cats.rail.nearest : null };
   } catch {
-    return null; // API down -> no adjustment
+    return null; // API down -> skip, no crash
   }
 }
 
@@ -339,8 +367,9 @@ export async function POST(req) {
     const rawBasePm2 = median(comps.map((m) => m.pm2)); // before indexing
     const marketPm2 = median(muts.map((m) => m.pm2)); // whole-commune reference
 
-    // Nearest public transport (best-effort, non blocking on failure)
-    const transit = await nearestTransit(lat, lon);
+    // Nearby amenities (transports + commerces) - best-effort, non blocking
+    const places = await nearbyPlaces(lat, lon);
+    const transit = places ? (places.rail || { dist: null, name: null }) : null;
 
     // 5) Qualitative adjustments ---------------------------------------------
     const adj = [];
@@ -414,6 +443,7 @@ export async function POST(req) {
       adjustments: adj,
       confidence,
       transit,
+      amenities: places ? places.list : null,
       yearsUsed,
       compCount: comps.length,
       totalSales: muts.length,
