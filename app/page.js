@@ -219,6 +219,7 @@ function Estimation({ onEstimate }) {
     address: "10 rue de la Paix, Paris",
     surface: 65,
     type: "Appartement",
+    pieces: 3,
     floor: 3,
     elevator: true,
     condition: 1,
@@ -228,6 +229,8 @@ function Estimation({ onEstimate }) {
     parking: false,
     cave: false,
     vue: "standard",
+    occupation: "libre",
+    securite: "standard",
     sentiment: 0,
   });
   const [loading, setLoading] = useState(false);
@@ -276,6 +279,7 @@ function Estimation({ onEstimate }) {
           ...form,
           surface: Number(form.surface),
           floor: Number(form.floor),
+          pieces: Number(form.pieces),
           condition: Number(form.condition),
           sentiment: Number(form.sentiment),
           geo: geo
@@ -341,6 +345,47 @@ function Estimation({ onEstimate }) {
                 <option>Appartement</option>
                 <option>Maison</option>
               </select>
+            </div>
+          </div>
+
+          <div className="row">
+            <div>
+              <label>Nombre de pièces</label>
+              <select value={form.pieces} onChange={(e) => set("pieces", e.target.value)}>
+                <option value="1">T1 — Studio (1 pièce)</option>
+                <option value="2">T2 — 2 pièces</option>
+                <option value="3">T3 — 3 pièces</option>
+                <option value="4">T4 — 4 pièces</option>
+                <option value="5">T5 — 5 pièces</option>
+                <option value="6">T6+ — 6 pièces et plus</option>
+              </select>
+            </div>
+            <div>
+              <label>Statut d'occupation</label>
+              <select value={form.occupation} onChange={(e) => set("occupation", e.target.value)}>
+                <option value="libre">Libre à la vente</option>
+                <option value="bail_cours">Occupé — bail en cours (-15 %)</option>
+                <option value="loi_1948">Occupé — loi 1948 / locataire protégé (-25 %)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="row">
+            <div>
+              <label>Sécurité du quartier</label>
+              <select value={form.securite} onChange={(e) => set("securite", e.target.value)}>
+                <option value="tres_sur">Très sûr / résidence fermée (+2 %)</option>
+                <option value="sur">Sûr (+0 %)</option>
+                <option value="standard">Standard (0 %)</option>
+                <option value="sensible">Quartier sensible (-5 %)</option>
+                <option value="risque">Zone à risque / QPV (-10 %)</option>
+              </select>
+              <p className="hint">Vérifiez sur <a href="https://www.interieur.gouv.fr/content/download/138619/1099394/file/stat-insecurite-territoire.pdf" target="_blank" rel="noreferrer">cartosécurité</a> ou l'observatoire de la délinquance.</p>
+            </div>
+            <div style={{display:"flex",alignItems:"flex-end",paddingBottom:6}}>
+              <div className="ppri-note">
+                🌊 Zone inondable (PPRI) détectée automatiquement via <b>GeoRisques</b> à l'estimation.
+              </div>
             </div>
           </div>
 
@@ -474,6 +519,20 @@ function EstimResult({ res, surface }) {
       </div>
 
       <div className="badge g">{res.compCount} ventes comparables retenues &middot; {res.totalSales} ventes analysees ({res.yearsUsed.join(", ")})</div>
+
+      {res.floodZone && (
+        <div className={"flood-badge " + (res.floodZone.zone === "hors_zone" ? "flood-ok" : res.floodZone.zone === "rouge" ? "flood-red" : "flood-warn")}>
+          🌊 {res.floodZone.label}
+          {res.floodZone.zone !== "hors_zone" && (
+            <> &mdash; impact estimé : <b>{res.floodZone.pct * 100} %</b> sur le prix.
+              {" "}<a href={`https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi/rapport?form-commune=true&latlon=${res.location.lon},${res.location.lat}`} target="_blank" rel="noreferrer">Rapport GeoRisques →</a>
+            </>
+          )}
+        </div>
+      )}
+      {res.floodZone === null && (
+        <div className="flood-badge flood-na">🌊 Zone inondable : données GeoRisques momentanément indisponibles.</div>
+      )}
 
       {res.amenities && res.amenities.length > 0 && (
         <>

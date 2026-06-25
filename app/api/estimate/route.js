@@ -269,6 +269,30 @@ function buildMutations(rows, targetType) {
   return muts;
 }
 
+// ---- Flood zone check (GeoRisques API) ------------------------------------
+
+async function checkFloodZone(lat, lon) {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(
+      `https://georisques.gouv.fr/api/v1/zonage_inondation?latlon=${lat},${lon}&rayon=0`,
+      { headers: { "User-Agent": "EstimImmo/1.0", "Accept": "application/json" }, signal: ctrl.signal }
+    );
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const features = data?.features || data?.data || [];
+    if (!features.length) return { zone: "hors_zone", label: "Hors zone inondable (PPRI)", pct: 0 };
+    const alea = (features[0]?.properties?.code_alea || features[0]?.properties?.lib_alea || "").toLowerCase();
+    if (/rouge|fort|tres/.test(alea)) return { zone: "rouge", label: "Zone inondable — risque fort (zone rouge PPRI)", pct: -0.15 };
+    if (/bleu|moyen/.test(alea)) return { zone: "bleue", label: "Zone inondable — risque moyen (zone bleue PPRI)", pct: -0.08 };
+    return { zone: "faible", label: "Zone inondable — risque faible (PPRI)", pct: -0.03 };
+  } catch {
+    return null;
+  }
+}
+
 // ---- Estimation handler ---------------------------------------------------
 
 export async function POST(req) {
@@ -287,8 +311,11 @@ export async function POST(req) {
       parking = false,
       cave = false,
       vue = "standard",
-      sentiment = 0, // conjoncture choisie par l'utilisateur (ex: 0.02 / -0.02)
-      geo: picked, // exact location chosen via autocomplete (optional)
+      sentiment = 0,
+      pieces = null,       // nb de pieces (T1=1, T2=2…)
+      occupation = "libre", // libre | bail_cours | loi_1948
+      securite = "standard", // tres_sur | sur | standard | sensible | risque
+      geo: picked,
     } = body;
 
     if (!address || !surface) {
@@ -361,11 +388,13 @@ export async function POST(req) {
       m.dist = Math.round(haversine(lat, lon, m.lat, m.lon));
       const monthsAgo = Math.max(0, (now - new Date(m.date).getTime()) / (1000 * 3600 * 24 * 30));
       m.monthsAgo = Math.round(monthsAgo);
-      const wDist = 1 / (1 + m.dist / 300);          // closer = better
-      const wTime = 1 / (1 + monthsAgo / 12);        // more recent = better
-      const wSurf = 1 / (1 + Math.abs(m.surface - surface) / surface); // similar size
-      const wLot = m.lots === 1 ? 1 : 0.7;           // prefer single-lot sales
-      m.score = wDist * wTime * wSurf * wLot;
+      const wDist = 1 / (1 + m.dist / 300);
+      const wTime = 1 / (1 + monthsAgo / 12);
+      const wSurf = 1 / (1 + Math.abs(m.surface - surface) / surface);
+      const wLot = m.lots === 1 ? 1 : 0.7;
+      // prefer comparables with same number of rooms
+      const wPieces = (pieces && m.pieces) ? 1 / (1 + Math.abs(m.pieces - pieces) * 0.4) : 1;
+      m.score = wDist * wTime * wSurf * wLot * wPieces;
     }
     muts.sort((a, b) => b.score - a.score);
 
@@ -387,8 +416,11 @@ export async function POST(req) {
     const rawBasePm2 = median(comps.map((m) => m.pm2)); // before indexing
     const marketPm2 = median(muts.map((m) => m.pm2)); // whole-commune reference
 
-    // Nearby amenities (transports + commerces) - best-effort, non blocking
-    const places = await nearbyPlaces(lat, lon);
+    // Nearby amenities + flood zone check (parallel, best-effort)
+    const [places, floodZone] = await Promise.all([
+      nearbyPlaces(lat, lon),
+      checkFloodZone(lat, lon),
+    ]);
     const transit = places ? (places.rail || { dist: null, name: null }) : null;
 
     // 5) Qualitative adjustments ---------------------------------------------
@@ -434,6 +466,25 @@ export async function POST(req) {
       // 600-1200 m : neutre (affiche pour info uniquement)
     }
 
+    // pieces (configuration T1/T2/T3…) — petites surfaces = prime/m2
+    const piecesMap = { 1: 0.07, 2: 0.03, 3: 0, 4: -0.02, 5: -0.04 };
+    if (pieces && piecesMap[pieces] !== undefined && piecesMap[pieces] !== 0)
+      add(`Configuration T${pieces}`, piecesMap[pieces]);
+    else if (pieces >= 6) add(`Grand appartement T${pieces}+`, -0.05);
+
+    // occupation (bien loue = decote)
+    const occupMap = { libre: 0, bail_cours: -0.15, loi_1948: -0.25 };
+    const occupLbl = { bail_cours: "Bien occupe — bail en cours (-15%)", loi_1948: "Bien occupe — locataire protege loi 1948 (-25%)" };
+    if (occupMap[occupation]) add(occupLbl[occupation], occupMap[occupation]);
+
+    // securite du quartier
+    const secMap = { tres_sur: 0.02, sur: 0, standard: 0, sensible: -0.05, risque: -0.10 };
+    const secLbl = { tres_sur: "Quartier tres sur / residence fermee", sensible: "Quartier sensible (statistiques delinquance)", risque: "Zone a risque / QPV" };
+    if (secMap[securite]) add(secLbl[securite] || `Securite : ${securite}`, secMap[securite]);
+
+    // zone inondable (PPRI) — applique si detectee
+    if (floodZone && floodZone.pct !== 0) add(floodZone.label, floodZone.pct);
+
     if (sentiment) add("Conjoncture de marche (confiance/demande)", Number(sentiment));
 
     const adjustedPm2 = basePm2 * factor;
@@ -463,6 +514,7 @@ export async function POST(req) {
       adjustments: adj,
       confidence,
       transit,
+      floodZone: floodZone || null,
       amenities: places ? places.list : null,
       yearsUsed,
       compCount: comps.length,
