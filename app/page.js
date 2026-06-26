@@ -456,7 +456,7 @@ export default function Page() {
           </button>
         </div>
 
-        {tab === "estim" && <Estimation onEstimate={handleEstimate} />}
+        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
         {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} />}
         {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
         {tab === "sources" && <Sources />}
@@ -726,7 +726,7 @@ function TableauAmortissement({ loan, rate, duration, mInsurance }) {
 }
 
 /* ======================= TAB 1 : ESTIMATION ============================== */
-function Estimation({ onEstimate }) {
+function Estimation({ onEstimate, onGoToCapacite }) {
   const [form, setForm] = useState({
     address: "10 rue de la Paix, Paris",
     surface: 65,
@@ -987,7 +987,7 @@ function Estimation({ onEstimate }) {
           <h2>Resultat de l'estimation</h2>
           {!res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables reels s'afficheront ici.</div>}
           {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3b82f6',borderColor:'#2a3650'}}/><br/>Recuperation des transactions DVF...</div>}
-          {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} />}
+          {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} onGoToCapacite={onGoToCapacite} />}
         </div>
       </div>
     </div>
@@ -1000,7 +1000,7 @@ function fraisNotaire(prix, period) {
   return { montant: Math.round(prix * taux), taux, neuf };
 }
 
-function EstimResult({ res, surface, prixDemande, period }) {
+function EstimResult({ res, surface, prixDemande, period, onGoToCapacite }) {
   const confColor = res.confidence === "Elevee" ? "g" : res.confidence === "Moyenne" ? "w" : "b";
   const fn = fraisNotaire(res.estimate, period);
   const gap = prixDemande ? Math.round(((prixDemande - res.estimate) / res.estimate) * 100) : null;
@@ -1013,6 +1013,12 @@ function EstimResult({ res, surface, prixDemande, period }) {
         <div className="range">Fourchette : {euro(res.low)} &ndash; {euro(res.high)}</div>
         <div className="loc">{res.location.area} &middot; {euro0(res.adjustedPm2)} EUR/m2</div>
       </div>
+
+      {onGoToCapacite && (
+        <button className="btn-budget" onClick={onGoToCapacite}>
+          🏦 Ce bien est-il dans mon budget ?
+        </button>
+      )}
 
       {gap !== null && (
         <div className={"nego-signal " + (gap <= -5 ? "nego-good" : gap <= 5 ? "nego-ok" : "nego-bad")}>
