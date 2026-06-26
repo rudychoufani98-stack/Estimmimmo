@@ -749,7 +749,7 @@ function Estimation({ onEstimate }) {
           </div>
 
           <div className="auto-detect-note">
-            🤖 <b>Sécurité</b> (SSMSI), <b>conjoncture locale</b> (Notaires de France) et <b>zone inondable</b> (GeoRisques) sont détectées <b>automatiquement</b> selon l'adresse saisie.
+            🤖 <b>Conjoncture locale</b> (Notaires de France) et <b>zone inondable</b> (GeoRisques) sont détectées <b>automatiquement</b> selon l'adresse saisie.
           </div>
 
           <div className="row">
@@ -929,12 +929,6 @@ function EstimResult({ res, surface, prixDemande, period }) {
         <div className="flood-badge flood-na">🌊 Zone inondable : données GeoRisques momentanément indisponibles.</div>
       )}
 
-      {res.securiteAuto && (
-        <div className={"auto-badge " + (res.securiteAuto.pct > 0 ? "ab-pos" : res.securiteAuto.pct < 0 ? "ab-neg" : "ab-neu")}>
-          🔒 {res.securiteAuto.label}
-          {res.securiteAuto.pct !== 0 && <b> ({res.securiteAuto.pct > 0 ? "+" : ""}{Math.round(res.securiteAuto.pct * 100)} %)</b>}
-        </div>
-      )}
       {res.conjoncture && (
         <div className={"auto-badge " + (res.conjoncture.pct > 0 ? "ab-pos" : res.conjoncture.pct < 0 ? "ab-neg" : "ab-neu")}>
           📈 {res.conjoncture.label}

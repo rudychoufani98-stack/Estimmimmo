@@ -269,90 +269,8 @@ function buildMutations(rows, targetType) {
   return muts;
 }
 
-// ---- Security & conjoncture — commune level (INSEE code) then dept fallback ----
-// Sources : SSMSI 2023 (sécurité), Notaires de France / Meilleurs Agents juin 2026 (marché)
-
-// Commune-level security (INSEE code → {pct, label})
-// pct = adjustment vs neutral market (e.g. -0.08 = -8%)
-const SECURITE_COMMUNE = {
-  // Paris & IDF
-  "75056":{ pct:-0.05, label:"Paris — taux de délinquance élevé, forte disparité entre arrondissements (SSMSI 2023)" },
-  "93001":{ pct:-0.12, label:"Aubervilliers — taux de délinquance très élevé (SSMSI 2023)" },
-  "93008":{ pct:-0.10, label:"Bobigny — taux de délinquance très élevé (SSMSI 2023)" },
-  "93027":{ pct:-0.12, label:"La Courneuve — taux de délinquance très élevé (SSMSI 2023)" },
-  "93029":{ pct:-0.10, label:"Épinay-sur-Seine — taux de délinquance très élevé (SSMSI 2023)" },
-  "93048":{ pct:-0.10, label:"Montreuil — taux de délinquance élevé (SSMSI 2023)" },
-  "93051":{ pct:-0.08, label:"Noisy-le-Grand — taux de délinquance au-dessus de la moyenne" },
-  "93066":{ pct:-0.10, label:"Saint-Denis — taux de délinquance très élevé (SSMSI 2023)" },
-  "92012":{ pct:+0.01, label:"Boulogne-Billancourt — faible taux de délinquance" },
-  "92026":{ pct:0,     label:"Courbevoie — taux de délinquance moyen" },
-  "92040":{ pct:+0.01, label:"Issy-les-Moulineaux — faible taux de délinquance" },
-  "92044":{ pct:+0.02, label:"Levallois-Perret — très faible taux de délinquance" },
-  "92050":{ pct:-0.02, label:"Nanterre — taux de délinquance au-dessus de la moyenne" },
-  "92051":{ pct:+0.02, label:"Neuilly-sur-Seine — très faible taux de délinquance" },
-  "78646":{ pct:+0.02, label:"Versailles — très faible taux de délinquance" },
-  "95018":{ pct:-0.05, label:"Argenteuil — taux de délinquance élevé (SSMSI 2023)" },
-  "91228":{ pct:-0.05, label:"Évry — taux de délinquance élevé" },
-  "94028":{ pct:0,     label:"Créteil — taux de délinquance moyen" },
-  "94080":{ pct:-0.03, label:"Vitry-sur-Seine — taux de délinquance légèrement élevé" },
-  // PACA
-  "13055":{ pct:-0.10, label:"Marseille — taux de délinquance très élevé, forte disparité nord/sud (SSMSI 2023)" },
-  "13001":{ pct:0,     label:"Aix-en-Provence — taux de délinquance moyen" },
-  "06088":{ pct:-0.05, label:"Nice — taux de délinquance au-dessus de la moyenne (SSMSI 2023)" },
-  "06029":{ pct:0,     label:"Cannes — taux de délinquance moyen" },
-  "83137":{ pct:0,     label:"Toulon — taux de délinquance moyen" },
-  "84007":{ pct:0,     label:"Avignon — taux de délinquance moyen" },
-  // Auvergne-Rhône-Alpes
-  "69123":{ pct:-0.05, label:"Lyon — taux de délinquance élevé, variable selon arrondissement (SSMSI 2023)" },
-  "69266":{ pct:-0.03, label:"Villeurbanne — taux de délinquance au-dessus de la moyenne" },
-  "38185":{ pct:-0.07, label:"Grenoble — taux de délinquance très élevé (SSMSI 2023)" },
-  "74010":{ pct:+0.02, label:"Annecy — très faible taux de délinquance" },
-  "73065":{ pct:+0.01, label:"Chambéry — faible taux de délinquance" },
-  "42218":{ pct:-0.07, label:"Saint-Étienne — taux de délinquance très élevé (SSMSI 2023)" },
-  "63113":{ pct:0,     label:"Clermont-Ferrand — taux de délinquance moyen" },
-  // Occitanie
-  "31555":{ pct:-0.05, label:"Toulouse — taux de délinquance élevé (SSMSI 2023)" },
-  "34172":{ pct:-0.05, label:"Montpellier — taux de délinquance élevé (SSMSI 2023)" },
-  "30189":{ pct:-0.07, label:"Nîmes — taux de délinquance très élevé (SSMSI 2023)" },
-  "66136":{ pct:-0.08, label:"Perpignan — taux de délinquance très élevé (SSMSI 2023)" },
-  // Nouvelle-Aquitaine
-  "33063":{ pct:0,     label:"Bordeaux — taux de délinquance moyen" },
-  "64102":{ pct:+0.01, label:"Bayonne — faible taux de délinquance" },
-  "64445":{ pct:+0.01, label:"Pau — faible taux de délinquance" },
-  "17300":{ pct:+0.01, label:"La Rochelle — faible taux de délinquance" },
-  // Bretagne / Pays de la Loire
-  "35238":{ pct:+0.01, label:"Rennes — faible taux de délinquance" },
-  "44109":{ pct:0,     label:"Nantes — taux de délinquance moyen" },
-  "29019":{ pct:+0.01, label:"Brest — faible taux de délinquance" },
-  "56121":{ pct:+0.01, label:"Lorient — faible taux de délinquance" },
-  "85047":{ pct:+0.01, label:"La Roche-sur-Yon — faible taux de délinquance" },
-  "49007":{ pct:+0.01, label:"Angers — faible taux de délinquance" },
-  "44184":{ pct:0,     label:"Saint-Nazaire — taux de délinquance moyen" },
-  // Grand Est
-  "67482":{ pct:0,     label:"Strasbourg — taux de délinquance moyen" },
-  "68224":{ pct:-0.08, label:"Mulhouse — taux de délinquance très élevé (SSMSI 2023)" },
-  "57463":{ pct:0,     label:"Metz — taux de délinquance moyen" },
-  "54395":{ pct:-0.03, label:"Nancy — taux de délinquance légèrement élevé" },
-  "51454":{ pct:0,     label:"Reims — taux de délinquance moyen" },
-  // Hauts-de-France
-  "59350":{ pct:-0.05, label:"Lille — taux de délinquance élevé (SSMSI 2023)" },
-  "62193":{ pct:-0.07, label:"Calais — taux de délinquance très élevé (SSMSI 2023)" },
-  "80021":{ pct:-0.03, label:"Amiens — taux de délinquance légèrement élevé" },
-  // Normandie
-  "76351":{ pct:-0.03, label:"Le Havre — taux de délinquance légèrement élevé" },
-  "76540":{ pct:-0.03, label:"Rouen — taux de délinquance légèrement élevé" },
-  "14118":{ pct:0,     label:"Caen — taux de délinquance moyen" },
-  // Centre
-  "45234":{ pct:0,     label:"Orléans — taux de délinquance moyen" },
-  "37261":{ pct:0,     label:"Tours — taux de délinquance moyen" },
-  // Autres
-  "76600":{ pct:0,     label:"Dieppe — taux de délinquance moyen" },
-  "25056":{ pct:0,     label:"Besançon — taux de délinquance moyen" },
-  "21231":{ pct:0,     label:"Dijon — taux de délinquance moyen" },
-  "86194":{ pct:0,     label:"Poitiers — taux de délinquance moyen" },
-  "87085":{ pct:0,     label:"Limoges — taux de délinquance moyen" },
-  "72181":{ pct:0,     label:"Le Mans — taux de délinquance moyen" },
-};
+// ---- Conjoncture — commune level (INSEE code) then dept fallback ----
+// Source : Notaires de France / Meilleurs Agents juin 2026
 
 // Commune-level conjoncture (INSEE code → {pct, label})
 const CONJONCTURE_COMMUNE = {
@@ -450,57 +368,9 @@ const CONJONCTURE_COMMUNE = {
   "2B033":{ pct:+0.015, label:"Bastia — marché porteur" },
 };
 
-function getSecurite(dept, insee) {
-  if (SECURITE_COMMUNE[insee]) return SECURITE_COMMUNE[insee];
-  return SECURITE_DEPT[dept] || { pct:0, label:`Département ${dept} — données de délinquance non disponibles, taux national moyen appliqué` };
-}
 function getConjoncture(dept, insee) {
   if (CONJONCTURE_COMMUNE[insee]) return CONJONCTURE_COMMUNE[insee];
   return CONJONCTURE_DEPT[dept] || { pct:0, label:`Département ${dept} — données de marché non disponibles, tendance nationale appliquée` };
-}
-
-// ---- Security index by department (SSMSI 2023 - crimes & délits / 1000 hab) ----
-// Source : Ministère de l'Intérieur / SSMSI, statistiques annuelles 2023
-const SECURITE_DEPT = {
-  "75":{ lvl:"sensible", pct:-0.05, label:"Paris — taux de délinquance élevé (statistiques SSMSI 2023)" },
-  "92":{ lvl:"standard", pct:0,     label:"Hauts-de-Seine — taux de délinquance modéré" },
-  "93":{ lvl:"risque",   pct:-0.10, label:"Seine-Saint-Denis — taux de délinquance très élevé (SSMSI 2023)" },
-  "94":{ lvl:"standard", pct:0,     label:"Val-de-Marne — taux de délinquance moyen" },
-  "95":{ lvl:"sensible", pct:-0.05, label:"Val-d'Oise — taux de délinquance au-dessus de la moyenne" },
-  "91":{ lvl:"standard", pct:0,     label:"Essonne — taux de délinquance moyen" },
-  "78":{ lvl:"sur",      pct:0.01,  label:"Yvelines — faible taux de délinquance" },
-  "77":{ lvl:"standard", pct:0,     label:"Seine-et-Marne — taux de délinquance moyen" },
-  "13":{ lvl:"sensible", pct:-0.05, label:"Bouches-du-Rhône — taux de délinquance élevé (SSMSI 2023)" },
-  "83":{ lvl:"standard", pct:0,     label:"Var — taux de délinquance moyen" },
-  "06":{ lvl:"sensible", pct:-0.05, label:"Alpes-Maritimes — taux de délinquance au-dessus de la moyenne" },
-  "69":{ lvl:"sensible", pct:-0.05, label:"Rhône — taux de délinquance élevé (agglomération lyonnaise)" },
-  "33":{ lvl:"standard", pct:0,     label:"Gironde — taux de délinquance moyen" },
-  "31":{ lvl:"sensible", pct:-0.05, label:"Haute-Garonne — taux de délinquance au-dessus de la moyenne" },
-  "59":{ lvl:"sensible", pct:-0.05, label:"Nord — taux de délinquance élevé (SSMSI 2023)" },
-  "67":{ lvl:"standard", pct:0,     label:"Bas-Rhin — taux de délinquance moyen" },
-  "57":{ lvl:"standard", pct:0,     label:"Moselle — taux de délinquance moyen" },
-  "44":{ lvl:"standard", pct:0,     label:"Loire-Atlantique — taux de délinquance moyen" },
-  "34":{ lvl:"sensible", pct:-0.05, label:"Hérault — taux de délinquance au-dessus de la moyenne" },
-  "76":{ lvl:"sensible", pct:-0.05, label:"Seine-Maritime — taux de délinquance au-dessus de la moyenne" },
-  "38":{ lvl:"standard", pct:0,     label:"Isère — taux de délinquance moyen" },
-  "45":{ lvl:"standard", pct:0,     label:"Loiret — taux de délinquance moyen" },
-  "35":{ lvl:"sur",      pct:0.01,  label:"Ille-et-Vilaine — faible taux de délinquance" },
-  "29":{ lvl:"sur",      pct:0.01,  label:"Finistère — faible taux de délinquance" },
-  "56":{ lvl:"sur",      pct:0.01,  label:"Morbihan — faible taux de délinquance" },
-  "22":{ lvl:"tres_sur", pct:0.02,  label:"Côtes-d'Armor — très faible taux de délinquance" },
-  "14":{ lvl:"sur",      pct:0.01,  label:"Calvados — faible taux de délinquance" },
-  "74":{ lvl:"sur",      pct:0.01,  label:"Haute-Savoie — faible taux de délinquance" },
-  "73":{ lvl:"sur",      pct:0.01,  label:"Savoie — faible taux de délinquance" },
-  "01":{ lvl:"sur",      pct:0.01,  label:"Ain — faible taux de délinquance" },
-  "63":{ lvl:"standard", pct:0,     label:"Puy-de-Dôme — taux de délinquance moyen" },
-  "37":{ lvl:"standard", pct:0,     label:"Indre-et-Loire — taux de délinquance moyen" },
-  "49":{ lvl:"sur",      pct:0.01,  label:"Maine-et-Loire — faible taux de délinquance" },
-  "85":{ lvl:"tres_sur", pct:0.02,  label:"Vendée — très faible taux de délinquance" },
-  "2A":{ lvl:"sur",      pct:0.01,  label:"Corse-du-Sud — faible taux de délinquance" },
-  "2B":{ lvl:"sur",      pct:0.01,  label:"Haute-Corse — faible taux de délinquance" },
-};
-function getSecurite(dept) {
-  return SECURITE_DEPT[dept] || { lvl:"standard", pct:0, label:`Département ${dept} — données de délinquance non disponibles (taux national moyen appliqué)` };
 }
 
 // ---- Market conjoncture by department (Notaires de France / Meilleurs Agents, juin 2026) ----
@@ -707,8 +577,7 @@ export async function POST(req) {
     const rawBasePm2 = median(comps.map((m) => m.pm2)); // before indexing
     const marketPm2 = median(muts.map((m) => m.pm2)); // whole-commune reference
 
-    // Auto-detect security & conjoncture — commune first, dept fallback
-    const securiteAuto = getSecurite(dept, insee);
+    // Auto-detect conjoncture — commune first, dept fallback
     const conjoncture = getConjoncture(dept, insee);
 
     // Nearby amenities + flood zone check (parallel, best-effort)
@@ -772,9 +641,6 @@ export async function POST(req) {
     const occupLbl = { bail_cours: "Bien occupe — bail en cours (-15%)", loi_1948: "Bien occupe — locataire protege loi 1948 (-25%)" };
     if (occupMap[occupation]) add(occupLbl[occupation], occupMap[occupation]);
 
-    // securite auto-detectee (SSMSI)
-    if (securiteAuto.pct !== 0) add(`Securite — ${securiteAuto.label}`, securiteAuto.pct);
-
     // zone inondable (PPRI) — applique si detectee
     if (floodZone && floodZone.pct !== 0) add(floodZone.label, floodZone.pct);
 
@@ -809,7 +675,6 @@ export async function POST(req) {
       confidence,
       transit,
       floodZone: floodZone || null,
-      securiteAuto,
       conjoncture,
       amenities: places ? places.list : null,
       yearsUsed,
