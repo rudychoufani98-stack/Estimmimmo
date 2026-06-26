@@ -533,10 +533,12 @@ export async function POST(req) {
     }
     muts.sort((a, b) => b.score - a.score);
 
-    // Use the best comparables: prefer those within 1 km, fall back to top N
+    // Use the best comparables: prefer close ones, widen radius if too few.
+    // muts is already sorted by similarity score (proximity + recency + surface).
     let comps = muts.filter((m) => m.dist <= 1000);
-    if (comps.length < 8) comps = muts.slice(0, 25);
-    comps = comps.slice(0, 40);
+    if (comps.length < 15) comps = muts.filter((m) => m.dist <= 1500);
+    if (comps.length < 8) comps = muts.slice(0, 30);
+    comps = comps.slice(0, 60); // pool for the median (still similarity-ranked)
 
     // 4) Local market trend -> re-index older sales to today ------------------
     const trend = localTrend(muts);
@@ -647,7 +649,7 @@ export async function POST(req) {
       yearsUsed,
       compCount: comps.length,
       totalSales: muts.length,
-      comparables: comps.slice(0, 30).map((m) => ({
+      comparables: comps.slice(0, 50).map((m) => ({
         date: m.date,
         prix: m.valeur,
         surface: m.surface,
