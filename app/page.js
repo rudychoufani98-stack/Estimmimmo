@@ -448,13 +448,17 @@ export default function Page() {
           <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
             2. Rentabilite
           </button>
+          <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
+            3. Capacite d'emprunt
+          </button>
           <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
-            3. Sources &amp; Données
+            4. Sources &amp; Données
           </button>
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} />}
         {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} />}
+        {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
         {tab === "sources" && <Sources />}
 
         <button className="btn-print" onClick={() => window.print()}>
@@ -466,6 +470,134 @@ export default function Page() {
         EstimImmo &middot; Donnees : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
       </footer>
     </>
+  );
+}
+
+/* ======================= CAPACITE D'EMPRUNT ================================ */
+function CapaciteEmprunt({ estValue }) {
+  const [f, setF] = useState({
+    income: 3800,          // revenus nets mensuels du foyer
+    charges: 0,            // mensualites de credits en cours
+    apport: 40000,
+    duration: 20,
+    rate: 3.4,
+    insurance: 0.34,
+    endettement: 35,       // taux d'endettement max (HCSF)
+    notaryRate: 0.075,
+  });
+  const set = (k, val) => setF((s) => ({ ...s, [k]: val }));
+  const v = (k) => Number(f[k]) || 0;
+
+  // Mensualite max selon la regle HCSF (assurance comprise)
+  const maxMensualite = Math.max(0, v("income") * (v("endettement") / 100) - v("charges"));
+
+  const r = v("rate") / 100 / 12;
+  const n = v("duration") * 12;
+  const annuity = r > 0 ? r / (1 - Math.pow(1 + r, -n)) : 1 / n; // mensualite par EUR emprunte
+  const insMonthly = v("insurance") / 100 / 12;                  // assurance par EUR emprunte
+
+  // mensualite = loan*annuity (capital+interets) + loan*insMonthly (assurance)
+  const loan = maxMensualite > 0 ? maxMensualite / (annuity + insMonthly) : 0;
+  const mInsurance = loan * insMonthly;
+  const mCapitalInterest = loan * annuity;
+  const budget = loan + v("apport");
+  const maxPrice = budget / (1 + v("notaryRate")); // prix du bien, frais de notaire deduits
+  const notaire = maxPrice * v("notaryRate");
+  const totalInterest = mCapitalInterest * n - loan;
+
+  let verdict = null, vClass = "";
+  if (estValue > 0 && loan > 0) {
+    if (maxPrice >= estValue) { verdict = `Le bien estime (${euro(estValue)}) est DANS votre budget. Marge : ${euro(maxPrice - estValue)}.`; vClass = "g"; }
+    else { verdict = `Le bien estime (${euro(estValue)}) depasse votre budget de ${euro(estValue - maxPrice)}. Augmentez l'apport, la duree ou les revenus.`; vClass = "w"; }
+  }
+
+  return (
+    <div className="grid">
+      {/* inputs */}
+      <div>
+        <div className="card">
+          <h2>Vos revenus</h2>
+          <div className="sub">Revenus nets du foyer (avant impot), tous emprunteurs confondus</div>
+          <div className="row">
+            <div>
+              <label>Revenus nets mensuels</label>
+              <div className="unit"><input type="number" value={f.income} onChange={(e) => set("income", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Credits en cours / mois</label>
+              <div className="unit"><input type="number" value={f.charges} onChange={(e) => set("charges", e.target.value)} /><small>EUR</small></div>
+            </div>
+          </div>
+          <label>Taux d'endettement maximal</label>
+          <select value={f.endettement} onChange={(e) => set("endettement", e.target.value)}>
+            <option value="35">35 % (plafond HCSF standard)</option>
+            <option value="33">33 % (prudent)</option>
+            <option value="40">40 % (revenus eleves / derogation)</option>
+          </select>
+          <p className="hint">Regle HCSF : la mensualite totale (assurance comprise) ne doit pas depasser ce taux de vos revenus.</p>
+        </div>
+
+        <div className="card">
+          <h2>Conditions du pret</h2>
+          <div className="row">
+            <div>
+              <label>Apport personnel</label>
+              <div className="unit"><input type="number" value={f.apport} onChange={(e) => set("apport", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Duree</label>
+              <div className="unit"><input type="number" value={f.duration} onChange={(e) => set("duration", e.target.value)} /><small>ans</small></div>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Taux d'interet</label>
+              <div className="unit"><input type="number" step="0.01" value={f.rate} onChange={(e) => set("rate", e.target.value)} /><small>%</small></div>
+            </div>
+            <div>
+              <label>Assurance emprunteur</label>
+              <div className="unit"><input type="number" step="0.01" value={f.insurance} onChange={(e) => set("insurance", e.target.value)} /><small>%/an</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* results */}
+      <div>
+        <div className="card">
+          <h2>Votre capacite</h2>
+          <div className="sub">Mise a jour en temps reel</div>
+
+          <div className="hero">
+            <div className="lbl">Capacite d'emprunt</div>
+            <div className="val">{euro(loan)}</div>
+            <div className="range">Budget total avec apport : {euro(budget)}</div>
+          </div>
+
+          <div className="kpis">
+            <div className="kpi"><div className="k">Mensualite max</div><div className="v">{euro0(maxMensualite)} EUR</div></div>
+            <div className="kpi"><div className="k">Prix de bien max</div><div className="v g">{euro0(maxPrice)} EUR</div></div>
+            <div className="kpi"><div className="k">Apport</div><div className="v">{euro0(v("apport"))} EUR</div></div>
+          </div>
+
+          <div className="section-t">Detail</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Mensualite maximale (assurance comprise)</span><span>{euro(maxMensualite)}</span></div>
+            <div className="li"><span className="lbl">dont assurance emprunteur</span><span className="neg">{euro(mInsurance)}</span></div>
+            <div className="li"><span className="lbl">dont capital + interets</span><span>{euro(mCapitalInterest)}</span></div>
+            <div className="li total"><span>Capacite d'emprunt</span><span className="v">{euro(loan)}</span></div>
+            <div className="li"><span className="lbl">+ Apport</span><span className="pos">+ {euro(v("apport"))}</span></div>
+            <div className="li"><span className="lbl">Budget total</span><span>{euro(budget)}</span></div>
+            <div className="li"><span className="lbl">- Frais de notaire ({(v("notaryRate") * 100).toFixed(1).replace(".", ",")}%)</span><span className="neg">- {euro(notaire)}</span></div>
+            <div className="li total"><span>Prix de bien maximal</span><span className="v">{euro(maxPrice)}</span></div>
+            <div className="li"><span className="lbl">Cout total des interets ({v("duration")} ans)</span><span className="neg">{euro(totalInterest)}</span></div>
+          </div>
+
+          {verdict && <div className={"badge " + vClass}>{verdict}</div>}
+          <p className="hint" style={{ marginTop: 10 }}>Estimation indicative. Les banques tiennent aussi compte du reste a vivre, du saut de charge, de la stabilite professionnelle et du profil global. Duree de pret en general limitee a 25 ans.</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
