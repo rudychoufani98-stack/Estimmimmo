@@ -1157,6 +1157,35 @@ function pmt(principal, annualRate, years) {
   return (principal * r) / (1 - Math.pow(1 + r, -n));
 }
 
+// Plus-value immobiliere : abattement pour duree de detention (hors residence principale)
+// IR (19%) : exoneration totale a 22 ans. PS (17,2%) : exoneration totale a 30 ans.
+function abattementIR(y) {
+  if (y <= 5) return 0;
+  if (y >= 22) return 1;
+  return (y - 5) * 0.06; // 6%/an de la 6e a la 21e annee
+}
+function abattementPS(y) {
+  if (y <= 5) return 0;
+  if (y >= 30) return 1;
+  if (y <= 21) return (y - 5) * 0.0165;   // 1,65%/an
+  if (y === 22) return 16 * 0.0165 + 0.016; // 28%
+  return Math.min(1, 0.28 + (y - 22) * 0.09); // 9%/an de la 23e a la 30e
+}
+
+// Taux de rendement interne (TRI / IRR) par bissection
+function computeIRR(flows) {
+  const npv = (r) => flows.reduce((s, f, i) => s + f / Math.pow(1 + r, i), 0);
+  let lo = -0.9, hi = 1.0;
+  let flo = npv(lo), fhi = npv(hi);
+  if (flo * fhi > 0) return null; // pas de changement de signe -> TRI non defini
+  for (let k = 0; k < 200; k++) {
+    const mid = (lo + hi) / 2, fm = npv(mid);
+    if (Math.abs(fm) < 0.5) return mid;
+    if (flo * fm < 0) { hi = mid; fhi = fm; } else { lo = mid; flo = fm; }
+  }
+  return (lo + hi) / 2;
+}
+
 function Rentabilite({ estValue, estCity }) {
   const [rentaTab, setRentaTab] = useState("classique");
   const [f, setF] = useState({
@@ -1176,6 +1205,8 @@ function Rentabilite({ estValue, estCity }) {
     loanInsurance: 0.34,
     regime: "microbic",
     tmi: 0.3,
+    horizon: 10,         // duree de detention avant revente (ans)
+    appreciation: 1,     // evolution annuelle du prix (%)
   });
   // keep price synced when arriving from estimation
   const [synced, setSynced] = useState(false);
@@ -1273,6 +1304,32 @@ function Rentabilite({ estValue, estCity }) {
   // economie d'impot grace aux interets (regimes au reel) : impot sans vs avec deduction des interets
   const taxReelSansInterets = Math.max(0, annualRentNet - (deductible - annualInterest - loanInsAnnual)) * taxRate;
   const interestSaving = Math.max(0, taxReelSansInterets - Math.max(0, reelResult) * taxRate + deficitImputable * tmi);
+
+  // ---- revente, plus-value & TRI ----
+  const horizon = Math.max(1, Math.min(30, Math.round(v("horizon"))));
+  const appr = v("appreciation") / 100;
+  const resalePrice = price * Math.pow(1 + appr, horizon);
+  // capital restant du a la revente (depuis l'echeancier)
+  const sched = loan > 0 ? buildAmortization(loan, v("rate"), v("duration"), mLoanIns) : [];
+  let crd = 0;
+  if (loan > 0 && horizon < v("duration")) crd = sched[horizon * 12 - 1] ? sched[horizon * 12 - 1].balance : 0;
+  const capitalRembourse = loan - crd;
+  // plus-value imposable (base = prix de revente - cout total d'acquisition)
+  const pvBrute = Math.max(0, resalePrice - totalCost);
+  const abIR = abattementIR(horizon), abPS = abattementPS(horizon);
+  const pvIR = pvBrute * (1 - abIR) * 0.19;
+  const pvPS = pvBrute * (1 - abPS) * 0.172;
+  const pvTax = pvIR + pvPS;
+  const pvNette = pvBrute - pvTax;
+  // capitaux propres recuperes a la revente
+  const exitEquity = resalePrice - crd - pvTax;
+  const cumulCashflow = cashflowAfterTax * horizon; // approx : cashflow annuel constant
+  const patrimoineNet = exitEquity + cumulCashflow - v("apport");
+  // TRI : -apport en t0, cashflow chaque annee, + revente la derniere annee
+  const flows = [-v("apport")];
+  for (let y = 1; y <= horizon; y++) flows.push(cashflowAfterTax + (y === horizon ? exitEquity : 0));
+  const triRaw = computeIRR(flows);
+  const tri = triRaw != null ? triRaw * 100 : null;
 
   const yClass = (y) => (y >= 5 ? "g" : y >= 3 ? "w" : "b");
   const cClass = (x) => (x >= 0 ? "g" : "b");
@@ -1413,6 +1470,22 @@ function Rentabilite({ estValue, estCity }) {
           </select>
           <p className="hint">LMNP reel : l'amortissement du bien efface souvent l'impot pendant des annees (estimation simplifiee). Le reel deduit interets et charges. A confirmer avec un comptable.</p>
         </div>
+
+        <div className="card">
+          <h2>Revente &amp; plus-value</h2>
+          <div className="sub">Projection patrimoniale et rendement total (TRI)</div>
+          <div className="row">
+            <div>
+              <label>Horizon de revente</label>
+              <div className="unit"><input type="number" value={f.horizon} onChange={(e) => set("horizon", e.target.value)} /><small>ans</small></div>
+            </div>
+            <div>
+              <label>Evolution annuelle du prix</label>
+              <div className="unit"><input type="number" step="0.1" value={f.appreciation} onChange={(e) => set("appreciation", e.target.value)} /><small>%/an</small></div>
+            </div>
+          </div>
+          <p className="hint">Plus-value : exoneration d'IR a 22 ans, de prelevements sociaux a 30 ans (residence secondaire / locatif). La residence principale est totalement exoneree.</p>
+        </div>
       </div>
 
       {/* results */}
@@ -1507,6 +1580,32 @@ function Rentabilite({ estValue, estCity }) {
             </div>
           )}
           <p className="hint" style={{ marginTop: 8 }}>Les interets ne sont deductibles qu'au reel (nu ou LMNP), jamais en micro ni sur une residence principale. Deduire 1 EUR d'interet economise votre TMI, pas 1 EUR : ca allege le cout, ne le rend pas gratuit. Estimation simplifiee, a valider avec un comptable.</p>
+
+          <div className="section-t">Revente &amp; plus-value a {horizon} ans</div>
+          <div className="hero" style={{ background: tri != null && tri >= 0 ? "linear-gradient(135deg,#14532d,#22c55e)" : "linear-gradient(135deg,#7f1d1d,#ef4444)" }}>
+            <div className="lbl">Rendement total de l'operation (TRI)</div>
+            <div className="val">{tri != null ? pct(tri) : "n/a"}</div>
+            <div className="range">Patrimoine net cree : {patrimoineNet >= 0 ? "+ " : "- "}{euro(Math.abs(patrimoineNet))}</div>
+          </div>
+
+          <div className="line-items">
+            <div className="li"><span className="lbl">Prix de revente estime ({pct(v("appreciation"))}/an)</span><span>{euro(resalePrice)}</span></div>
+            <div className="li"><span className="lbl">Cout total d'acquisition</span><span>{euro(totalCost)}</span></div>
+            <div className="li"><span className="lbl">Plus-value brute</span><span className={pvBrute > 0 ? "pos" : ""}>{euro(pvBrute)}</span></div>
+            <div className="li"><span className="lbl">Abattement IR / PS (detention {horizon} ans)</span><span>{Math.round(abIR * 100)}% / {Math.round(abPS * 100)}%</span></div>
+            <div className="li"><span className="lbl">Impot sur la plus-value (IR 19% + PS 17,2%)</span><span className="neg">- {euro(pvTax)}</span></div>
+            <div className="li total"><span>Plus-value nette</span><span className="v">{euro(pvNette)}</span></div>
+          </div>
+
+          <div className="section-t">A la revente</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Capital rembourse sur {horizon} ans</span><span className="pos">{euro(capitalRembourse)}</span></div>
+            <div className="li"><span className="lbl">Capital restant du (solde du pret)</span><span className="neg">{euro(crd)}</span></div>
+            <div className="li"><span className="lbl">Cashflow cumule apres impot ({horizon} ans)</span><span className={cumulCashflow >= 0 ? "pos" : "neg"}>{cumulCashflow >= 0 ? "+ " : "- "}{euro(Math.abs(cumulCashflow))}</span></div>
+            <div className="li"><span className="lbl">Capitaux recuperes a la revente</span><span>{euro(exitEquity)}</span></div>
+            <div className="li total"><span>Patrimoine net cree (vs apport)</span><span className={patrimoineNet >= 0 ? "pos" : "neg"}>{patrimoineNet >= 0 ? "+ " : "- "}{euro(Math.abs(patrimoineNet))}</span></div>
+          </div>
+          <p className="hint" style={{ marginTop: 8 }}>Le TRI agrege apport, cashflows annuels et revente : c'est le vrai rendement de l'operation. Hypotheses : cashflow annuel constant, prix +{pct(v("appreciation"))}/an, hors frais d'agence a la revente et surtaxe sur plus-value &gt; 50 000 EUR.</p>
 
           <div className={"badge " + vClass}>{verdict}</div>
         </div>
