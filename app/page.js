@@ -749,7 +749,7 @@ function Estimation({ onEstimate }) {
           </div>
 
           <div className="auto-detect-note">
-            🤖 <b>Conjoncture locale</b> (Notaires de France) et <b>zone inondable</b> (GeoRisques) sont détectées <b>automatiquement</b> selon l'adresse saisie.
+            🤖 <b>Conjoncture locale</b> (Notaires de France) est détectée <b>automatiquement</b> selon l'adresse saisie.
           </div>
 
           <div className="row">
@@ -914,20 +914,6 @@ function EstimResult({ res, surface, prixDemande, period }) {
       </div>
 
       <div className="badge g">{res.compCount} ventes comparables retenues &middot; {res.totalSales} ventes analysees ({res.yearsUsed.join(", ")})</div>
-
-      {res.floodZone && (
-        <div className={"flood-badge " + (res.floodZone.zone === "hors_zone" ? "flood-ok" : res.floodZone.zone === "rouge" ? "flood-red" : "flood-warn")}>
-          🌊 {res.floodZone.label}
-          {res.floodZone.zone !== "hors_zone" && (
-            <> &mdash; impact estimé : <b>{res.floodZone.pct * 100} %</b> sur le prix.
-              {" "}<a href={`https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi/rapport?form-commune=true&latlon=${res.location.lon},${res.location.lat}`} target="_blank" rel="noreferrer">Rapport GeoRisques →</a>
-            </>
-          )}
-        </div>
-      )}
-      {res.floodZone === null && (
-        <div className="flood-badge flood-na">🌊 Zone inondable : données GeoRisques momentanément indisponibles.</div>
-      )}
 
       {res.conjoncture && (
         <div className={"auto-badge " + (res.conjoncture.pct > 0 ? "ab-pos" : res.conjoncture.pct < 0 ? "ab-neg" : "ab-neu")}>
@@ -1276,8 +1262,6 @@ function Rentabilite({ estValue, estCity }) {
             <div className="li"><span className="lbl">Cout total des interets</span><span>{euro(totalInterest)}</span></div>
           </div>
 
-          <TableauAmortissement loan={loan} rate={v("rate")} duration={v("duration")} mInsurance={mLoanIns} />
-
           <div className="section-t">Flux annuel (apres credit)</div>
           <div className="line-items">
             <div className="li"><span className="lbl">Loyers HC encaisses</span><span className="pos">+ {euro(annualRentNet)}</span></div>
@@ -1314,6 +1298,9 @@ function Rentabilite({ estValue, estCity }) {
         </div>
       </div>
     </div>
+      )}
+      {rentaTab === "classique" && (
+        <TableauAmortissement loan={loan} rate={v("rate")} duration={v("duration")} mInsurance={mLoanIns} />
       )}
     </>
   );

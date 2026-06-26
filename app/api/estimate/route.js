@@ -432,29 +432,6 @@ function getConjoncture(dept) {
   return CONJONCTURE_DEPT[dept] || { pct:0, label:`Département ${dept} — marché neutre (données locales non disponibles)` };
 }
 
-// ---- Flood zone check (GeoRisques API) ------------------------------------
-
-async function checkFloodZone(lat, lon) {
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 6000);
-    const res = await fetch(
-      `https://georisques.gouv.fr/api/v1/zonage_inondation?latlon=${lat},${lon}&rayon=0`,
-      { headers: { "User-Agent": "EstimImmo/1.0", "Accept": "application/json" }, signal: ctrl.signal }
-    );
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const features = data?.features || data?.data || [];
-    if (!features.length) return { zone: "hors_zone", label: "Hors zone inondable (PPRI)", pct: 0 };
-    const alea = (features[0]?.properties?.code_alea || features[0]?.properties?.lib_alea || "").toLowerCase();
-    if (/rouge|fort|tres/.test(alea)) return { zone: "rouge", label: "Zone inondable — risque fort (zone rouge PPRI)", pct: -0.15 };
-    if (/bleu|moyen/.test(alea)) return { zone: "bleue", label: "Zone inondable — risque moyen (zone bleue PPRI)", pct: -0.08 };
-    return { zone: "faible", label: "Zone inondable — risque faible (PPRI)", pct: -0.03 };
-  } catch {
-    return null;
-  }
-}
 
 // ---- Estimation handler ---------------------------------------------------
 
@@ -580,11 +557,8 @@ export async function POST(req) {
     // Auto-detect conjoncture — commune first, dept fallback
     const conjoncture = getConjoncture(dept, insee);
 
-    // Nearby amenities + flood zone check (parallel, best-effort)
-    const [places, floodZone] = await Promise.all([
-      nearbyPlaces(lat, lon),
-      checkFloodZone(lat, lon),
-    ]);
+    // Nearby amenities (best-effort)
+    const places = await nearbyPlaces(lat, lon);
     const transit = places ? (places.rail || { dist: null, name: null }) : null;
 
     // 5) Qualitative adjustments ---------------------------------------------
@@ -641,9 +615,6 @@ export async function POST(req) {
     const occupLbl = { bail_cours: "Bien occupe — bail en cours (-15%)", loi_1948: "Bien occupe — locataire protege loi 1948 (-25%)" };
     if (occupMap[occupation]) add(occupLbl[occupation], occupMap[occupation]);
 
-    // zone inondable (PPRI) — applique si detectee
-    if (floodZone && floodZone.pct !== 0) add(floodZone.label, floodZone.pct);
-
     // conjoncture auto-detectee (Notaires de France / Meilleurs Agents)
     if (conjoncture.pct !== 0) add(`Conjoncture locale — ${conjoncture.label}`, conjoncture.pct);
 
@@ -674,7 +645,6 @@ export async function POST(req) {
       adjustments: adj,
       confidence,
       transit,
-      floodZone: floodZone || null,
       conjoncture,
       amenities: places ? places.list : null,
       yearsUsed,
