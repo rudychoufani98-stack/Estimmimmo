@@ -428,9 +428,6 @@ const CONJONCTURE_DEPT = {
   // Auvergne / Massif Central
   "63":  { pct:0,      label:"Puy-de-Dôme — Clermont stable" },
 };
-function getConjoncture(dept) {
-  return CONJONCTURE_DEPT[dept] || { pct:0, label:`Département ${dept} — marché neutre (données locales non disponibles)` };
-}
 
 
 // ---- Estimation handler ---------------------------------------------------
