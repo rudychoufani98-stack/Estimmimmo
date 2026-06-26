@@ -986,7 +986,7 @@ function Estimation({ onEstimate, onGoToCapacite }) {
         <div className="card">
           <h2>Resultat de l'estimation</h2>
           {!res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables reels s'afficheront ici.</div>}
-          {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3b82f6',borderColor:'#2a3650'}}/><br/>Recuperation des transactions DVF...</div>}
+          {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3a7bd5',borderColor:'#e3e9f2'}}/><br/>Recuperation des transactions DVF...</div>}
           {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} onGoToCapacite={onGoToCapacite} />}
         </div>
       </div>
