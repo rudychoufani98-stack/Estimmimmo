@@ -1230,6 +1230,50 @@ function Rentabilite({ estValue, estCity }) {
   const mCashflowAT = cashflowAfterTax / 12;
   const yieldNetNet = totalCost > 0 ? ((annualRentNet - annualOperating - incomeTax) / totalCost) * 100 : 0;
 
+  // ---- comparateur des 4 regimes fiscaux ----
+  const tmi = v("tmi");
+  const chargesHorsInterets = nonRecovCopro + v("taxe") + v("insurancePNO") + mgmtCost; // hors interets
+  // Deficit foncier (location nue, reel) : les loyers absorbent d'abord les interets.
+  const rentAfterInterest = annualRentNet - annualInterest - loanInsAnnual;
+  const reelResult = annualRentNet - deductible; // resultat foncier
+  let deficitImputable = 0, deficitReporte = 0;
+  if (reelResult < 0) {
+    const deficit = -reelResult;
+    // part hors interets imputable sur revenu global (plafond 10 700 EUR), le reste reporte
+    const otherPart = rentAfterInterest >= 0 ? deficit : chargesHorsInterets;
+    deficitImputable = Math.min(Math.max(0, otherPart), 10700);
+    deficitReporte = deficit - deficitImputable;
+  }
+  const regimes = [
+    {
+      key: "microfoncier", label: "Nu — Micro-foncier", abatt: "−30%",
+      base: annualRentGross * 0.7, tax: annualRentGross * 0.7 * taxRate,
+      eligible: annualRentGross <= 15000, interest: false,
+    },
+    {
+      key: "reel", label: "Nu — Réel", abatt: "charges + déficit",
+      base: Math.max(0, reelResult),
+      // impot foncier (0 si deficit) MOINS l'economie d'impot du deficit imputable (a la TMI)
+      tax: Math.max(0, reelResult) * taxRate - deficitImputable * tmi,
+      eligible: true, interest: true, deficitImputable, deficitReporte,
+    },
+    {
+      key: "microbic", label: "Meublé — Micro-BIC", abatt: "−50%",
+      base: annualRentGross * 0.5, tax: annualRentGross * 0.5 * taxRate,
+      eligible: annualRentGross <= 77700, interest: false,
+    },
+    {
+      key: "lmnp", label: "Meublé — LMNP réel", abatt: "charges + amortissement",
+      base: Math.max(0, annualRentNet - deductible - amort),
+      tax: Math.max(0, annualRentNet - deductible - amort) * taxRate,
+      eligible: true, interest: true,
+    },
+  ];
+  const bestRegime = regimes.reduce((a, b) => (b.tax < a.tax ? b : a));
+  // economie d'impot grace aux interets (regimes au reel) : impot sans vs avec deduction des interets
+  const taxReelSansInterets = Math.max(0, annualRentNet - (deductible - annualInterest - loanInsAnnual)) * taxRate;
+  const interestSaving = Math.max(0, taxReelSansInterets - Math.max(0, reelResult) * taxRate + deficitImputable * tmi);
+
   const yClass = (y) => (y >= 5 ? "g" : y >= 3 ? "w" : "b");
   const cClass = (x) => (x >= 0 ? "g" : "b");
 
@@ -1431,6 +1475,38 @@ function Rentabilite({ estValue, estCity }) {
             <div className="kpi"><div className="k">Cashflow / mois (ap. impot)</div><div className={"v " + cClass(mCashflowAT)}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} EUR</div></div>
             <div className="kpi"><div className="k">Impot / mois</div><div className="v w">{euro0(incomeTax / 12)} EUR</div></div>
           </div>
+
+          <div className="section-t">Comparateur des 4 regimes fiscaux</div>
+          <div className="tbl-scroll" style={{ maxHeight: "none" }}>
+            <table>
+              <thead>
+                <tr><th>Regime</th><th>Deduction</th><th className="num">Base / an</th><th className="num">Impot / an</th></tr>
+              </thead>
+              <tbody>
+                {regimes.map((rg) => (
+                  <tr key={rg.key} style={rg.key === bestRegime.key ? { background: "rgba(34,197,94,.12)" } : undefined}>
+                    <td>{rg.key === bestRegime.key ? "★ " : ""}{rg.label}{!rg.eligible ? <span className="neg" style={{ fontSize: 11 }}> (seuil dépassé)</span> : ""}</td>
+                    <td style={{ fontSize: 12, color: "var(--muted)" }}>{rg.abatt}</td>
+                    <td className="num">{euro0(rg.base)}</td>
+                    <td className={"num " + (rg.tax <= 0 ? "pos" : "neg")}>{rg.tax < 0 ? "+ " + euro0(-rg.tax) : euro0(rg.tax)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="badge g" style={{ display: "block", marginTop: 10 }}>
+            ★ Regime optimal : <b>{bestRegime.label}</b> &middot; impot {bestRegime.tax <= 0 ? "nul (voire economie de " + euro(-bestRegime.tax) + ")" : euro(bestRegime.tax) + "/an"}
+            {bestRegime.tax < incomeTax && <> &middot; soit {euro(incomeTax - bestRegime.tax)}/an de moins que votre choix actuel</>}
+          </div>
+
+          {interestSaving > 0 && (
+            <div className="line-items" style={{ marginTop: 10 }}>
+              <div className="li"><span className="lbl">Economie d'impot grace aux interets d'emprunt (au reel)</span><span className="pos">{euro(interestSaving)}/an</span></div>
+              {deficitImputable > 0 && <div className="li"><span className="lbl">Deficit foncier imputable sur revenu global</span><span className="pos">{euro(deficitImputable)}</span></div>}
+              {deficitReporte > 0 && <div className="li"><span className="lbl">Deficit reporte (10 ans, sur revenus fonciers)</span><span>{euro(deficitReporte)}</span></div>}
+            </div>
+          )}
+          <p className="hint" style={{ marginTop: 8 }}>Les interets ne sont deductibles qu'au reel (nu ou LMNP), jamais en micro ni sur une residence principale. Deduire 1 EUR d'interet economise votre TMI, pas 1 EUR : ca allege le cout, ne le rend pas gratuit. Estimation simplifiee, a valider avec un comptable.</p>
 
           <div className={"badge " + vClass}>{verdict}</div>
         </div>
