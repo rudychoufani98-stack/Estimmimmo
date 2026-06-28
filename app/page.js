@@ -2767,7 +2767,6 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
             <p className="hint">Les revenus Airbnb sont estimatifs et dépendent de la qualité de l'annonce, des avis, et d'une gestion active du calendrier.</p>
           </div>
         )}
-        </div>
         </>)}
       </div>
     </div>
