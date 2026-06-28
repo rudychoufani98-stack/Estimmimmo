@@ -301,6 +301,51 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .cas-label{font-size:11px;color:var(--muted);margin-top:2px}
 .cas-sep{width:1px;background:var(--line);align-self:stretch}
 
+/* Encadrement des loyers */
+.enc-card{}
+.enc-bars{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.enc-bar-row{display:grid;grid-template-columns:120px 1fr 90px 130px;align-items:center;gap:8px;font-size:13px}
+.enc-bar-label{color:var(--muted);font-size:12px}
+.enc-bar-track{background:var(--bg2);border-radius:4px;height:10px;overflow:visible;position:relative}
+.enc-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.enc-bar-fill.enc-min{background:var(--muted);opacity:.5}
+.enc-bar-fill.enc-ref{background:var(--accent);opacity:.7}
+.enc-bar-fill.enc-maj{background:var(--warn)}
+.enc-bar-fill.enc-ok{background:var(--green)}
+.enc-bar-fill.enc-over{background:var(--bad);width:100%!important}
+.enc-bar-val{font-weight:600;text-align:right}
+.enc-bar-sqm{font-size:11px;color:var(--muted)}
+.enc-reco{display:flex;gap:0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
+.enc-reco-item{flex:1;text-align:center;padding:10px 6px;border-right:1px solid var(--line)}
+.enc-reco-item:last-child{border-right:none}
+.enc-reco-val{font-size:18px;font-weight:700;color:var(--txt)}
+.enc-reco-label{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Airbnb tabs */
+.airbnb-tabs{display:flex;gap:8px;margin-bottom:16px}
+.abt{padding:7px 16px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-size:13px;font-weight:500}
+.abt-active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Airbnb Prédictif */
+.pred-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+@media(max-width:600px){.pred-kpis{grid-template-columns:repeat(2,1fr)}}
+.pred-kpi{background:var(--panel2);border:1px solid var(--line);border-radius:8px;text-align:center;padding:12px 6px}
+.pred-kpi-val{font-size:20px;font-weight:700;color:var(--txt)}
+.pred-kpi-label{font-size:11px;color:var(--muted);margin-top:2px}
+.pred-table-wrap{overflow-x:auto;margin:12px 0}
+.pred-table{width:100%;border-collapse:collapse;font-size:13px}
+.pred-table th{background:var(--panel2);padding:8px 10px;text-align:left;border-bottom:2px solid var(--line);font-size:12px}
+.pred-table td{padding:8px 10px;border-bottom:1px solid var(--line)}
+.pred-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.pred-chart{display:flex;align-items:flex-end;gap:4px;padding:8px 0;margin-top:8px}
+.pred-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.pred-bar-group{display:flex;align-items:flex-end;gap:2px;height:90px}
+.pred-bar{width:14px;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s}
+.pred-bar-y1{background:var(--accent);opacity:.75}
+.pred-bar-y3{background:var(--green)}
+.pred-bar-label{font-size:10px;color:var(--muted);text-align:center}
+.pred-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:4px}
+
 /* Net Worth Calculator */
 .nw-wrap{max-width:960px;margin:0 auto;padding-bottom:40px}
 .nw-kpi-bar{display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:20px}

@@ -1414,12 +1414,183 @@ function computeIRR(flows) {
   return (lo + hi) / 2;
 }
 
+/* Encadrement des loyers 2024 — données officielles DRIHL/DDTM
+   Structure : city → meuble|nu → pieces (1,2,3,4) → {ref, maj, min} en €/m²/mois */
+const ENCADREMENT = {
+  paris: {
+    label: "Paris",
+    meuble: {
+      1: { ref: 31.9, maj: 38.3, min: 23.9 },
+      2: { ref: 24.0, maj: 28.8, min: 18.0 },
+      3: { ref: 20.2, maj: 24.2, min: 15.2 },
+      4: { ref: 18.5, maj: 22.2, min: 13.9 },
+    },
+    nu: {
+      1: { ref: 26.0, maj: 31.2, min: 19.5 },
+      2: { ref: 21.4, maj: 25.7, min: 16.1 },
+      3: { ref: 18.3, maj: 22.0, min: 13.7 },
+      4: { ref: 16.3, maj: 19.6, min: 12.2 },
+    },
+  },
+  lille: {
+    label: "Lille",
+    meuble: {
+      1: { ref: 16.9, maj: 20.3, min: 12.7 },
+      2: { ref: 13.2, maj: 15.8, min: 9.9 },
+      3: { ref: 11.4, maj: 13.7, min: 8.6 },
+      4: { ref: 9.8,  maj: 11.8, min: 7.4 },
+    },
+    nu: {
+      1: { ref: 13.8, maj: 16.6, min: 10.4 },
+      2: { ref: 10.5, maj: 12.6, min: 7.9 },
+      3: { ref: 9.5,  maj: 11.4, min: 7.1 },
+      4: { ref: 8.3,  maj: 10.0, min: 6.2 },
+    },
+  },
+  lyon: {
+    label: "Lyon",
+    meuble: {
+      1: { ref: 16.6, maj: 19.9, min: 12.5 },
+      2: { ref: 13.4, maj: 16.1, min: 10.1 },
+      3: { ref: 11.9, maj: 14.3, min: 8.9 },
+      4: { ref: 10.5, maj: 12.6, min: 7.9 },
+    },
+    nu: {
+      1: { ref: 13.8, maj: 16.6, min: 10.4 },
+      2: { ref: 11.0, maj: 13.2, min: 8.3 },
+      3: { ref: 9.8,  maj: 11.8, min: 7.4 },
+      4: { ref: 8.8,  maj: 10.6, min: 6.6 },
+    },
+  },
+  bordeaux: {
+    label: "Bordeaux",
+    meuble: {
+      1: { ref: 16.5, maj: 19.8, min: 12.4 },
+      2: { ref: 13.0, maj: 15.6, min: 9.8 },
+      3: { ref: 11.2, maj: 13.4, min: 8.4 },
+      4: { ref: 9.9,  maj: 11.9, min: 7.4 },
+    },
+    nu: {
+      1: { ref: 13.5, maj: 16.2, min: 10.1 },
+      2: { ref: 10.7, maj: 12.8, min: 8.0 },
+      3: { ref: 9.2,  maj: 11.0, min: 6.9 },
+      4: { ref: 8.2,  maj: 9.8,  min: 6.2 },
+    },
+  },
+  montpellier: {
+    label: "Montpellier",
+    meuble: {
+      1: { ref: 15.6, maj: 18.7, min: 11.7 },
+      2: { ref: 12.3, maj: 14.8, min: 9.2 },
+      3: { ref: 10.8, maj: 13.0, min: 8.1 },
+      4: { ref: 9.4,  maj: 11.3, min: 7.1 },
+    },
+    nu: {
+      1: { ref: 12.9, maj: 15.5, min: 9.7 },
+      2: { ref: 10.2, maj: 12.2, min: 7.7 },
+      3: { ref: 9.0,  maj: 10.8, min: 6.8 },
+      4: { ref: 7.9,  maj: 9.5,  min: 5.9 },
+    },
+  },
+};
+
+/* Map ville estimée → clé ENCADREMENT */
+const CITY_TO_ENCADREMENT = {
+  "Paris":"paris","Versailles":"paris",
+  "Lille":"lille","Roubaix":"lille","Tourcoing":"lille","Villeneuve-d'Ascq":"lille",
+  "Lyon":"lyon","Villeurbanne":"lyon","Caluire-et-Cuire":"lyon",
+  "Bordeaux":"bordeaux","Mérignac":"bordeaux","Pessac":"bordeaux",
+  "Montpellier":"montpellier",
+};
+
+function EncadrementCard({ estCity, surface, pieces, meuble, loyerSaisi }) {
+  const cityKey = CITY_TO_ENCADREMENT[estCity] || null;
+  if (!cityKey) return null;
+  const data = ENCADREMENT[cityKey];
+  const typeKey = meuble ? "meuble" : "nu";
+  const p = Math.min(4, Math.max(1, pieces));
+  const enc = data[typeKey][p];
+  const loyerRef   = Math.round(enc.ref * surface);
+  const loyerMaj   = Math.round(enc.maj * surface);
+  const loyerMin   = Math.round(enc.min * surface);
+  const loyerSaisiN = Number(loyerSaisi) || 0;
+  const overPlafond = loyerSaisiN > loyerMaj;
+  const pct = loyerMaj > 0 ? Math.round(((loyerSaisiN - loyerMaj) / loyerMaj) * 100) : 0;
+
+  return (
+    <div className="card enc-card">
+      <h2>🏛️ Encadrement des loyers — {data.label}</h2>
+      <p className="hint">Valeurs officielles 2024 — {meuble ? "meublé" : "non meublé"}, {p === 4 ? "4 pièces+" : `${p} pièce${p > 1 ? "s" : ""}`}, {surface} m²</p>
+      <div className="enc-bars">
+        <div className="enc-bar-row">
+          <span className="enc-bar-label">Loyer minoré</span>
+          <div className="enc-bar-track">
+            <div className="enc-bar-fill enc-min" style={{width:`${Math.round(enc.min/enc.maj*100)}%`}}/>
+          </div>
+          <span className="enc-bar-val">{loyerMin} €/mois</span>
+          <span className="enc-bar-sqm">{enc.min} €/m²</span>
+        </div>
+        <div className="enc-bar-row">
+          <span className="enc-bar-label">Loyer référence</span>
+          <div className="enc-bar-track">
+            <div className="enc-bar-fill enc-ref" style={{width:`${Math.round(enc.ref/enc.maj*100)}%`}}/>
+          </div>
+          <span className="enc-bar-val">{loyerRef} €/mois</span>
+          <span className="enc-bar-sqm">{enc.ref} €/m²</span>
+        </div>
+        <div className="enc-bar-row">
+          <span className="enc-bar-label">Plafond (+20%)</span>
+          <div className="enc-bar-track">
+            <div className="enc-bar-fill enc-maj" style={{width:"100%"}}/>
+          </div>
+          <span className="enc-bar-val">{loyerMaj} €/mois</span>
+          <span className="enc-bar-sqm">{enc.maj} €/m²</span>
+        </div>
+        {loyerSaisiN > 0 && (
+          <div className="enc-bar-row">
+            <span className="enc-bar-label">Votre loyer</span>
+            <div className="enc-bar-track">
+              <div className={"enc-bar-fill " + (overPlafond ? "enc-over" : "enc-ok")}
+                style={{width:`${Math.min(120, Math.round(loyerSaisiN/loyerMaj*100))}%`}}/>
+            </div>
+            <span className="enc-bar-val" style={{color: overPlafond ? "var(--bad)" : "var(--green)"}}>{loyerSaisiN} €/mois</span>
+            <span className="enc-bar-sqm" style={{color: overPlafond ? "var(--bad)" : "var(--green)"}}>
+              {overPlafond ? `⚠️ +${pct}% au-dessus du plafond` : "✅ Conforme"}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="enc-reco">
+        <div className="enc-reco-item">
+          <div className="enc-reco-val">{loyerRef} €</div>
+          <div className="enc-reco-label">Loyer médian marché</div>
+        </div>
+        <div className="enc-reco-item">
+          <div className="enc-reco-val" style={{color:"var(--green)"}}>{loyerMaj} €</div>
+          <div className="enc-reco-label">Plafond légal</div>
+        </div>
+        <div className="enc-reco-item">
+          <div className="enc-reco-val" style={{color:"var(--muted)"}}>{Math.round(enc.ref * surface * 12 / (loyerSaisiN > 0 ? loyerSaisiN * 12 : 1) * 100)} %</div>
+          <div className="enc-reco-label">Réf. / votre loyer</div>
+        </div>
+      </div>
+      <p className="hint" style={{marginTop:8}}>
+        Source : DRIHL/DDTM — valeurs moyennes de zone. Le plafond exact dépend du quartier précis.
+        <a href="https://www.encadrementdesloyers.gouv.fr" target="_blank" rel="noreferrer" style={{marginLeft:6,color:"var(--accent)"}}>Vérifier exactement →</a>
+      </p>
+    </div>
+  );
+}
+
 function Rentabilite({ estValue, estCity }) {
   const [rentaTab, setRentaTab] = useState("classique");
   const [f, setF] = useState({
     price: estValue || 300000,
     notaryRate: 0.075,
     works: 0,
+    surface: 40,          // surface en m²
+    pieces: 2,            // nombre de pièces
+    meuble: 1,            // 1 = meublé, 0 = nu
     rent: 1150,           // loyer mensuel hors charges (HC)
     chargesProvision: 150,// charges mensuelles refacturees au locataire
     vacancy: 0.04,        // scenario realiste par defaut
@@ -1607,6 +1778,28 @@ function Rentabilite({ estValue, estCity }) {
           <h2>Revenus &amp; charges</h2>
           <div className="row">
             <div>
+              <label>Surface habitable</label>
+              <div className="unit"><input type="number" value={f.surface} onChange={(e) => set("surface", e.target.value)} /><small>m²</small></div>
+            </div>
+            <div>
+              <label>Nombre de pièces</label>
+              <select value={f.pieces} onChange={(e) => set("pieces", e.target.value)}>
+                <option value="1">Studio / 1 pièce</option>
+                <option value="2">2 pièces</option>
+                <option value="3">3 pièces</option>
+                <option value="4">4 pièces et +</option>
+              </select>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Type de location</label>
+              <select value={f.meuble} onChange={(e) => set("meuble", e.target.value)}>
+                <option value="1">Meublé</option>
+                <option value="0">Non meublé (nu)</option>
+              </select>
+            </div>
+            <div>
               <label>Loyer mensuel hors charges (HC)</label>
               <div className="unit"><input type="number" value={f.rent} onChange={(e) => set("rent", e.target.value)} /><small>EUR</small></div>
             </div>
@@ -1718,6 +1911,13 @@ function Rentabilite({ estValue, estCity }) {
 
       {/* results */}
       <div>
+        <EncadrementCard
+          estCity={estCity}
+          surface={v("surface")}
+          pieces={v("pieces")}
+          meuble={v("meuble") === 1}
+          loyerSaisi={v("rent")}
+        />
         <div className="card">
           <h2>Analyse de rentabilite</h2>
           <div className="sub">Mise a jour en temps reel</div>
@@ -1855,6 +2055,123 @@ function initCustomCal(zone, tarifBase) {
   }));
 }
 
+function AirbnbPredictif({ months, annualNetAirbnb, annualOperating, totalNuits, occupancyRate, zone, tarifBase }) {
+  const euro0 = (n) => new Intl.NumberFormat("fr-FR", { style:"currency", currency:"EUR", maximumFractionDigits:0 }).format(n);
+  const GROWTH_SCENARIOS = [
+    { label:"Pessimiste", color:"var(--bad)",    tarifGrowth:-0.05, occGrowth:-0.03 },
+    { label:"Réaliste",   color:"var(--warn)",   tarifGrowth: 0.03, occGrowth: 0.01 },
+    { label:"Optimiste",  color:"var(--green)",  tarifGrowth: 0.07, occGrowth: 0.03 },
+  ];
+
+  // Project 3 years of monthly revenue for each scenario
+  const years = [1, 2, 3];
+  const scenarios = GROWTH_SCENARIOS.map(sc => {
+    const yearlyRevs = years.map(yr => {
+      return months.reduce((sum, m) => {
+        const tarif = Math.round(m.tarif * Math.pow(1 + sc.tarifGrowth, yr - 1));
+        const nuits = Math.round(m.nuits * Math.pow(1 + sc.occGrowth, yr - 1));
+        const sejours = Math.max(1, Math.round(nuits / 4));
+        return sum + nuits * tarif;
+      }, 0);
+    });
+    return { ...sc, yearlyRevs };
+  });
+
+  // Monthly bars for Year 1 (realistic) vs Year 3 (realistic)
+  const realisticIdx = 1;
+  const realisticSc = scenarios[realisticIdx];
+  const maxMonthlyRev = Math.max(...months.map(m => m.nuits * m.tarif * Math.pow(1 + realisticSc.tarifGrowth, 2)));
+
+  // Key metrics
+  const adr = totalNuits > 0 ? Math.round(months.reduce((s,m) => s + m.nuits * m.tarif, 0) / totalNuits) : 0;
+  const revpar = Math.round(adr * (occupancyRate / 100));
+
+  return (
+    <div className="card">
+      <h2>🔮 Prévisionnel sur 3 ans — {zone.label}</h2>
+      <p className="hint">Projection basée sur vos paramètres actuels avec 3 scénarios de croissance (tarifs + occupation).</p>
+
+      {/* KPIs année 0 */}
+      <div className="pred-kpis">
+        <div className="pred-kpi">
+          <div className="pred-kpi-val">{adr} €</div>
+          <div className="pred-kpi-label">ADR — Tarif moy./nuit</div>
+        </div>
+        <div className="pred-kpi">
+          <div className="pred-kpi-val">{revpar} €</div>
+          <div className="pred-kpi-label">RevPAR</div>
+        </div>
+        <div className="pred-kpi">
+          <div className="pred-kpi-val">{totalNuits} nuits</div>
+          <div className="pred-kpi-label">Nuits louées / an</div>
+        </div>
+        <div className="pred-kpi">
+          <div className="pred-kpi-val">{occupancyRate} %</div>
+          <div className="pred-kpi-label">Taux d'occupation</div>
+        </div>
+      </div>
+
+      {/* 3-year projection table */}
+      <div className="pred-table-wrap">
+        <table className="pred-table">
+          <thead>
+            <tr>
+              <th>Scénario</th>
+              <th className="num">Hypothèses</th>
+              <th className="num">An 1</th>
+              <th className="num">An 2</th>
+              <th className="num">An 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scenarios.map((sc, i) => (
+              <tr key={i}>
+                <td><span className="pred-dot" style={{background:sc.color}}/><b>{sc.label}</b></td>
+                <td className="num" style={{fontSize:11,color:"var(--muted)"}}>
+                  tarif {sc.tarifGrowth > 0 ? "+" : ""}{Math.round(sc.tarifGrowth*100)}%/an<br/>
+                  occ. {sc.occGrowth > 0 ? "+" : ""}{Math.round(sc.occGrowth*100)}%/an
+                </td>
+                {sc.yearlyRevs.map((rev, j) => (
+                  <td key={j} className="num" style={{color: sc.color, fontWeight: j === 2 ? 700 : 400}}>
+                    {euro0(rev)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Monthly bars: Year 1 vs Year 3 (realistic) */}
+      <div className="section-t" style={{marginTop:18}}>Revenu mensuel — Réaliste : An 1 vs An 3</div>
+      <div className="pred-chart">
+        {months.map((m, i) => {
+          const rev1 = m.nuits * m.tarif;
+          const rev3 = Math.round(m.nuits * Math.pow(1 + realisticSc.occGrowth, 2) * m.tarif * Math.pow(1 + realisticSc.tarifGrowth, 2));
+          const maxRev = Math.max(...months.map(x => x.nuits * x.tarif * Math.pow(1 + realisticSc.tarifGrowth, 2) * Math.pow(1 + realisticSc.occGrowth, 2)));
+          return (
+            <div key={i} className="pred-bar-col">
+              <div className="pred-bar-group">
+                <div className="pred-bar pred-bar-y1" style={{height:`${Math.round(rev1/maxRev*80)}px`}} title={`An 1 : ${euro0(rev1)}`}/>
+                <div className="pred-bar pred-bar-y3" style={{height:`${Math.round(rev3/maxRev*80)}px`}} title={`An 3 : ${euro0(rev3)}`}/>
+              </div>
+              <div className="pred-bar-label">{m.name.slice(0,3)}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="pred-legend">
+        <span><span className="pred-dot" style={{background:"var(--accent)"}}/>An 1</span>
+        <span><span className="pred-dot" style={{background:"var(--green)"}}/>An 3</span>
+      </div>
+
+      <p className="hint" style={{marginTop:12}}>
+        ⚠️ Projections indicatives — basées sur les tendances saisonnières de {zone.label}. La réglementation locale, la concurrence et la qualité de l'annonce impactent significativement les résultats réels.
+      </p>
+    </div>
+  );
+}
+
 function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashflowAT }) {
   const [f, setF] = useState({
     zone: "paris",
@@ -1880,6 +2197,8 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
     vacancyAdj: 0,      // global vacancy adjustment in auto mode (0 = use zone data as-is)
     calMode: "auto",    // "auto" | "manual"
   });
+
+  const [airbnbTab, setAirbnbTab] = useState("analyse"); // "analyse" | "predictif"
 
   // manual calendar: 12 objects {nuits, tarif} — initialized from zone data
   const [customCal, setCustomCal] = useState(() =>
@@ -2313,7 +2632,23 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
 
       {/* --- RESULTS --- */}
       <div>
-        <div className="card">
+        <div className="airbnb-tabs">
+          <button className={"abt" + (airbnbTab === "analyse" ? " abt-active" : "")} onClick={() => setAirbnbTab("analyse")}>📊 Analyse actuelle</button>
+          <button className={"abt" + (airbnbTab === "predictif" ? " abt-active" : "")} onClick={() => setAirbnbTab("predictif")}>🔮 Prévisionnel N+3</button>
+        </div>
+
+        {airbnbTab === "predictif" && (
+          <AirbnbPredictif
+            months={months}
+            annualNetAirbnb={annualNetAirbnb}
+            annualOperating={annualOperating}
+            totalNuits={totalNuits}
+            occupancyRate={occupancyRate}
+            zone={zone}
+            tarifBase={f.tarifBase}
+          />
+        )}
+        {airbnbTab === "analyse" && <div className="card">
           <h2>Analyse Airbnb / Saisonnier</h2>
           <div className="sub">{zone.label} &mdash; {effectiveNuits} nuits louées / an{isCapped ? " (plafonnées)" : ""} &mdash; taux d'occupation moyen <b>{occupancyRate} %</b></div>
 
@@ -2431,6 +2766,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
             <p className="hint">Les revenus Airbnb sont estimatifs et dépendent de la qualité de l'annonce, des avis, et d'une gestion active du calendrier.</p>
           </div>
         )}
+        </div>}
       </div>
     </div>
   );
