@@ -2648,7 +2648,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
             tarifBase={f.tarifBase}
           />
         )}
-        {airbnbTab === "analyse" && (
+        {airbnbTab === "analyse" && (<>
         <div className="card">
           <h2>Analyse Airbnb / Saisonnier</h2>
           <div className="sub">{zone.label} &mdash; {effectiveNuits} nuits louées / an{isCapped ? " (plafonnées)" : ""} &mdash; taux d'occupation moyen <b>{occupancyRate} %</b></div>
@@ -2768,7 +2768,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
           </div>
         )}
         </div>
-        )}
+        </>)}
       </div>
     </div>
   );
