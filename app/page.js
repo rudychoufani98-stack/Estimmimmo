@@ -684,7 +684,7 @@ export default function Page() {
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
-        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} />}
+        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} />}
         {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
         {tab === "sources" && <Sources />}
         {tab === "networth" && <NetWorthCalculator estValue={estValue} />}
@@ -1582,7 +1582,7 @@ function EncadrementCard({ estCity, surface, pieces, meuble, loyerSaisi }) {
   );
 }
 
-function Rentabilite({ estValue, estCity }) {
+function Rentabilite({ estValue, estCity, estCityRaw }) {
   const [rentaTab, setRentaTab] = useState("classique");
   const [f, setF] = useState({
     price: estValue || 300000,
@@ -1912,7 +1912,7 @@ function Rentabilite({ estValue, estCity }) {
       {/* results */}
       <div>
         <EncadrementCard
-          estCity={estCity}
+          estCity={estCityRaw}
           surface={v("surface")}
           pieces={v("pieces")}
           meuble={v("meuble") === 1}
