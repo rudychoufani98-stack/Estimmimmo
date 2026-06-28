@@ -1620,6 +1620,13 @@ function Rentabilite({ estValue, estCity }) {
 }
 
 /* ======================= AIRBNB / SAISONNIER ============================= */
+function initCustomCal(zone, tarifBase) {
+  return zone.saisons.map((s, i) => ({
+    nuits: Math.round(DAYS_IN_MONTH[i] * s.taux),
+    tarif: Math.round(tarifBase * s.mult),
+  }));
+}
+
 function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashflowAT }) {
   const [f, setF] = useState({
     zone: "paris",
@@ -1642,7 +1649,14 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
     chargesCopro: 2400,
     tmi: 0.3,
     regime: "microbic",
+    vacancyAdj: 0,      // global vacancy adjustment in auto mode (0 = use zone data as-is)
+    calMode: "auto",    // "auto" | "manual"
   });
+
+  // manual calendar: 12 objects {nuits, tarif} — initialized from zone data
+  const [customCal, setCustomCal] = useState(() =>
+    initCustomCal(AIRBNB_ZONES["paris"], 120)
+  );
 
   const [synced, setSynced] = useState(false);
   if (!synced && estValue && f.price !== estValue) {
@@ -1654,11 +1668,37 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
   const [citySynced, setCitySynced] = useState(false);
   if (!citySynced && estCity && AIRBNB_ZONES[estCity] && f.zone !== estCity) {
     setF((x) => ({ ...x, zone: estCity }));
+    setCustomCal(initCustomCal(AIRBNB_ZONES[estCity], f.tarifBase));
     setCitySynced(true);
   }
 
   const setV = (k, v) => setF((s) => ({ ...s, [k]: isNaN(Number(v)) || v === "" ? v : Number(v) }));
   const setS = (k, v) => setF((s) => ({ ...s, [k]: v }));
+
+  // when zone changes in auto mode, reset custom cal
+  function handleZoneChange(newZone) {
+    setS("zone", newZone);
+    setCustomCal(initCustomCal(AIRBNB_ZONES[newZone], f.tarifBase));
+  }
+
+  // when switching to manual, pre-fill with current auto data
+  function handleCalMode(mode) {
+    if (mode === "manual") {
+      const zone = AIRBNB_ZONES[f.zone];
+      const vacAdj = 1 - (f.vacancyAdj / 100);
+      setCustomCal(zone.saisons.map((s, i) => ({
+        nuits: Math.max(0, Math.round(DAYS_IN_MONTH[i] * s.taux * vacAdj)),
+        tarif: Math.round(f.tarifBase * s.mult),
+      })));
+    }
+    setS("calMode", mode);
+  }
+
+  function updateCustomMonth(i, field, val) {
+    setCustomCal((prev) => prev.map((m, idx) =>
+      idx === i ? { ...m, [field]: Math.max(0, Number(val) || 0) } : m
+    ));
+  }
 
   const zone = AIRBNB_ZONES[f.zone];
   const loi = zone.loi;
@@ -1666,15 +1706,23 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
   // Monthly revenue simulation
   const months = zone.saisons.map((s, i) => {
     const days = DAYS_IN_MONTH[i];
-    const nuits = Math.round(days * s.taux);
-    const tarif = Math.round(f.tarifBase * s.mult);
+    let nuits, tarif;
+    if (f.calMode === "manual") {
+      nuits = Math.min(customCal[i].nuits, days);
+      tarif = customCal[i].tarif;
+    } else {
+      const vacAdj = 1 - (f.vacancyAdj / 100);
+      nuits = Math.round(days * s.taux * vacAdj);
+      tarif = Math.round(f.tarifBase * s.mult);
+    }
     const sejours = Math.max(1, Math.round(nuits / Math.max(1, f.avgStay)));
-    const revenueGross = nuits * tarif;
+    const revenueGross = nuits * tarif + sejours * f.cleaningFee;
     const platformCut = revenueGross * f.platformFee;
     const netHost = revenueGross - platformCut;
+    const taux = nuits / days;
     return {
-      name: MONTH_NAMES[i], days, nuits, tarif, sejours, revenueGross, platformCut, netHost,
-      isHaute: s.mult >= 1.2, isMoyenne: s.mult >= 1.0 && s.mult < 1.2, taux: s.taux,
+      name: MONTH_NAMES[i], days, nuits, tarif, sejours, revenueGross, platformCut, netHost, taux,
+      isHaute: taux >= 0.75, isMoyenne: taux >= 0.45 && taux < 0.75,
     };
   });
 
@@ -1682,6 +1730,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
   const annualRevenueGross = months.reduce((a, m) => a + m.revenueGross, 0);
   const annualPlatformFee = months.reduce((a, m) => a + m.platformCut, 0);
   const annualNetAirbnb = months.reduce((a, m) => a + m.netHost, 0);
+  const occupancyRate = Math.round((totalNuits / 365) * 100);
 
   const isCapped = f.isPrimary && loi.limite && totalNuits > loi.limite;
   const ratio = isCapped ? loi.limite / totalNuits : 1;
@@ -1689,9 +1738,9 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
   const effectiveNuits = isCapped ? loi.limite : totalNuits;
 
   const annualMgmt = annualRevenueCapped * f.mgmt;
-  const annualInsurance = f.insuranceAirbnb;
-  const annualCopro = f.chargesCopro;
-  const annualTaxe = f.taxe;
+  const annualInsurance = Number(f.insuranceAirbnb);
+  const annualCopro = Number(f.chargesCopro);
+  const annualTaxe = Number(f.taxe);
   const annualOperating = annualMgmt + annualInsurance + annualCopro + annualTaxe;
 
   const price = Number(f.price) || 0;
@@ -1726,7 +1775,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
         <div className="card">
           <h2>Zone &amp; type de location</h2>
           <label>Ville / Région</label>
-          <select value={f.zone} onChange={(e) => setS("zone", e.target.value)}>
+          <select value={f.zone} onChange={(e) => handleZoneChange(e.target.value)}>
             <optgroup label="── Paris & Île-de-France">
               <option value="paris">Paris</option>
               <option value="versailles">Versailles & Yvelines</option>
@@ -1799,7 +1848,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
           <h2>Tarification &amp; séjours</h2>
           <div className="row">
             <div>
-              <label>Tarif nuit de base (basse saison)</label>
+              <label>Tarif nuit de base</label>
               <div className="unit"><input type="number" value={f.tarifBase} onChange={(e) => setV("tarifBase", e.target.value)} /><small>EUR</small></div>
             </div>
             <div>
@@ -1839,24 +1888,99 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
         </div>
 
         <div className="card">
-          <h2>Calendrier saisonnier — {zone.label}</h2>
-          <div className="sub">Taux d'occupation et tarif estimés par mois selon la zone</div>
-          <div className="season-grid">
-            {months.map((m, i) => (
-              <div key={i} className={"season-cell " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
-                <div className="sc-month">{m.name}</div>
-                <div className="sc-tarif">{m.tarif}€</div>
-                <div className="sc-taux">{Math.round(m.taux * 100)}%</div>
-                <div className="sc-nuits">{m.nuits}n</div>
+          <h2>Calendrier &amp; occupation — {zone.label}</h2>
+          <div className="cal-mode-toggle">
+            <button className={"cmt" + (f.calMode === "auto" ? " cmt-active" : "")} onClick={() => handleCalMode("auto")}>
+              🤖 Automatique (données {zone.label})
+            </button>
+            <button className={"cmt" + (f.calMode === "manual" ? " cmt-active" : "")} onClick={() => handleCalMode("manual")}>
+              ✏️ Saisie manuelle par mois
+            </button>
+          </div>
+
+          {f.calMode === "auto" && (
+            <>
+              <label style={{marginTop:14,display:"block"}}>
+                Ajustement taux d'occupation global
+                <span className="vacancy-val"> {f.vacancyAdj > 0 ? `-${f.vacancyAdj}` : f.vacancyAdj < 0 ? `+${Math.abs(f.vacancyAdj)}` : "aucun"} %</span>
+              </label>
+              <div className="vacancy-slider-wrap">
+                <span className="vs-label">Optimiste</span>
+                <input type="range" min="-10" max="40" step="1" value={f.vacancyAdj}
+                  onChange={(e) => setV("vacancyAdj", e.target.value)}
+                  className="vacancy-slider" />
+                <span className="vs-label">Prudent</span>
               </div>
-            ))}
-          </div>
-          <div className="season-legend">
-            <span className="sl haute">■ Haute saison</span>
-            <span className="sl moyenne">■ Moyenne</span>
-            <span className="sl basse">■ Basse saison</span>
-          </div>
-          <p className="hint">Tarif = base × multiplicateur saisonnier. Occupation = taux d'occupation estimé par nuit.</p>
+              <div className="season-grid" style={{marginTop:12}}>
+                {months.map((m, i) => (
+                  <div key={i} className={"season-cell " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
+                    <div className="sc-month">{m.name}</div>
+                    <div className="sc-tarif">{m.tarif}€/n</div>
+                    <div className="sc-taux">{Math.round(m.taux * 100)}%</div>
+                    <div className="sc-nuits">{m.nuits}n</div>
+                  </div>
+                ))}
+              </div>
+              <div className="season-legend">
+                <span className="sl haute">■ Haute saison ≥75%</span>
+                <span className="sl moyenne">■ Moyenne 45-75%</span>
+                <span className="sl basse">■ Basse &lt;45%</span>
+              </div>
+            </>
+          )}
+
+          {f.calMode === "manual" && (
+            <>
+              <p className="hint" style={{marginTop:10}}>Saisissez le nombre de nuits louées et le tarif/nuit pour chaque mois. Les frais de ménage s'ajoutent par séjour.</p>
+              <div className="cal-manual-scroll">
+                <table className="cal-manual-table">
+                  <thead>
+                    <tr>
+                      <th>Mois</th>
+                      <th>Jours dispo</th>
+                      <th className="num">Nuits louées</th>
+                      <th className="num">Taux occ.</th>
+                      <th className="num">Tarif/nuit</th>
+                      <th className="num">Revenu brut</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {months.map((m, i) => (
+                      <tr key={i} className={"season-row " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
+                        <td><b>{m.name}</b></td>
+                        <td style={{color:"var(--muted)",fontSize:12}}>{m.days}j</td>
+                        <td>
+                          <input type="number" min="0" max={m.days} value={customCal[i].nuits}
+                            onChange={(e) => updateCustomMonth(i, "nuits", e.target.value)}
+                            className="cal-input" />
+                        </td>
+                        <td className="num" style={{fontSize:12}}>
+                          <span className={"taux-pill " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
+                            {Math.round(m.taux * 100)} %
+                          </span>
+                        </td>
+                        <td>
+                          <input type="number" min="0" value={customCal[i].tarif}
+                            onChange={(e) => updateCustomMonth(i, "tarif", e.target.value)}
+                            className="cal-input" />
+                        </td>
+                        <td className="num"><b>{euro0(m.revenueGross)}</b></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="cal-total-row">
+                      <td colSpan="2"><b>Total</b></td>
+                      <td className="num"><b>{totalNuits} nuits</b></td>
+                      <td className="num"><b>{occupancyRate} %</b></td>
+                      <td></td>
+                      <td className="num"><b>{euro0(annualRevenueGross)}</b></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="card">
@@ -1938,7 +2062,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
       <div>
         <div className="card">
           <h2>Analyse Airbnb / Saisonnier</h2>
-          <div className="sub">{zone.label} &mdash; {effectiveNuits} nuits louées / an{isCapped ? " (plafonnées)" : ""}</div>
+          <div className="sub">{zone.label} &mdash; {effectiveNuits} nuits louées / an{isCapped ? " (plafonnées)" : ""} &mdash; taux d'occupation moyen <b>{occupancyRate} %</b></div>
 
           <div className="kpis">
             <div className="kpi"><div className="k">Rendement brut</div><div className={"v " + yClass(yieldGross)}>{pct(yieldGross)}</div></div>
@@ -1948,7 +2072,7 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
 
           <div className="section-t">Revenus annuels</div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Revenu brut nuits</span><span className="pos">+ {euro(annualRevenueGross * ratio)}</span></div>
+            <div className="li"><span className="lbl">Revenu brut (nuits + ménage)</span><span className="pos">+ {euro(annualRevenueGross * ratio)}</span></div>
             <div className="li"><span className="lbl">Commission plateforme ({Math.round(f.platformFee * 100)} %)</span><span className="neg">- {euro(annualPlatformFee * ratio)}</span></div>
             <div className="li total"><span>Revenu net hôte</span><span className="v">{euro(annualRevenueCapped)}</span></div>
           </div>
@@ -1978,6 +2102,51 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
             <div className="kpi"><div className="k">Cashflow / mois (ap. impôt)</div><div className={"v " + cClass(mCashflowAT)}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} EUR</div></div>
             <div className="kpi"><div className="k">Mensualité crédit</div><div className="v">{euro0(mPayment)} EUR</div></div>
             <div className="kpi"><div className="k">Impôt / mois</div><div className="v w">{euro0(incomeTax / 12)} EUR</div></div>
+          </div>
+
+          <div className="section-t">Détail mensuel</div>
+          <div className="cal-result-scroll">
+            <table className="cal-result-table">
+              <thead>
+                <tr>
+                  <th>Mois</th>
+                  <th className="num">Nuits</th>
+                  <th className="num">Occ.</th>
+                  <th className="num">Tarif/n</th>
+                  <th className="num">Brut</th>
+                  <th className="num">Plateforme</th>
+                  <th className="num">Net hôte</th>
+                </tr>
+              </thead>
+              <tbody>
+                {months.map((m, i) => (
+                  <tr key={i} className={"season-row " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
+                    <td><b>{m.name}</b></td>
+                    <td className="num">{m.nuits}</td>
+                    <td className="num">
+                      <span className={"taux-pill " + (m.isHaute ? "haute" : m.isMoyenne ? "moyenne" : "basse")}>
+                        {Math.round(m.taux * 100)} %
+                      </span>
+                    </td>
+                    <td className="num">{m.tarif} €</td>
+                    <td className="num">{euro0(m.revenueGross)}</td>
+                    <td className="num neg">-{euro0(m.platformCut)}</td>
+                    <td className="num"><b>{euro0(m.netHost)}</b></td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="cal-total-row">
+                  <td><b>Total</b></td>
+                  <td className="num"><b>{totalNuits}</b></td>
+                  <td className="num"><b>{occupancyRate} %</b></td>
+                  <td></td>
+                  <td className="num"><b>{euro0(annualRevenueGross * ratio)}</b></td>
+                  <td className="num neg"><b>-{euro0(annualPlatformFee * ratio)}</b></td>
+                  <td className="num pos"><b>{euro0(annualRevenueCapped)}</b></td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
 
