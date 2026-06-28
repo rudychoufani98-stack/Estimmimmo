@@ -678,12 +678,16 @@ export default function Page() {
           <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
             4. Sources &amp; Données
           </button>
+          <button className={"tab" + (tab === "networth" ? " active" : "")} onClick={() => setTab("networth")}>
+            5. Net Worth
+          </button>
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
         {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} />}
         {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
         {tab === "sources" && <Sources />}
+        {tab === "networth" && <NetWorthCalculator estValue={estValue} />}
 
         <button className="btn-print" onClick={() => window.print()}>
           ⬇ Télécharger / Imprimer PDF
@@ -2606,6 +2610,179 @@ const REFRESH_LABEL = {
   manuel: { label: "Manuel (périodique)", cls: "src-manuel" },
   a_integrer: { label: "À intégrer", cls: "src-todo" },
 };
+
+/* ======================= NET WORTH CALCULATOR ============================= */
+function NetWorthCalculator({ estValue }) {
+  const euro = (n) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+  const makeItem = (label, val = 0) => ({ id: Math.random().toString(36).slice(2), label, val });
+
+  const [actifs, setActifs] = useState({
+    immo: [makeItem("Résidence principale", estValue || 0)],
+    epargne: [makeItem("Livret A / LDDS", 0)],
+    placements: [makeItem("PEA / Actions", 0)],
+    autres: [makeItem("Véhicule(s)", 0)],
+  });
+
+  const [passifs, setPassifs] = useState({
+    credits_immo: [makeItem("Crédit immobilier restant", 0)],
+    credits_conso: [makeItem("Crédit auto / conso", 0)],
+    autres: [makeItem("Autres dettes", 0)],
+  });
+
+  function addItem(side, cat) {
+    const setter = side === "actif" ? setActifs : setPassifs;
+    setter(prev => ({ ...prev, [cat]: [...prev[cat], makeItem("", 0)] }));
+  }
+
+  function removeItem(side, cat, id) {
+    const setter = side === "actif" ? setActifs : setPassifs;
+    setter(prev => ({ ...prev, [cat]: prev[cat].filter(i => i.id !== id) }));
+  }
+
+  function updateItem(side, cat, id, field, value) {
+    const setter = side === "actif" ? setActifs : setPassifs;
+    setter(prev => ({
+      ...prev,
+      [cat]: prev[cat].map(i => i.id === id ? { ...i, [field]: field === "val" ? parseFloat(value) || 0 : value } : i),
+    }));
+  }
+
+  const sumCat = (obj) => Object.values(obj).flat().reduce((s, i) => s + i.val, 0);
+  const totalActifs = sumCat(actifs);
+  const totalPassifs = sumCat(passifs);
+  const netWorth = totalActifs - totalPassifs;
+  const ratio = totalActifs > 0 ? Math.round((totalActifs - totalPassifs) / totalActifs * 100) : 0;
+
+  const catLabels = {
+    immo: "🏠 Immobilier",
+    epargne: "🏦 Épargne & Liquidités",
+    placements: "📈 Placements financiers",
+    autres: "🚗 Autres actifs",
+    credits_immo: "🏦 Crédits immobiliers",
+    credits_conso: "💳 Crédits conso / auto",
+  };
+
+  function NWSection({ side, data, catKey }) {
+    const label = catLabels[catKey] || catKey;
+    const catTotal = data[catKey].reduce((s, i) => s + i.val, 0);
+    return (
+      <div className="nw-section">
+        <div className="nw-cat-header">
+          <span className="nw-cat-label">{label}</span>
+          <span className="nw-cat-total">{euro(catTotal)}</span>
+        </div>
+        {data[catKey].map(item => (
+          <div key={item.id} className="nw-row">
+            <input className="nw-label-input" value={item.label}
+              onChange={e => updateItem(side, catKey, item.id, "label", e.target.value)}
+              placeholder="Description" />
+            <input className="nw-val-input" type="number" min="0" value={item.val || ""}
+              onChange={e => updateItem(side, catKey, item.id, "val", e.target.value)}
+              placeholder="0" />
+            <span className="nw-currency">€</span>
+            <button className="nw-remove" onClick={() => removeItem(side, catKey, item.id)}>×</button>
+          </div>
+        ))}
+        <button className="nw-add-btn" onClick={() => addItem(side, catKey)}>+ Ajouter</button>
+      </div>
+    );
+  }
+
+  const breakdown = [
+    { label: "Immobilier", val: actifs.immo.reduce((s,i)=>s+i.val,0), color: "#3a7bd5" },
+    { label: "Épargne", val: actifs.epargne.reduce((s,i)=>s+i.val,0), color: "#2f9e6a" },
+    { label: "Placements", val: actifs.placements.reduce((s,i)=>s+i.val,0), color: "#7c5cbf" },
+    { label: "Autres actifs", val: actifs.autres.reduce((s,i)=>s+i.val,0), color: "#dd8a2c" },
+    { label: "Dettes", val: -totalPassifs, color: "#e15a5a" },
+  ].filter(b => b.val !== 0);
+
+  return (
+    <div className="nw-wrap">
+      {/* Header KPIs */}
+      <div className="nw-kpi-bar">
+        <div className="nw-kpi">
+          <div className="nw-kpi-val" style={{color:"var(--accent)"}}>{euro(totalActifs)}</div>
+          <div className="nw-kpi-label">Total Actifs</div>
+        </div>
+        <div className="nw-kpi-sep"/>
+        <div className="nw-kpi">
+          <div className="nw-kpi-val" style={{color:"var(--bad)"}}>{euro(totalPassifs)}</div>
+          <div className="nw-kpi-label">Total Passifs</div>
+        </div>
+        <div className="nw-kpi-sep"/>
+        <div className="nw-kpi">
+          <div className="nw-kpi-val" style={{color: netWorth >= 0 ? "var(--green)" : "var(--bad)", fontSize:28}}>{euro(netWorth)}</div>
+          <div className="nw-kpi-label">Net Worth</div>
+        </div>
+        <div className="nw-kpi-sep"/>
+        <div className="nw-kpi">
+          <div className="nw-kpi-val" style={{color: ratio >= 70 ? "var(--green)" : ratio >= 40 ? "var(--warn)" : "var(--bad)"}}>{ratio} %</div>
+          <div className="nw-kpi-label">Ratio patrimoine net</div>
+        </div>
+      </div>
+
+      {/* Visual bar */}
+      {totalActifs > 0 && (
+        <div className="nw-bar-wrap">
+          {breakdown.filter(b=>b.val > 0).map((b,i) => (
+            <div key={i} className="nw-bar-seg" style={{width: `${Math.round(b.val/totalActifs*100)}%`, background: b.color}}
+              title={`${b.label} : ${euro(b.val)}`}>
+            </div>
+          ))}
+        </div>
+      )}
+      {totalActifs > 0 && (
+        <div className="nw-bar-legend">
+          {breakdown.map((b,i) => (
+            <span key={i} className="nw-bar-leg-item">
+              <span className="nw-bar-dot" style={{background: b.color}}/>
+              {b.label} <b>{euro(Math.abs(b.val))}</b>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Two columns: actifs | passifs */}
+      <div className="nw-columns">
+        <div className="nw-col">
+          <div className="nw-col-header actif">
+            <span>ACTIFS</span>
+            <span>{euro(totalActifs)}</span>
+          </div>
+          {Object.keys(actifs).map(cat => (
+            <NWSection key={cat} side="actif" data={actifs} catKey={cat} />
+          ))}
+        </div>
+
+        <div className="nw-col">
+          <div className="nw-col-header passif">
+            <span>PASSIFS</span>
+            <span>{euro(totalPassifs)}</span>
+          </div>
+          {Object.keys(passifs).map(cat => (
+            <NWSection key={cat} side="passif" data={passifs} catKey={cat} />
+          ))}
+
+          {/* Net result inside passif col at bottom */}
+          <div className="nw-result-card" style={{borderColor: netWorth >= 0 ? "var(--green)" : "var(--bad)"}}>
+            <div className="nw-result-label">PATRIMOINE NET</div>
+            <div className="nw-result-val" style={{color: netWorth >= 0 ? "var(--green)" : "var(--bad)"}}>
+              {netWorth >= 0 ? "+" : ""}{euro(netWorth)}
+            </div>
+            <div className="nw-result-sub">Actifs − Passifs</div>
+          </div>
+        </div>
+      </div>
+
+      {estValue > 0 && (
+        <p className="hint" style={{marginTop:8, textAlign:"center"}}>
+          💡 La valeur estimée de votre bien ({euro(estValue)}) a été pré-remplie dans "Résidence principale". Mettez à jour si nécessaire.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function Sources() {
   return (

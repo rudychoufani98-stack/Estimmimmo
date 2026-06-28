@@ -301,6 +301,41 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .cas-label{font-size:11px;color:var(--muted);margin-top:2px}
 .cas-sep{width:1px;background:var(--line);align-self:stretch}
 
+/* Net Worth Calculator */
+.nw-wrap{max-width:960px;margin:0 auto;padding-bottom:40px}
+.nw-kpi-bar{display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.nw-kpi{flex:1;text-align:center;padding:18px 10px}
+.nw-kpi-val{font-size:22px;font-weight:800;line-height:1.1}
+.nw-kpi-label{font-size:11px;color:var(--muted);margin-top:3px}
+.nw-kpi-sep{width:1px;background:var(--line);align-self:stretch}
+.nw-bar-wrap{display:flex;height:18px;border-radius:9px;overflow:hidden;gap:2px;margin-bottom:8px}
+.nw-bar-seg{height:100%;transition:width .4s;min-width:4px;border-radius:4px}
+.nw-bar-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-bottom:20px;font-size:12px}
+.nw-bar-leg-item{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.nw-bar-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.nw-columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:700px){.nw-columns{grid-template-columns:1fr}}
+.nw-col{display:flex;flex-direction:column;gap:12px}
+.nw-col-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:.04em}
+.nw-col-header.actif{background:rgba(58,123,213,.1);color:var(--accent)}
+.nw-col-header.passif{background:rgba(225,90,90,.1);color:var(--bad)}
+.nw-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.nw-cat-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.nw-cat-label{font-size:12px;font-weight:600;color:var(--txt)}
+.nw-cat-total{font-size:12px;font-weight:700;color:var(--accent)}
+.nw-row{display:flex;align-items:center;gap:6px}
+.nw-label-input{flex:1;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--panel2);color:var(--txt);min-width:0}
+.nw-val-input{width:110px;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:13px;text-align:right;background:var(--panel2);color:var(--txt)}
+.nw-currency{font-size:12px;color:var(--muted);flex-shrink:0}
+.nw-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:0 2px}
+.nw-remove:hover{color:var(--bad)}
+.nw-add-btn{align-self:flex-start;background:none;border:1px dashed var(--line);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;margin-top:2px}
+.nw-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.nw-result-card{border:2px solid;border-radius:10px;padding:18px;text-align:center;margin-top:4px}
+.nw-result-label{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.nw-result-val{font-size:32px;font-weight:800;line-height:1}
+.nw-result-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
 /* Sources tab */
 .sources-wrap{max-width:860px;margin:0 auto}
 .src-intro p{margin:6px 0 12px;color:var(--muted);font-size:14px}
