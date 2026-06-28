@@ -294,6 +294,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .taux-pill.basse{background:rgba(148,163,184,.12);color:var(--muted)}
 
 .cal-total-row td{background:var(--panel2)!important;font-weight:700}
+.month-events{font-size:11px;color:var(--muted);font-weight:400;line-height:1.35;margin-top:3px;max-width:280px;white-space:normal}
 
 /* Sources tab */
 .sources-wrap{max-width:860px;margin:0 auto}
