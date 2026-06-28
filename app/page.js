@@ -2151,6 +2151,27 @@ function RentabiliteAirbnb({ estValue, estCity, classicYieldGross, classicCashfl
                 <span className="sl moyenne">■ Moyenne 45-75%</span>
                 <span className="sl basse">■ Basse &lt;45%</span>
               </div>
+              <div className="cal-annual-summary">
+                <div className="cas-item">
+                  <div className="cas-val">{totalNuits} nuits</div>
+                  <div className="cas-label">Nuits louées / an</div>
+                </div>
+                <div className="cas-sep"/>
+                <div className="cas-item">
+                  <div className="cas-val" style={{color: occupancyRate >= 75 ? "var(--green)" : occupancyRate >= 45 ? "var(--warn)" : "var(--muted)"}}>{occupancyRate} %</div>
+                  <div className="cas-label">Taux d'occupation annuel</div>
+                </div>
+                <div className="cas-sep"/>
+                <div className="cas-item">
+                  <div className="cas-val">{Math.round(365 - totalNuits)} jours</div>
+                  <div className="cas-label">Jours non loués / an</div>
+                </div>
+                <div className="cas-sep"/>
+                <div className="cas-item">
+                  <div className="cas-val" style={{color:"var(--accent)"}}>{euro0(annualRevenueGross)}</div>
+                  <div className="cas-label">Revenu brut estimé / an</div>
+                </div>
+              </div>
             </>
           )}
 

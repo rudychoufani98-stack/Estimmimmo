@@ -295,6 +295,11 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 
 .cal-total-row td{background:var(--panel2)!important;font-weight:700}
 .month-events{font-size:11px;color:var(--muted);font-weight:400;line-height:1.35;margin-top:3px;max-width:280px;white-space:normal}
+.cal-annual-summary{display:flex;align-items:center;gap:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-top:14px;overflow:hidden}
+.cas-item{flex:1;text-align:center;padding:12px 8px}
+.cas-val{font-size:20px;font-weight:700;color:var(--txt)}
+.cas-label{font-size:11px;color:var(--muted);margin-top:2px}
+.cas-sep{width:1px;background:var(--line);align-self:stretch}
 
 /* Sources tab */
 .sources-wrap{max-width:860px;margin:0 auto}
