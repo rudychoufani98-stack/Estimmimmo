@@ -678,16 +678,12 @@ export default function Page() {
           <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
             4. Sources &amp; Données
           </button>
-          <button className={"tab" + (tab === "networth" ? " active" : "")} onClick={() => setTab("networth")}>
-            5. Net Worth
-          </button>
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
         {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} />}
         {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
         {tab === "sources" && <Sources />}
-        {tab === "networth" && <NetWorthCalculator estValue={estValue} />}
 
         <button className="btn-print" onClick={() => window.print()}>
           ⬇ Télécharger / Imprimer PDF
@@ -740,6 +736,7 @@ function CapaciteEmprunt({ estValue }) {
   }
 
   return (
+    <>
     <div className="grid">
       {/* inputs */}
       <div>
@@ -825,6 +822,96 @@ function CapaciteEmprunt({ estValue }) {
           <p className="hint" style={{ marginTop: 10 }}>Estimation indicative. Les banques tiennent aussi compte du reste a vivre, du saut de charge, de la stabilite professionnelle et du profil global. Duree de pret en general limitee a 25 ans.</p>
         </div>
       </div>
+    </div>
+    <NegoTips />
+    </>
+  );
+}
+
+/* ======================= CONSEILS NEGOCIATION PRET ======================== */
+const NEGO_TIPS = [
+  {
+    icon: "🏦", titre: "Mettre les banques en concurrence",
+    tips: [
+      "Demandez une offre ecrite a 3-4 banques minimum (la votre, une concurrente, une banque en ligne).",
+      "Passez par un courtier : il interroge des dizaines de banques et negocie a votre place. Ses frais (~1% ou forfait 990-1500 EUR) sont souvent largement couverts par les economies.",
+      "Faites jouer les offres les unes contre les autres : montrez l'offre concurrente la plus basse pour faire baisser les autres.",
+      "Comparez le TAEG (taux annuel effectif global), PAS le taux nominal : le TAEG inclut assurance, frais de dossier et garantie — c'est le seul vrai cout.",
+    ],
+  },
+  {
+    icon: "📋", titre: "Soigner son dossier (avant de negocier)",
+    tips: [
+      "Apport : visez au moins 10% (frais de notaire) et idealement 20%+ — plus l'apport est eleve, meilleur le taux.",
+      "3 mois de comptes sans decouvert ni incident avant la demande : les banques epluchent vos releves.",
+      "Gardez une epargne residuelle apres l'achat (matelas de securite) : c'est rassurant pour la banque.",
+      "Soldez vos petits credits conso (auto, revolving) : ils plombent votre taux d'endettement.",
+      "Mettez en avant la stabilite : CDI confirme, anciennete, evolution de revenus, profil 'jeune a fort potentiel'.",
+    ],
+  },
+  {
+    icon: "🛡️", titre: "L'assurance emprunteur — LE poste a negocier",
+    tips: [
+      "C'est souvent 25 a 35% du cout total du credit. La delegation d'assurance (assureur externe) peut vous faire economiser 5 000 a 15 000 EUR.",
+      "Loi Lemoine (2022) : vous pouvez resilier et changer d'assurance emprunteur A TOUT MOMENT, sans frais. Aucune raison de garder l'assurance groupe de la banque si une delegation est moins chere.",
+      "Plus de questionnaire de sante pour les prets < 200 000 EUR/personne remboursés avant 60 ans (loi Lemoine).",
+      "Comparez le TAEA (taux annuel effectif d'assurance), a garanties equivalentes.",
+    ],
+  },
+  {
+    icon: "🔓", titre: "Les clauses a faire ajouter (la flexibilite)",
+    tips: [
+      "Supprimer les indemnites de remboursement anticipe (IRA) : negociez leur suppression des la signature. Crucial si vous revendez ou rachetez le pret plus tard. (Plafond legal : 6 mois d'interets ou 3% du capital restant.)",
+      "Clause de modularite des echeances : pouvoir augmenter/baisser vos mensualites (souvent +/-30%) selon vos revenus, gratuitement.",
+      "Report d'echeances : pouvoir suspendre 1 a 12 mensualites en cas de coup dur.",
+      "Transferabilite du pret : conserver le taux pour un futur achat (rare mais precieux quand les taux montent).",
+    ],
+  },
+  {
+    icon: "💸", titre: "Reduire les frais annexes",
+    tips: [
+      "Frais de dossier : negociables, voire offerts. Demandez systematiquement leur suppression (300-1500 EUR).",
+      "Garantie : preferez une caution (Credit Logement) a l'hypotheque/PPD — moins chere ET partiellement remboursee a la fin du pret.",
+      "Refusez les produits 'imposes' non rentables (carte premium, produits d'epargne maison) sauf s'ils sont une vraie contrepartie au taux.",
+      "Domiciliation des revenus : la banque ne peut plus l'imposer a vie, mais c'est un levier — l'accepter peut faire baisser le taux.",
+    ],
+  },
+  {
+    icon: "🎁", titre: "Les prets aides (a cumuler)",
+    tips: [
+      "PTZ (Pret a Taux Zero) : pour les primo-accedants sous conditions de ressources — jusqu'a 50% du bien dans le neuf, sans interets.",
+      "Pret Action Logement (ex-1% patronal) : taux tres bas si votre employeur (>10 salaries) cotise.",
+      "PEL / CEL : droits a pret a taux preferentiel selon l'anciennete du plan.",
+      "Prets regionaux / locaux : certaines collectivites proposent des prets bonifies. Verifiez aupres de votre region/ville.",
+    ],
+  },
+  {
+    icon: "⏱️", titre: "Strategie & timing",
+    tips: [
+      "Reduisez la duree si vous le pouvez : taux plus bas + beaucoup moins d'interets totaux.",
+      "Privilegiez le taux FIXE en France (securite) — le variable est rarement interessant pour un particulier.",
+      "Vous avez 10 jours de reflexion obligatoires apres reception de l'offre : utilisez-les pour comparer.",
+      "Apres l'achat : si les taux baissent de 0,7 a 1 point, faites racheter ou renegocier votre pret — gros gains possibles.",
+    ],
+  },
+];
+
+function NegoTips() {
+  return (
+    <div className="card" style={{ marginTop: 18 }}>
+      <h2>💡 Negocier son pret immobilier : tous les conseils</h2>
+      <div className="sub">Les leviers concrets pour decrocher le meilleur credit en France</div>
+      <div className="nego-grid">
+        {NEGO_TIPS.map((b, i) => (
+          <div className="nego-block" key={i}>
+            <div className="nego-block-head"><span className="nego-ico">{b.icon}</span>{b.titre}</div>
+            <ul className="nego-list">
+              {b.tips.map((t, j) => <li key={j}>{t}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a votre situation. Un courtier en credit peut activer plusieurs de ces leviers pour vous.</p>
     </div>
   );
 }
@@ -2948,178 +3035,6 @@ const REFRESH_LABEL = {
   a_integrer: { label: "À intégrer", cls: "src-todo" },
 };
 
-/* ======================= NET WORTH CALCULATOR ============================= */
-function NetWorthCalculator({ estValue }) {
-  const euro = (n) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-
-  const makeItem = (label, val = 0) => ({ id: Math.random().toString(36).slice(2), label, val });
-
-  const [actifs, setActifs] = useState({
-    immo: [makeItem("Résidence principale", estValue || 0)],
-    epargne: [makeItem("Livret A / LDDS", 0)],
-    placements: [makeItem("PEA / Actions", 0)],
-    autres: [makeItem("Véhicule(s)", 0)],
-  });
-
-  const [passifs, setPassifs] = useState({
-    credits_immo: [makeItem("Crédit immobilier restant", 0)],
-    credits_conso: [makeItem("Crédit auto / conso", 0)],
-    autres: [makeItem("Autres dettes", 0)],
-  });
-
-  function addItem(side, cat) {
-    const setter = side === "actif" ? setActifs : setPassifs;
-    setter(prev => ({ ...prev, [cat]: [...prev[cat], makeItem("", 0)] }));
-  }
-
-  function removeItem(side, cat, id) {
-    const setter = side === "actif" ? setActifs : setPassifs;
-    setter(prev => ({ ...prev, [cat]: prev[cat].filter(i => i.id !== id) }));
-  }
-
-  function updateItem(side, cat, id, field, value) {
-    const setter = side === "actif" ? setActifs : setPassifs;
-    setter(prev => ({
-      ...prev,
-      [cat]: prev[cat].map(i => i.id === id ? { ...i, [field]: field === "val" ? parseFloat(value) || 0 : value } : i),
-    }));
-  }
-
-  const sumCat = (obj) => Object.values(obj).flat().reduce((s, i) => s + i.val, 0);
-  const totalActifs = sumCat(actifs);
-  const totalPassifs = sumCat(passifs);
-  const netWorth = totalActifs - totalPassifs;
-  const ratio = totalActifs > 0 ? Math.round((totalActifs - totalPassifs) / totalActifs * 100) : 0;
-
-  const catLabels = {
-    immo: "🏠 Immobilier",
-    epargne: "🏦 Épargne & Liquidités",
-    placements: "📈 Placements financiers",
-    autres: "🚗 Autres actifs",
-    credits_immo: "🏦 Crédits immobiliers",
-    credits_conso: "💳 Crédits conso / auto",
-  };
-
-  function NWSection({ side, data, catKey }) {
-    const label = catLabels[catKey] || catKey;
-    const catTotal = data[catKey].reduce((s, i) => s + i.val, 0);
-    return (
-      <div className="nw-section">
-        <div className="nw-cat-header">
-          <span className="nw-cat-label">{label}</span>
-          <span className="nw-cat-total">{euro(catTotal)}</span>
-        </div>
-        {data[catKey].map(item => (
-          <div key={item.id} className="nw-row">
-            <input className="nw-label-input" value={item.label}
-              onChange={e => updateItem(side, catKey, item.id, "label", e.target.value)}
-              placeholder="Description" />
-            <input className="nw-val-input" type="number" min="0" value={item.val || ""}
-              onChange={e => updateItem(side, catKey, item.id, "val", e.target.value)}
-              placeholder="0" />
-            <span className="nw-currency">€</span>
-            <button className="nw-remove" onClick={() => removeItem(side, catKey, item.id)}>×</button>
-          </div>
-        ))}
-        <button className="nw-add-btn" onClick={() => addItem(side, catKey)}>+ Ajouter</button>
-      </div>
-    );
-  }
-
-  const breakdown = [
-    { label: "Immobilier", val: actifs.immo.reduce((s,i)=>s+i.val,0), color: "#3a7bd5" },
-    { label: "Épargne", val: actifs.epargne.reduce((s,i)=>s+i.val,0), color: "#2f9e6a" },
-    { label: "Placements", val: actifs.placements.reduce((s,i)=>s+i.val,0), color: "#7c5cbf" },
-    { label: "Autres actifs", val: actifs.autres.reduce((s,i)=>s+i.val,0), color: "#dd8a2c" },
-    { label: "Dettes", val: -totalPassifs, color: "#e15a5a" },
-  ].filter(b => b.val !== 0);
-
-  return (
-    <div className="nw-wrap">
-      {/* Header KPIs */}
-      <div className="nw-kpi-bar">
-        <div className="nw-kpi">
-          <div className="nw-kpi-val" style={{color:"var(--accent)"}}>{euro(totalActifs)}</div>
-          <div className="nw-kpi-label">Total Actifs</div>
-        </div>
-        <div className="nw-kpi-sep"/>
-        <div className="nw-kpi">
-          <div className="nw-kpi-val" style={{color:"var(--bad)"}}>{euro(totalPassifs)}</div>
-          <div className="nw-kpi-label">Total Passifs</div>
-        </div>
-        <div className="nw-kpi-sep"/>
-        <div className="nw-kpi">
-          <div className="nw-kpi-val" style={{color: netWorth >= 0 ? "var(--green)" : "var(--bad)", fontSize:28}}>{euro(netWorth)}</div>
-          <div className="nw-kpi-label">Net Worth</div>
-        </div>
-        <div className="nw-kpi-sep"/>
-        <div className="nw-kpi">
-          <div className="nw-kpi-val" style={{color: ratio >= 70 ? "var(--green)" : ratio >= 40 ? "var(--warn)" : "var(--bad)"}}>{ratio} %</div>
-          <div className="nw-kpi-label">Ratio patrimoine net</div>
-        </div>
-      </div>
-
-      {/* Visual bar */}
-      {totalActifs > 0 && (
-        <div className="nw-bar-wrap">
-          {breakdown.filter(b=>b.val > 0).map((b,i) => (
-            <div key={i} className="nw-bar-seg" style={{width: `${Math.round(b.val/totalActifs*100)}%`, background: b.color}}
-              title={`${b.label} : ${euro(b.val)}`}>
-            </div>
-          ))}
-        </div>
-      )}
-      {totalActifs > 0 && (
-        <div className="nw-bar-legend">
-          {breakdown.map((b,i) => (
-            <span key={i} className="nw-bar-leg-item">
-              <span className="nw-bar-dot" style={{background: b.color}}/>
-              {b.label} <b>{euro(Math.abs(b.val))}</b>
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Two columns: actifs | passifs */}
-      <div className="nw-columns">
-        <div className="nw-col">
-          <div className="nw-col-header actif">
-            <span>ACTIFS</span>
-            <span>{euro(totalActifs)}</span>
-          </div>
-          {Object.keys(actifs).map(cat => (
-            <NWSection key={cat} side="actif" data={actifs} catKey={cat} />
-          ))}
-        </div>
-
-        <div className="nw-col">
-          <div className="nw-col-header passif">
-            <span>PASSIFS</span>
-            <span>{euro(totalPassifs)}</span>
-          </div>
-          {Object.keys(passifs).map(cat => (
-            <NWSection key={cat} side="passif" data={passifs} catKey={cat} />
-          ))}
-
-          {/* Net result inside passif col at bottom */}
-          <div className="nw-result-card" style={{borderColor: netWorth >= 0 ? "var(--green)" : "var(--bad)"}}>
-            <div className="nw-result-label">PATRIMOINE NET</div>
-            <div className="nw-result-val" style={{color: netWorth >= 0 ? "var(--green)" : "var(--bad)"}}>
-              {netWorth >= 0 ? "+" : ""}{euro(netWorth)}
-            </div>
-            <div className="nw-result-sub">Actifs − Passifs</div>
-          </div>
-        </div>
-      </div>
-
-      {estValue > 0 && (
-        <p className="hint" style={{marginTop:8, textAlign:"center"}}>
-          💡 La valeur estimée de votre bien ({euro(estValue)}) a été pré-remplie dans "Résidence principale". Mettez à jour si nécessaire.
-        </p>
-      )}
-    </div>
-  );
-}
 
 function Sources() {
   return (
