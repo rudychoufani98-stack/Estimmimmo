@@ -571,6 +571,21 @@ const BAROMETRE = {
   resume: "Marche a l'equilibre mais fragile : reprise moderee, soutenue par la detente des taux et une offre limitee. Forte prime aux bons DPE.",
 };
 
+// Barometre des taux de credit immobilier - a rafraichir periodiquement.
+// Sources : Banque de France & barometres courtiers (Cafpi, Meilleurtaux, Pretto).
+const TAUX_MARCHE = {
+  date: "juin 2026",
+  trend: "hausse", // "hausse" | "baisse" | "stable"
+  trendNote: "Legere hausse depuis mai 2026 (tensions geopolitiques, prix de l'energie).",
+  rates: { 15: 3.20, 20: 3.37, 25: 3.48 }, // taux moyens constates
+  best: { 15: 2.85, 20: 3.05, 25: 3.20 },   // meilleurs profils
+  source: "Banque de France & barometres courtiers",
+};
+const rateForDuration = (years) => {
+  const d = years <= 17 ? 15 : years <= 22 ? 20 : 25;
+  return { key: d, rate: TAUX_MARCHE.rates[d], best: TAUX_MARCHE.best[d] };
+};
+
 // Interactive map of the subject property + comparable sales (Leaflet + OSM).
 function CompMap({ center, comps }) {
   const ref = useRef(null);
@@ -784,6 +799,27 @@ function CapaciteEmprunt({ estValue }) {
               <div className="unit"><input type="number" step="0.01" value={f.insurance} onChange={(e) => set("insurance", e.target.value)} /><small>%/an</small></div>
             </div>
           </div>
+        </div>
+
+        <div className="card">
+          <h2>Taux du marche <span className={"taux-trend " + TAUX_MARCHE.trend}>{TAUX_MARCHE.trend === "hausse" ? "▲ en hausse" : TAUX_MARCHE.trend === "baisse" ? "▼ en baisse" : "= stable"}</span></h2>
+          <div className="sub">Taux moyens constates &middot; {TAUX_MARCHE.date}</div>
+          <div className="taux-grid">
+            {[15, 20, 25].map((d) => {
+              const active = rateForDuration(v("duration")).key === d;
+              return (
+                <div className={"taux-cell" + (active ? " active" : "")} key={d}>
+                  <div className="taux-dur">{d} ans</div>
+                  <div className="taux-val">{TAUX_MARCHE.rates[d].toFixed(2).replace(".", ",")}%</div>
+                  <div className="taux-best">top profils {TAUX_MARCHE.best[d].toFixed(2).replace(".", ",")}%</div>
+                </div>
+              );
+            })}
+          </div>
+          <button className="btn-budget" style={{ marginTop: 14 }} onClick={() => set("rate", rateForDuration(v("duration")).rate)}>
+            Appliquer le taux marche ({rateForDuration(v("duration")).rate.toFixed(2).replace(".", ",")}% sur {rateForDuration(v("duration")).key} ans)
+          </button>
+          <p className="hint">{TAUX_MARCHE.trendNote} Source : {TAUX_MARCHE.source}. Barometre indicatif, mis a jour periodiquement.</p>
         </div>
       </div>
 

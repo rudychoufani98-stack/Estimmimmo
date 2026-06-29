@@ -346,6 +346,18 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .pred-bar-label{font-size:10px;color:var(--muted);text-align:center}
 .pred-legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:4px}
 
+/* Barometre des taux du marche */
+.taux-trend{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;margin-left:8px;vertical-align:middle}
+.taux-trend.hausse{background:rgba(225,90,90,.13);color:var(--bad)}
+.taux-trend.baisse{background:rgba(47,158,106,.13);color:var(--green)}
+.taux-trend.stable{background:var(--panel2);color:var(--muted)}
+.taux-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.taux-cell{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;transition:.15s}
+.taux-cell.active{border-color:var(--accent);background:rgba(58,123,213,.07);box-shadow:0 0 0 1px var(--accent) inset}
+.taux-dur{font-size:11px;color:var(--muted);font-weight:600}
+.taux-val{font-size:22px;font-weight:700;color:var(--txt);margin:2px 0}
+.taux-best{font-size:10.5px;color:var(--green)}
+
 /* Conseils negociation pret */
 .nego-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
 @media(max-width:760px){.nego-grid{grid-template-columns:1fr}}
