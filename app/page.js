@@ -727,6 +727,23 @@ function CapaciteEmprunt({ estValue }) {
   const set = (k, val) => setF((s) => ({ ...s, [k]: val }));
   const v = (k) => Number(f[k]) || 0;
 
+  // Taux officiel auto-actualise (Banque de France / BCE), recupere au chargement
+  const [liveTaux, setLiveTaux] = useState(null);
+  useEffect(() => {
+    let on = true;
+    fetch("/api/taux")
+      .then((r) => r.json())
+      .then((d) => { if (on && d && d.rate != null) setLiveTaux(d); })
+      .catch(() => {});
+    return () => { on = false; };
+  }, []);
+  const moisFr = (p) => {
+    if (!p) return "";
+    const [y, m] = p.split("-");
+    const noms = ["", "janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
+    return `${noms[parseInt(m)]} ${y}`;
+  };
+
   // Mensualite max selon la regle HCSF (assurance comprise)
   const maxMensualite = Math.max(0, v("income") * (v("endettement") / 100) - v("charges"));
 
@@ -804,6 +821,17 @@ function CapaciteEmprunt({ estValue }) {
         <div className="card">
           <h2>Taux du marche <span className={"taux-trend " + TAUX_MARCHE.trend}>{TAUX_MARCHE.trend === "hausse" ? "▲ en hausse" : TAUX_MARCHE.trend === "baisse" ? "▼ en baisse" : "= stable"}</span></h2>
           <div className="sub">Taux moyens constates &middot; {TAUX_MARCHE.date}</div>
+
+          {liveTaux && (
+            <div className="taux-live">
+              <div className="taux-live-dot" />
+              <div>
+                <b>Taux officiel : {liveTaux.rate.toFixed(2).replace(".", ",")}%</b>
+                <span> &middot; {moisFr(liveTaux.period)} &middot; auto-actualise (BdF/BCE)</span>
+              </div>
+              <button className="taux-live-apply" onClick={() => set("rate", liveTaux.rate)}>Appliquer</button>
+            </div>
+          )}
           <div className="taux-grid">
             {[15, 20, 25].map((d) => {
               const active = rateForDuration(v("duration")).key === d;

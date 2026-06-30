@@ -357,6 +357,16 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .taux-dur{font-size:11px;color:var(--muted);font-weight:600}
 .taux-val{font-size:22px;font-weight:700;color:var(--txt);margin:2px 0}
 .taux-best{font-size:10.5px;color:var(--green)}
+.taux-live{display:flex;align-items:center;gap:9px;background:rgba(47,158,106,.08);border:1px solid rgba(47,158,106,.28);
+  border-radius:10px;padding:9px 12px;margin:4px 0 12px;font-size:12.5px;color:var(--txt)}
+.taux-live b{color:var(--green)}
+.taux-live span{color:var(--muted)}
+.taux-live-dot{width:9px;height:9px;border-radius:50%;background:var(--green);flex-shrink:0;
+  box-shadow:0 0 0 0 rgba(47,158,106,.5);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,158,106,.45)}70%{box-shadow:0 0 0 7px rgba(47,158,106,0)}100%{box-shadow:0 0 0 0 rgba(47,158,106,0)}}
+.taux-live-apply{margin-left:auto;flex-shrink:0;background:var(--green);color:#fff;border:none;
+  border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.taux-live-apply:hover{filter:brightness(1.05)}
 
 /* Conseils negociation pret */
 .nego-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
