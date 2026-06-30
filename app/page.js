@@ -999,33 +999,33 @@ const NEGO_DETAILS = [
 ];
 
 const NEGO_FISCALITE = [
-  { icon: "📜", titre: "Les frais de notaire (surtout des taxes)", paras: [
-    "Mal nommes : 80% sont des TAXES reversees a l'Etat (droits de mutation), pas la remuneration du notaire. Tu les paies a l'achat, en plus du prix.",
-    "Environ 7 a 8% du prix dans l'ANCIEN, mais seulement 2 a 3% dans le NEUF (VEFA). C'est pour ca que le neuf 'coute moins de frais'.",
-    "Ils ne sont quasiment pas negociables (sauf une petite remise possible sur les emoluments du notaire pour les biens chers). A integrer dans ton budget des le depart.",
+  { icon: "🛋️", titre: "Meuble — Micro-BIC (abattement 50%)", paras: [
+    "Tu loues en MEUBLE ? Tes loyers sont des BIC. Le micro-BIC applique un abattement forfaitaire de 50% : tu n'es impose que sur la MOITIE de tes loyers.",
+    "Sur cette moitie, tu paies ta tranche d'impot (TMI) + 17,2% de prelevements sociaux. Exemple : 12 000 EUR de loyers -> base imposable 6 000 EUR.",
+    "Pour qui : loyers meubles < 77 700 EUR/an, et peu de charges/credit. Zero comptabilite, ultra simple.",
+    "Limite : si tu as un credit (donc beaucoup d'interets) et des charges, le LMNP reel est presque toujours plus avantageux.",
   ]},
-  { icon: "🏠", titre: "La taxe fonciere", paras: [
-    "Impot annuel paye par le PROPRIETAIRE (meme si le bien est loue). Son montant varie enormement selon la commune — parfois du simple au triple.",
-    "Verifie-la AVANT d'acheter (demande le dernier avis au vendeur) : c'est une charge recurrente qui pese sur ta rentabilite.",
-    "Elle augmente regulierement (revalorisation annuelle + decisions locales).",
+  { icon: "🏆", titre: "Meuble — LMNP reel (le plus puissant)", paras: [
+    "Tu deduis TOUTES tes charges reelles : interets d'emprunt, assurance, taxe fonciere, charges de copro, travaux, frais de comptable...",
+    "EN PLUS, tu 'amortis' le bien : chaque annee, tu deduis une fraction de sa valeur (~2 a 3%/an) comme si le bien s'usait. C'est une charge 'sur papier' qui ne te coute rien.",
+    "Resultat : ton impot sur les loyers tombe souvent a ZERO pendant 8 a 12 ans. C'est LE regime des investisseurs meubles avec credit.",
+    "Contrepartie : il faut un comptable (~300-500 EUR/an, deductible). Largement rentable des que tu as un credit.",
   ]},
-  { icon: "🧾", titre: "La taxe d'habitation", paras: [
-    "Supprimee depuis 2023 pour la RESIDENCE PRINCIPALE : tu ne la paies plus sur ton logement principal.",
-    "Elle reste due sur les RESIDENCES SECONDAIRES et les logements vacants — parfois majoree dans les zones tendues. A prevoir si tu achetes un pied-a-terre.",
+  { icon: "🔑", titre: "Nu — Micro-foncier (abattement 30%)", paras: [
+    "Tu loues VIDE (non meuble) ? Tes loyers sont des revenus fonciers. Le micro-foncier applique un abattement de 30% : tu es impose sur 70% des loyers.",
+    "Imposition : TMI + 17,2% de prelevements sociaux sur ces 70%.",
+    "Pour qui : loyers nus < 15 000 EUR/an et peu de charges. Simple, mais l'abattement (30%) est plus faible qu'en meuble (50%).",
   ]},
-  { icon: "💶", titre: "Les interets d'emprunt deductibles (locatif)", paras: [
-    "Mythe a corriger : les interets ne sont PAS deductibles pour ta residence principale (supprime depuis 2011).",
-    "Ils le sont uniquement en INVESTISSEMENT LOCATIF au regime reel : tu deduis les interets (+ assurance, charges, taxe fonciere) de tes loyers imposables, ce qui reduit ton impot.",
-    "Au reel, si les charges + interets depassent les loyers, tu crees un 'deficit foncier' imputable sur ton revenu global jusqu'a 10 700 EUR/an. Voir l'onglet Rentabilite pour le calcul.",
+  { icon: "🧱", titre: "Nu — Reel (charges + deficit foncier)", paras: [
+    "Tu deduis tes charges reelles et tes interets d'emprunt de tes loyers. Si le total depasse les loyers, tu crees un 'deficit foncier'.",
+    "Ce deficit s'impute sur ton REVENU GLOBAL (salaire...) jusqu'a 10 700 EUR/an, ce qui reduit ton impot global. Le surplus se reporte 10 ans.",
+    "Ideal si tu fais de gros travaux ou si tu as beaucoup d'interets. Mais en nu, PAS d'amortissement (contrairement au LMNP meuble).",
   ]},
-  { icon: "📈", titre: "La plus-value a la revente", paras: [
-    "Ta RESIDENCE PRINCIPALE est TOTALEMENT exoneree : tu ne paies aucun impot sur le gain a la revente.",
-    "Pour un autre bien (locatif, secondaire) : impot de 19% (IR) + 17,2% (prelevements sociaux) sur la plus-value.",
-    "Mais des abattements pour duree de detention reduisent cet impot : exoneration totale d'IR a 22 ans de detention, et de prelevements sociaux a 30 ans.",
-  ]},
-  { icon: "🏛️", titre: "L'IFI (gros patrimoine immobilier)", paras: [
-    "Impot sur la Fortune Immobiliere : du uniquement si la valeur NETTE de ton patrimoine immobilier depasse 1 300 000 EUR.",
-    "Bon a savoir : le capital restant du de tes credits immobiliers se DEDUIT de la valeur taxable. Emprunter reduit donc l'assiette de l'IFI.",
+  { icon: "🤔", titre: "Meuble ou nu ? Comment choisir", paras: [
+    "MEUBLE (BIC) : bail court (1 an, 9 mois etudiant), loyers ~10-20% plus eleves, et surtout l'amortissement (LMNP reel) qui efface l'impot. Plus de rotation de locataires.",
+    "NU (foncier) : bail 3 ans, plus stable, moins de gestion. Mais fiscalite moins avantageuse (pas d'amortissement).",
+    "Regle simple : as-tu un credit et des charges ? -> REEL (LMNP si meuble). Tres peu de charges ? -> MICRO. ",
+    "Bonne nouvelle : l'onglet Rentabilite calcule AUTOMATIQUEMENT l'impot des 4 regimes sur ton bien et te dit lequel est le plus avantageux. Va voir le 'Comparateur des 4 regimes fiscaux'.",
   ]},
 ];
 
@@ -1094,7 +1094,7 @@ function NegoTips() {
         {NEGO_DETAILS.map((d, i) => <Explainer key={i} {...d} />)}
       </div>
 
-      <div className="section-t">🧾 La fiscalite de l'achat (clique pour ouvrir)</div>
+      <div className="section-t">🧾 Quel regime fiscal locatif choisir ? (clique pour ouvrir)</div>
       <div className="explain-list">
         {NEGO_FISCALITE.map((d, i) => <Explainer key={i} {...d} />)}
       </div>
