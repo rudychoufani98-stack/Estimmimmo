@@ -893,89 +893,121 @@ function CapaciteEmprunt({ estValue }) {
 }
 
 /* ======================= CONSEILS NEGOCIATION PRET ======================== */
+const NEGO_STEPS = [
+  { n: 1, t: "Prepare ton dossier (2-3 mois avant)", d: "Apport pret, 3 mois de comptes sans decouvert, petits credits soldes. Un dossier propre = un meilleur taux." },
+  { n: 2, t: "Mets les banques en concurrence", d: "Vois un courtier (gratuit, paye seulement si ca marche) ET 2-3 banques toi-meme. But : plusieurs offres ecrites." },
+  { n: 3, t: "Compare le bon chiffre : le TAEG", d: "Jamais le 'taux' affiche seul. Le TAEG inclut TOUT (interets + assurance + frais). C'est le seul vrai cout." },
+  { n: 4, t: "Negocie les 3 gros postes", d: "L'assurance (le plus gros levier), les penalites de remboursement anticipe (IRA), et les frais de dossier." },
+  { n: 5, t: "Prends ton temps", d: "Tu as 10 jours de reflexion obligatoires. Ne signe JAMAIS sous pression. Relis chaque ligne." },
+];
+
 const NEGO_TIPS = [
   {
-    icon: "🏦", titre: "Mettre les banques en concurrence",
+    icon: "🛡️", titre: "L'assurance emprunteur", sous: "le plus gros levier", impact: "jusqu'a 15 000 EUR",
     tips: [
-      "Demandez une offre ecrite a 3-4 banques minimum (la votre, une concurrente, une banque en ligne).",
-      "Passez par un courtier : il interroge des dizaines de banques et negocie a votre place. Ses frais (~1% ou forfait 990-1500 EUR) sont souvent largement couverts par les economies.",
-      "Faites jouer les offres les unes contre les autres : montrez l'offre concurrente la plus basse pour faire baisser les autres.",
-      "Comparez le TAEG (taux annuel effectif global), PAS le taux nominal : le TAEG inclut assurance, frais de dossier et garantie — c'est le seul vrai cout.",
+      "C'est 25 a 35% du cout total du credit. La banque te vend la sienne, mais tu n'es PAS oblige de la prendre.",
+      "Loi Lemoine : tu peux la changer A TOUT MOMENT, sans frais. Prends un devis externe (delegation) et compare.",
+      "Compare le TAEA (le cout de l'assurance), a garanties equivalentes.",
+    ],
+    dire: "Je prends une delegation d'assurance, voici mon devis externe a X EUR/mois. Merci d'en tenir compte.",
+  },
+  {
+    icon: "🏦", titre: "Mettre en concurrence", sous: "ton vrai pouvoir", impact: "0,2 a 0,5 pt de taux",
+    tips: [
+      "Une banque baisse son taux quand elle sait que tu en vois d'autres. Sans concurrence, tu paies le prix fort.",
+      "Le courtier interroge des dizaines de banques pour toi ; ses frais sont souvent couverts par les economies.",
+    ],
+    dire: "J'ai une offre concurrente a X%. Pouvez-vous faire mieux ? Sinon je signe ailleurs.",
+  },
+  {
+    icon: "🔓", titre: "Faire sauter les penalites (IRA)", sous: "clause cle", impact: "jusqu'a 3% du capital",
+    tips: [
+      "Les IRA = penalites si tu rembourses ton pret en avance (revente, rachat). Plafond : 6 mois d'interets ou 3% du capital restant.",
+      "Elles se negocient a la baisse, voire a zero, AVANT de signer. Apres, c'est trop tard.",
+    ],
+    dire: "Je veux que les indemnites de remboursement anticipe soient supprimees dans le contrat.",
+  },
+  {
+    icon: "💸", titre: "Reduire les frais", sous: "souvent offerts", impact: "300 a 1500 EUR",
+    tips: [
+      "Frais de dossier : negociables, voire offerts. Demande-le systematiquement.",
+      "Garantie : la caution (Credit Logement) est souvent moins chere que l'hypotheque ET partiellement remboursee a la fin.",
+      "Refuse les produits 'imposes' inutiles (carte premium...) sauf vraie contrepartie sur le taux.",
+    ],
+    dire: "Pouvez-vous offrir les frais de dossier ?",
+  },
+  {
+    icon: "🔧", titre: "Demander de la flexibilite", sous: "gratuit a demander", impact: "securite",
+    tips: [
+      "Modularite : pouvoir augmenter ou baisser tes mensualites (souvent +/-30%) selon tes revenus.",
+      "Report d'echeances : suspendre 1 a 12 mensualites en cas de coup dur.",
+      "Ces clauses ne coutent rien mais te protegent. Demande-les des le depart.",
     ],
   },
   {
-    icon: "📋", titre: "Soigner son dossier (avant de negocier)",
+    icon: "🎁", titre: "Les prets aides", sous: "a cumuler", impact: "argent gratuit",
     tips: [
-      "Apport : visez au moins 10% (frais de notaire) et idealement 20%+ — plus l'apport est eleve, meilleur le taux.",
-      "3 mois de comptes sans decouvert ni incident avant la demande : les banques epluchent vos releves.",
-      "Gardez une epargne residuelle apres l'achat (matelas de securite) : c'est rassurant pour la banque.",
-      "Soldez vos petits credits conso (auto, revolving) : ils plombent votre taux d'endettement.",
-      "Mettez en avant la stabilite : CDI confirme, anciennete, evolution de revenus, profil 'jeune a fort potentiel'.",
+      "PTZ : pret a taux zero pour un 1er achat, sous conditions de ressources.",
+      "Pret Action Logement (1% patronal) : taux tres bas si ton employeur cotise.",
+      "PEL/CEL et prets regionaux : verifie tes droits, ils se cumulent.",
     ],
   },
-  {
-    icon: "🛡️", titre: "L'assurance emprunteur — LE poste a negocier",
-    tips: [
-      "C'est souvent 25 a 35% du cout total du credit. La delegation d'assurance (assureur externe) peut vous faire economiser 5 000 a 15 000 EUR.",
-      "Loi Lemoine (2022) : vous pouvez resilier et changer d'assurance emprunteur A TOUT MOMENT, sans frais. Aucune raison de garder l'assurance groupe de la banque si une delegation est moins chere.",
-      "Plus de questionnaire de sante pour les prets < 200 000 EUR/personne remboursés avant 60 ans (loi Lemoine).",
-      "Comparez le TAEA (taux annuel effectif d'assurance), a garanties equivalentes.",
-    ],
-  },
-  {
-    icon: "🔓", titre: "Les clauses a faire ajouter (la flexibilite)",
-    tips: [
-      "Supprimer les indemnites de remboursement anticipe (IRA) : negociez leur suppression des la signature. Crucial si vous revendez ou rachetez le pret plus tard. (Plafond legal : 6 mois d'interets ou 3% du capital restant.)",
-      "Clause de modularite des echeances : pouvoir augmenter/baisser vos mensualites (souvent +/-30%) selon vos revenus, gratuitement.",
-      "Report d'echeances : pouvoir suspendre 1 a 12 mensualites en cas de coup dur.",
-      "Transferabilite du pret : conserver le taux pour un futur achat (rare mais precieux quand les taux montent).",
-    ],
-  },
-  {
-    icon: "💸", titre: "Reduire les frais annexes",
-    tips: [
-      "Frais de dossier : negociables, voire offerts. Demandez systematiquement leur suppression (300-1500 EUR).",
-      "Garantie : preferez une caution (Credit Logement) a l'hypotheque/PPD — moins chere ET partiellement remboursee a la fin du pret.",
-      "Refusez les produits 'imposes' non rentables (carte premium, produits d'epargne maison) sauf s'ils sont une vraie contrepartie au taux.",
-      "Domiciliation des revenus : la banque ne peut plus l'imposer a vie, mais c'est un levier — l'accepter peut faire baisser le taux.",
-    ],
-  },
-  {
-    icon: "🎁", titre: "Les prets aides (a cumuler)",
-    tips: [
-      "PTZ (Pret a Taux Zero) : pour les primo-accedants sous conditions de ressources — jusqu'a 50% du bien dans le neuf, sans interets.",
-      "Pret Action Logement (ex-1% patronal) : taux tres bas si votre employeur (>10 salaries) cotise.",
-      "PEL / CEL : droits a pret a taux preferentiel selon l'anciennete du plan.",
-      "Prets regionaux / locaux : certaines collectivites proposent des prets bonifies. Verifiez aupres de votre region/ville.",
-    ],
-  },
-  {
-    icon: "⏱️", titre: "Strategie & timing",
-    tips: [
-      "Reduisez la duree si vous le pouvez : taux plus bas + beaucoup moins d'interets totaux.",
-      "Privilegiez le taux FIXE en France (securite) — le variable est rarement interessant pour un particulier.",
-      "Vous avez 10 jours de reflexion obligatoires apres reception de l'offre : utilisez-les pour comparer.",
-      "Apres l'achat : si les taux baissent de 0,7 a 1 point, faites racheter ou renegocier votre pret — gros gains possibles.",
-    ],
-  },
+];
+
+const NEGO_GLOSSAIRE = [
+  ["TAEG", "Le cout TOTAL du credit en % (interets + assurance + frais + garantie). LE chiffre a comparer entre banques."],
+  ["Taux nominal", "Le taux 'affiche', SANS l'assurance ni les frais. Trompeur si on le compare seul."],
+  ["TAEA", "La part du cout liee a l'assurance. Sert a comparer les assurances entre elles."],
+  ["Delegation d'assurance", "Prendre son assurance emprunteur ailleurs qu'a la banque (souvent bien moins chere)."],
+  ["IRA", "Indemnites de Remboursement Anticipe : penalites si tu soldes le pret en avance. A negocier a zero."],
+  ["Caution vs hypotheque", "Deux types de garantie. La caution (Credit Logement) est souvent moins chere et partiellement remboursee."],
+  ["Apport", "L'argent que tu mets toi-meme. Plus il est eleve, meilleur le taux. Vise 10% minimum."],
+  ["Taux d'endettement", "Part de tes revenus qui part dans les credits. Plafond 35% (assurance comprise)."],
 ];
 
 function NegoTips() {
   return (
     <div className="card" style={{ marginTop: 18 }}>
-      <h2>💡 Negocier son pret immobilier : tous les conseils</h2>
-      <div className="sub">Les leviers concrets pour decrocher le meilleur credit en France</div>
-      <div className="nego-grid">
-        {NEGO_TIPS.map((b, i) => (
-          <div className="nego-block" key={i}>
-            <div className="nego-block-head"><span className="nego-ico">{b.icon}</span>{b.titre}</div>
-            <ul className="nego-list">
-              {b.tips.map((t, j) => <li key={j}>{t}</li>)}
-            </ul>
+      <h2>💡 Negocier son pret immobilier : le guide complet</h2>
+      <div className="sub">Meme si tu n'y connais rien : comprends, prepare, et obtiens le meilleur credit.</div>
+
+      <div className="nego-mindset">
+        <b>La regle d'or :</b> la 1re offre d'une banque n'est qu'un point de depart. <b>Tout se negocie</b> &mdash; le taux, l'assurance, les frais, les clauses. Ton vrai pouvoir : faire jouer plusieurs banques. Ne sois jamais presse de signer.
+      </div>
+
+      <div className="section-t">Le parcours en 5 etapes</div>
+      <div className="nego-steps">
+        {NEGO_STEPS.map((s) => (
+          <div className="nego-step" key={s.n}>
+            <div className="nego-step-n">{s.n}</div>
+            <div><div className="nego-step-t">{s.t}</div><div className="nego-step-d">{s.d}</div></div>
           </div>
         ))}
       </div>
-      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a votre situation. Un courtier en credit peut activer plusieurs de ces leviers pour vous.</p>
+
+      <div className="section-t">Les leviers, du plus rentable au moins</div>
+      <div className="nego-grid">
+        {NEGO_TIPS.map((b, i) => (
+          <div className="nego-block" key={i}>
+            <div className="nego-block-head">
+              <span className="nego-ico">{b.icon}</span>
+              <span className="nego-titre">{b.titre}<span className="nego-sous">{b.sous}</span></span>
+              <span className="nego-impact">{b.impact}</span>
+            </div>
+            <ul className="nego-list">{b.tips.map((t, j) => <li key={j}>{t}</li>)}</ul>
+            {b.dire && <div className="nego-dire"><span>💬 A dire au banquier</span>&laquo; {b.dire} &raquo;</div>}
+          </div>
+        ))}
+      </div>
+
+      <div className="section-t">Le lexique (les mots compliques, en simple)</div>
+      <div className="nego-glossaire">
+        {NEGO_GLOSSAIRE.map(([term, def], i) => (
+          <div className="nego-gl" key={i}><b>{term}</b><span>{def}</span></div>
+        ))}
+      </div>
+
+      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation. Un courtier peut activer plusieurs de ces leviers pour toi.</p>
     </div>
   );
 }
