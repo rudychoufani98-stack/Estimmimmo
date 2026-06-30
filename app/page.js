@@ -965,6 +965,88 @@ const NEGO_GLOSSAIRE = [
   ["Taux d'endettement", "Part de tes revenus qui part dans les credits. Plafond 35% (assurance comprise)."],
 ];
 
+// Explications detaillees qui s'ouvrent au clic (accordeon, sans redirection)
+const NEGO_DETAILS = [
+  { icon: "🎁", titre: "Le PTZ (Pret a Taux Zero)", paras: [
+    "Le PTZ est un pret SANS interets ni frais, accorde par l'Etat pour aider a acheter sa premiere residence principale. Tu rembourses uniquement le capital : 40 000 EUR de PTZ = 40 000 EUR a rendre, zero interet.",
+    "Pour qui ? Les 'primo-accedants' : ne pas avoir ete proprietaire de sa residence principale durant les 2 dernieres annees. Avec des plafonds de revenus selon la zone et la taille du foyer.",
+    "Combien ? Jusqu'a 50% du prix dans le neuf (depuis 2025 le PTZ est elargi a toute la France pour le neuf). Dans l'ancien, surtout en zones detendues avec gros travaux.",
+    "L'atout : le 'differe' de remboursement. Tu peux ne RIEN payer sur le PTZ pendant 5 a 15 ans, puis commencer ensuite — ca allege fortement les premieres annees.",
+    "Il se CUMULE avec ton pret principal : il reduit la somme empruntee au taux normal, donc ton cout total.",
+  ]},
+  { icon: "🛡️", titre: "La delegation d'assurance & la loi Lemoine", paras: [
+    "La banque exige une assurance qui rembourse le pret en cas de deces ou d'incapacite. Elle te propose la sienne, mais tu as le DROIT d'en prendre une ailleurs : la 'delegation'.",
+    "Une assurance externe est souvent 2 a 3 fois moins chere a garanties egales, surtout si tu es jeune et en bonne sante : 5 000 a 15 000 EUR d'economie sur la duree.",
+    "Loi Lemoine (2022) : tu peux changer d'assurance A TOUT MOMENT, gratuitement — meme apres la signature. Aucune excuse pour rester sur une offre chere.",
+    "Compare le TAEA et verifie que les garanties (deces, invalidite, incapacite) sont equivalentes a celles demandees par la banque.",
+  ]},
+  { icon: "🔓", titre: "Les IRA (penalites de remboursement anticipe)", paras: [
+    "Si tu rembourses ton pret en avance (revente, rentree d'argent, rachat par une autre banque), la banque peut te facturer des penalites : les IRA.",
+    "Elles sont plafonnees par la loi : maximum 6 mois d'interets OU 3% du capital restant du (le plus petit des deux). Sur un gros pret, ca peut chiffrer en milliers d'euros.",
+    "Bonne nouvelle : elles se negocient a la baisse, voire a ZERO, mais uniquement AVANT de signer. Demande leur suppression dans l'offre. Apres signature, c'est fige.",
+  ]},
+  { icon: "⚖️", titre: "Caution ou hypotheque : la garantie", paras: [
+    "La banque veut une garantie au cas ou tu ne rembourses plus. Deux options principales : la caution ou l'hypotheque.",
+    "La caution (ex : Credit Logement) : un organisme se porte garant. Souvent moins chere, plus rapide, et une partie est REMBOURSEE a la fin du pret si tout s'est bien passe.",
+    "L'hypotheque (ou PPD) : ton bien est mis en garantie. Frais notaires en plus, et des frais de mainlevee si tu revends avant la fin. Generalement plus couteuse.",
+    "Pour la plupart des dossiers, la caution est preferable. Demande-la.",
+  ]},
+  { icon: "🧭", titre: "Le courtier : a quoi il sert vraiment", paras: [
+    "Un courtier est un intermediaire qui presente ton dossier a des dizaines de banques et negocie le taux, l'assurance et les frais a ta place.",
+    "Il est en general paye uniquement SI le pret aboutit (honoraires ~1% du montant ou forfait 990-1500 EUR). Souvent, l'economie qu'il obtient depasse ses frais.",
+    "Avantage : gain de temps + acces a des taux 'negocies' que tu n'aurais pas seul. Tu peux aussi le mettre en concurrence avec ta propre banque.",
+  ]},
+];
+
+const NEGO_FISCALITE = [
+  { icon: "📜", titre: "Les frais de notaire (surtout des taxes)", paras: [
+    "Mal nommes : 80% sont des TAXES reversees a l'Etat (droits de mutation), pas la remuneration du notaire. Tu les paies a l'achat, en plus du prix.",
+    "Environ 7 a 8% du prix dans l'ANCIEN, mais seulement 2 a 3% dans le NEUF (VEFA). C'est pour ca que le neuf 'coute moins de frais'.",
+    "Ils ne sont quasiment pas negociables (sauf une petite remise possible sur les emoluments du notaire pour les biens chers). A integrer dans ton budget des le depart.",
+  ]},
+  { icon: "🏠", titre: "La taxe fonciere", paras: [
+    "Impot annuel paye par le PROPRIETAIRE (meme si le bien est loue). Son montant varie enormement selon la commune — parfois du simple au triple.",
+    "Verifie-la AVANT d'acheter (demande le dernier avis au vendeur) : c'est une charge recurrente qui pese sur ta rentabilite.",
+    "Elle augmente regulierement (revalorisation annuelle + decisions locales).",
+  ]},
+  { icon: "🧾", titre: "La taxe d'habitation", paras: [
+    "Supprimee depuis 2023 pour la RESIDENCE PRINCIPALE : tu ne la paies plus sur ton logement principal.",
+    "Elle reste due sur les RESIDENCES SECONDAIRES et les logements vacants — parfois majoree dans les zones tendues. A prevoir si tu achetes un pied-a-terre.",
+  ]},
+  { icon: "💶", titre: "Les interets d'emprunt deductibles (locatif)", paras: [
+    "Mythe a corriger : les interets ne sont PAS deductibles pour ta residence principale (supprime depuis 2011).",
+    "Ils le sont uniquement en INVESTISSEMENT LOCATIF au regime reel : tu deduis les interets (+ assurance, charges, taxe fonciere) de tes loyers imposables, ce qui reduit ton impot.",
+    "Au reel, si les charges + interets depassent les loyers, tu crees un 'deficit foncier' imputable sur ton revenu global jusqu'a 10 700 EUR/an. Voir l'onglet Rentabilite pour le calcul.",
+  ]},
+  { icon: "📈", titre: "La plus-value a la revente", paras: [
+    "Ta RESIDENCE PRINCIPALE est TOTALEMENT exoneree : tu ne paies aucun impot sur le gain a la revente.",
+    "Pour un autre bien (locatif, secondaire) : impot de 19% (IR) + 17,2% (prelevements sociaux) sur la plus-value.",
+    "Mais des abattements pour duree de detention reduisent cet impot : exoneration totale d'IR a 22 ans de detention, et de prelevements sociaux a 30 ans.",
+  ]},
+  { icon: "🏛️", titre: "L'IFI (gros patrimoine immobilier)", paras: [
+    "Impot sur la Fortune Immobiliere : du uniquement si la valeur NETTE de ton patrimoine immobilier depasse 1 300 000 EUR.",
+    "Bon a savoir : le capital restant du de tes credits immobiliers se DEDUIT de la valeur taxable. Emprunter reduit donc l'assiette de l'IFI.",
+  ]},
+];
+
+function Explainer({ icon, titre, paras }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={"explain" + (open ? " open" : "")}>
+      <button className="explain-head" onClick={() => setOpen((o) => !o)}>
+        <span className="explain-ico">{icon}</span>
+        <span className="explain-title">{titre}</span>
+        <span className="explain-chevron">{open ? "−" : "+"}</span>
+      </button>
+      {open && (
+        <div className="explain-body">
+          {paras.map((p, i) => <p key={i}>{p}</p>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NegoTips() {
   return (
     <div className="card" style={{ marginTop: 18 }}>
@@ -1007,7 +1089,17 @@ function NegoTips() {
         ))}
       </div>
 
-      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation. Un courtier peut activer plusieurs de ces leviers pour toi.</p>
+      <div className="section-t">Comprendre en detail (clique pour ouvrir)</div>
+      <div className="explain-list">
+        {NEGO_DETAILS.map((d, i) => <Explainer key={i} {...d} />)}
+      </div>
+
+      <div className="section-t">🧾 La fiscalite de l'achat (clique pour ouvrir)</div>
+      <div className="explain-list">
+        {NEGO_FISCALITE.map((d, i) => <Explainer key={i} {...d} />)}
+      </div>
+
+      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation. Un courtier ou un comptable peut activer plusieurs de ces leviers pour toi.</p>
     </div>
   );
 }
