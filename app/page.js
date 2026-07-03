@@ -998,36 +998,59 @@ const NEGO_DETAILS = [
   ]},
 ];
 
-const NEGO_FISCALITE = [
-  { icon: "🛋️", titre: "Meuble — Micro-BIC (abattement 50%)", paras: [
-    "Tu loues en MEUBLE ? Tes loyers sont des BIC. Le micro-BIC applique un abattement forfaitaire de 50% : tu n'es impose que sur la MOITIE de tes loyers.",
-    "Sur cette moitie, tu paies ta tranche d'impot (TMI) + 17,2% de prelevements sociaux. Exemple : 12 000 EUR de loyers -> base imposable 6 000 EUR.",
-    "Pour qui : loyers meubles < 77 700 EUR/an, et peu de charges/credit. Zero comptabilite, ultra simple.",
-    "Limite : si tu as un credit (donc beaucoup d'interets) et des charges, le LMNP reel est presque toujours plus avantageux.",
-  ]},
-  { icon: "🏆", titre: "Meuble — LMNP reel (le plus puissant)", paras: [
-    "Tu deduis TOUTES tes charges reelles : interets d'emprunt, assurance, taxe fonciere, charges de copro, travaux, frais de comptable...",
-    "EN PLUS, tu 'amortis' le bien : chaque annee, tu deduis une fraction de sa valeur (~2 a 3%/an) comme si le bien s'usait. C'est une charge 'sur papier' qui ne te coute rien.",
-    "Resultat : ton impot sur les loyers tombe souvent a ZERO pendant 8 a 12 ans. C'est LE regime des investisseurs meubles avec credit.",
-    "Contrepartie : il faut un comptable (~300-500 EUR/an, deductible). Largement rentable des que tu as un credit.",
-  ]},
+// Location classique (longue duree) : le locataire habite le logement a l'annee
+const NEGO_FISC_CLASSIQUE = [
   { icon: "🔑", titre: "Nu — Micro-foncier (abattement 30%)", paras: [
-    "Tu loues VIDE (non meuble) ? Tes loyers sont des revenus fonciers. Le micro-foncier applique un abattement de 30% : tu es impose sur 70% des loyers.",
-    "Imposition : TMI + 17,2% de prelevements sociaux sur ces 70%.",
-    "Pour qui : loyers nus < 15 000 EUR/an et peu de charges. Simple, mais l'abattement (30%) est plus faible qu'en meuble (50%).",
+    "Location VIDE (non meublee). Abattement forfaitaire de 30% : tu es impose sur 70% des loyers (TMI + 17,2% de prelevements sociaux).",
+    "Pour qui : loyers nus < 15 000 EUR/an et peu de charges. Tres simple, aucune comptabilite.",
   ]},
   { icon: "🧱", titre: "Nu — Reel (charges + deficit foncier)", paras: [
-    "Tu deduis tes charges reelles et tes interets d'emprunt de tes loyers. Si le total depasse les loyers, tu crees un 'deficit foncier'.",
-    "Ce deficit s'impute sur ton REVENU GLOBAL (salaire...) jusqu'a 10 700 EUR/an, ce qui reduit ton impot global. Le surplus se reporte 10 ans.",
-    "Ideal si tu fais de gros travaux ou si tu as beaucoup d'interets. Mais en nu, PAS d'amortissement (contrairement au LMNP meuble).",
+    "Tu deduis tes charges reelles et tes interets d'emprunt. Si le total depasse les loyers, tu crees un 'deficit foncier'.",
+    "Ce deficit s'impute sur ton REVENU GLOBAL (salaire) jusqu'a 10 700 EUR/an, reduisant ton impot ; le surplus se reporte 10 ans.",
+    "Ideal si gros travaux ou beaucoup d'interets. En nu, PAS d'amortissement (contrairement au meuble).",
   ]},
-  { icon: "🤔", titre: "Meuble ou nu ? Comment choisir", paras: [
-    "MEUBLE (BIC) : bail court (1 an, 9 mois etudiant), loyers ~10-20% plus eleves, et surtout l'amortissement (LMNP reel) qui efface l'impot. Plus de rotation de locataires.",
-    "NU (foncier) : bail 3 ans, plus stable, moins de gestion. Mais fiscalite moins avantageuse (pas d'amortissement).",
-    "Regle simple : as-tu un credit et des charges ? -> REEL (LMNP si meuble). Tres peu de charges ? -> MICRO. ",
-    "Bonne nouvelle : l'onglet Rentabilite calcule AUTOMATIQUEMENT l'impot des 4 regimes sur ton bien et te dit lequel est le plus avantageux. Va voir le 'Comparateur des 4 regimes fiscaux'.",
+  { icon: "🛋️", titre: "Meuble longue duree — Micro-BIC (50%)", paras: [
+    "Location MEUBLEE a l'annee (bail 1 an, ou 9 mois etudiant). Abattement de 50% : tu n'es impose que sur la MOITIE des loyers.",
+    "Plafond : 77 700 EUR (revenus 2025) puis 83 600 EUR (revenus 2026). Au-dela, passage au reel.",
+    "Simple, mais avec un credit le LMNP reel est presque toujours plus avantageux.",
+  ]},
+  { icon: "🏆", titre: "Meuble longue duree — LMNP reel", paras: [
+    "Deduction de TOUTES les charges reelles (interets, taxe fonciere, charges, travaux, comptable) + AMORTISSEMENT du bien (~2-3%/an, une charge 'sur papier').",
+    "Resultat : l'impot sur les loyers tombe souvent a ZERO pendant 8 a 12 ans. Le regime roi des investisseurs meubles avec credit.",
+    "Contrepartie : un comptable (~300-500 EUR/an, deductible). Nuance 2025 : les amortissements deduits sont desormais reintegres dans le calcul de la plus-value a la revente.",
   ]},
 ];
+
+// Location courte duree / Airbnb (meuble de tourisme) — fiscalite durcie par la loi Le Meur
+const NEGO_FISC_TOURISME = [
+  { icon: "🏖️", titre: "Tourisme NON classe — Micro-BIC 30%", paras: [
+    "Airbnb / courte duree NON classe. La loi Le Meur (2024) a fait TOMBER l'abattement de 50% a 30%, et le plafond de 77 700 EUR a seulement 15 000 EUR/an.",
+    "C'est la grosse perte fiscale de 2025 : le tourisme non classe est desormais aligne sur la location nue. Au-dela de 15 000 EUR, tu bascules automatiquement au reel.",
+  ]},
+  { icon: "⭐", titre: "Tourisme CLASSE — Micro-BIC 50%", paras: [
+    "Si tu fais CLASSER ton meuble de tourisme (1 a 5 etoiles, via un organisme agree / Atout France), l'abattement reste a 50%, plafond 77 700 EUR.",
+    "Le classement coute peu (~150-300 EUR, valable 5 ans) et quasiment DOUBLE ton abattement vs non classe. Quasi indispensable si tu restes au micro.",
+  ]},
+  { icon: "🏆", titre: "Tourisme — LMNP reel (amortissement)", paras: [
+    "Comme en meuble classique : deduction des charges + amortissement du bien -> impot souvent nul. Souvent le meilleur choix des que les recettes montent.",
+    "Meme nuance qu'en LMNP : reintegration des amortissements dans la plus-value depuis 2025. Comptable recommande.",
+  ]},
+  { icon: "⚠️", titre: "Les regles Airbnb a respecter (non fiscal, mais crucial)", paras: [
+    "Numero d'enregistrement en mairie : desormais generalise par la loi Le Meur.",
+    "Grandes villes : autorisation de changement d'usage souvent exigee pour un logement entier dedie a la courte duree.",
+    "Ta RESIDENCE PRINCIPALE : location courte duree limitee a 120 nuits/an (parfois 90 selon la ville).",
+    "DPE obligatoire : interdiction progressive des passoires thermiques en meuble de tourisme.",
+  ]},
+];
+
+const NEGO_FISC_CHOIX = {
+  icon: "🤔", titre: "Location classique ou Airbnb ? Comment choisir", paras: [
+    "Airbnb rapporte souvent 2 a 3x plus de loyer qu'une location classique... mais beaucoup plus de gestion, de rotation, de reglementation, et une fiscalite durcie (loi Le Meur).",
+    "Classique = revenus stables, peu de gestion, moins de contraintes. Airbnb = rendement max mais chronophage et tres regule.",
+    "Cote fiscal au micro : la location meublee classique (50%) bat desormais le tourisme NON classe (30%). Se faire CLASSER ou passer au REEL remet le tourisme devant.",
+    "L'onglet Rentabilite a un mode Airbnb (revenus saisonniers) et un comparateur qui calcule l'impot des regimes sur ton bien reel.",
+  ],
+};
 
 function Explainer({ icon, titre, paras }) {
   const [open, setOpen] = useState(false);
@@ -1095,11 +1118,19 @@ function NegoTips() {
       </div>
 
       <div className="section-t">🧾 Quel regime fiscal locatif choisir ? (clique pour ouvrir)</div>
+      <div className="fisc-sub">🏠 Location classique (longue duree)</div>
       <div className="explain-list">
-        {NEGO_FISCALITE.map((d, i) => <Explainer key={i} {...d} />)}
+        {NEGO_FISC_CLASSIQUE.map((d, i) => <Explainer key={i} {...d} />)}
+      </div>
+      <div className="fisc-sub" style={{ marginTop: 14 }}>🏖️ Location courte duree / Airbnb (meuble de tourisme)</div>
+      <div className="explain-list">
+        {NEGO_FISC_TOURISME.map((d, i) => <Explainer key={i} {...d} />)}
+      </div>
+      <div className="explain-list" style={{ marginTop: 14 }}>
+        <Explainer {...NEGO_FISC_CHOIX} />
       </div>
 
-      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation. Un courtier ou un comptable peut activer plusieurs de ces leviers pour toi.</p>
+      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation (regles applicables aux revenus 2025/2026). Un comptable est vivement recommande pour le regime reel et l'Airbnb.</p>
     </div>
   );
 }
