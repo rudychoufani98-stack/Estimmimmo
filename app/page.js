@@ -690,14 +690,18 @@ export default function Page() {
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
             3. Capacite d'emprunt
           </button>
+          <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
+            4. Travaux
+          </button>
           <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
-            4. Sources &amp; Données
+            5. Sources &amp; Données
           </button>
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
         {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} />}
         {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
+        {tab === "travaux" && <SimulateurTravaux estValue={estValue} />}
         {tab === "sources" && <Sources />}
 
         <button className="btn-print" onClick={() => window.print()}>
@@ -3297,6 +3301,125 @@ const REFRESH_LABEL = {
   a_integrer: { label: "À intégrer", cls: "src-todo" },
 };
 
+/* ======================= SIMULATEUR DE TRAVAUX ============================ */
+const DPE_FACTORS = { A: 0.04, B: 0.03, C: 0.01, D: 0, E: -0.03, F: -0.07, G: -0.11 };
+function statutLocation(dpe) {
+  if (dpe === "G") return { txt: "Interdit a la location (depuis 2025)", cls: "b" };
+  if (dpe === "F") return { txt: "Loyer gele, interdit en 2028", cls: "w" };
+  if (dpe === "E") return { txt: "Interdit en 2034", cls: "w" };
+  return { txt: "Louable sans restriction", cls: "g" };
+}
+
+function SimulateurTravaux({ estValue }) {
+  const [f, setF] = useState({
+    valeur: estValue || 300000,
+    dpeAvant: "F",
+    dpeApres: "C",
+    cout: 25000,
+    aides: 8000,
+    gainLoyer: 0,
+  });
+  const set = (k, val) => setF((s) => ({ ...s, [k]: val }));
+  const v = (k) => Number(f[k]) || 0;
+  const [synced, setSynced] = useState(false);
+  if (!synced && estValue && f.valeur !== estValue) { setF((x) => ({ ...x, valeur: estValue })); setSynced(true); }
+
+  const fb = DPE_FACTORS[f.dpeAvant], fa = DPE_FACTORS[f.dpeApres];
+  const valeur = v("valeur");
+  const gainValeur = valeur * ((1 + fa) / (1 + fb) - 1);
+  const coutNet = Math.max(0, v("cout") - v("aides"));
+  const plusValueNette = gainValeur - coutNet;
+  const roi = coutNet > 0 ? (gainValeur / coutNet) * 100 : 0;
+  const gainLoyerAn = v("gainLoyer") * 12;
+  const paybackAns = gainLoyerAn > 0 ? coutNet / gainLoyerAn : null;
+
+  const sAvant = statutLocation(f.dpeAvant), sApres = statutLocation(f.dpeApres);
+
+  let verdict, vClass;
+  if (plusValueNette >= 0) { verdict = "Rentable : les travaux creent plus de valeur qu'ils ne coutent (apres aides)."; vClass = "g"; }
+  else if (sAvant.cls === "b" || sAvant.cls === "w") { verdict = "A faire malgre tout : la valeur creee ne couvre pas tout le cout, mais tu debloques la location (passoire) et securises ton bien face a la loi Climat."; vClass = "w"; }
+  else { verdict = "Peu rentable financierement en l'etat. A justifier surtout par le confort et l'economie d'energie."; vClass = "b"; }
+
+  const dpeOpts = ["A", "B", "C", "D", "E", "F", "G"];
+
+  return (
+    <div className="grid">
+      {/* inputs */}
+      <div>
+        <div className="card">
+          <h2>Le projet de travaux</h2>
+          <div className="sub">{estValue ? "Valeur pre-remplie depuis ton estimation." : "Renseigne la valeur du bien."}</div>
+          <label>Valeur actuelle du bien</label>
+          <div className="unit"><input type="number" value={f.valeur} onChange={(e) => set("valeur", e.target.value)} /><small>EUR</small></div>
+          <div className="row">
+            <div>
+              <label>DPE actuel</label>
+              <select value={f.dpeAvant} onChange={(e) => set("dpeAvant", e.target.value)}>{dpeOpts.map((d) => <option key={d}>{d}</option>)}</select>
+            </div>
+            <div>
+              <label>DPE vise (apres travaux)</label>
+              <select value={f.dpeApres} onChange={(e) => set("dpeApres", e.target.value)}>{dpeOpts.map((d) => <option key={d}>{d}</option>)}</select>
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Cout des travaux</label>
+              <div className="unit"><input type="number" value={f.cout} onChange={(e) => set("cout", e.target.value)} /><small>EUR</small></div>
+            </div>
+            <div>
+              <label>Aides estimees</label>
+              <div className="unit"><input type="number" value={f.aides} onChange={(e) => set("aides", e.target.value)} /><small>EUR</small></div>
+            </div>
+          </div>
+          <label>Gain de loyer / mois apres travaux (optionnel)</label>
+          <div className="unit"><input type="number" value={f.gainLoyer} onChange={(e) => set("gainLoyer", e.target.value)} /><small>EUR</small></div>
+          <p className="hint">Aides cumulables : <b>MaPrimeRenov'</b>, <b>CEE</b> (primes energie), <b>eco-PTZ</b> (pret 0% jusqu'a 50 000 EUR), TVA 5,5%. En locatif, les travaux sont deductibles (deficit foncier). Estime le total ici.</p>
+        </div>
+      </div>
+
+      {/* results */}
+      <div>
+        <div className="card">
+          <h2>Impact des travaux</h2>
+          <div className="sub">Mise a jour en temps reel</div>
+
+          <div className="hero" style={{ background: plusValueNette >= 0 ? "linear-gradient(135deg,#2f9e6a,#4bb583)" : "linear-gradient(135deg,#dd8a2c,#e8a955)" }}>
+            <div className="lbl">Plus-value nette creee</div>
+            <div className="val">{plusValueNette >= 0 ? "+ " : "- "}{euro(Math.abs(plusValueNette))}</div>
+            <div className="range">ROI des travaux : {roi.toFixed(0)}%</div>
+          </div>
+
+          <div className="kpis">
+            <div className="kpi"><div className="k">Gain de valeur (verte)</div><div className="v g">+ {euro0(gainValeur)}</div></div>
+            <div className="kpi"><div className="k">Cout net (apres aides)</div><div className="v">{euro0(coutNet)}</div></div>
+            <div className="kpi"><div className="k">ROI travaux</div><div className={"v " + (roi >= 100 ? "g" : roi >= 60 ? "w" : "b")}>{roi.toFixed(0)}%</div></div>
+          </div>
+
+          <div className="section-t">Statut location (loi Climat)</div>
+          <div className="travaux-statut">
+            <div className={"badge " + sAvant.cls}>DPE {f.dpeAvant} : {sAvant.txt}</div>
+            <span className="travaux-arrow">→</span>
+            <div className={"badge " + sApres.cls}>DPE {f.dpeApres} : {sApres.txt}</div>
+          </div>
+
+          <div className="section-t">Detail</div>
+          <div className="line-items">
+            <div className="li"><span className="lbl">Cout des travaux</span><span className="neg">- {euro(v("cout"))}</span></div>
+            <div className="li"><span className="lbl">Aides (MaPrimeRenov', CEE...)</span><span className="pos">+ {euro(v("aides"))}</span></div>
+            <div className="li total"><span>Cout net</span><span className="v">{euro(coutNet)}</span></div>
+            <div className="li"><span className="lbl">Gain de valeur du bien</span><span className="pos">+ {euro(gainValeur)}</span></div>
+            <div className="li total"><span>Plus-value nette</span><span className={plusValueNette >= 0 ? "pos" : "neg"}>{plusValueNette >= 0 ? "+ " : "- "}{euro(Math.abs(plusValueNette))}</span></div>
+            {gainLoyerAn > 0 && <div className="li"><span className="lbl">Gain de loyer / an</span><span className="pos">+ {euro(gainLoyerAn)}</span></div>}
+            {paybackAns != null && <div className="li"><span className="lbl">Retour sur invest. (via loyer)</span><span>{paybackAns.toFixed(1)} ans</span></div>}
+          </div>
+
+          <div className={"badge " + vClass} style={{ marginTop: 10 }}>{verdict}</div>
+          <p className="hint" style={{ marginTop: 8 }}>Le gain de valeur estime provient de l'amelioration du DPE (valeur verte), calculee comme dans l'estimation. Les couts et aides reels dependent des devis ; fais-toi accompagner (France Renov').</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Sources() {
   return (
