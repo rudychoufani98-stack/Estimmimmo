@@ -4,3 +4,7 @@
 .env*.local
 .DS_Store
 *.log
+# Cloudflare / OpenNext
+/.open-next
+.dev.vars
+.wrangler
