@@ -2039,6 +2039,22 @@ function Rentabilite({ estValue, estCity, estCityRaw }) {
   const yClass = (y) => (y >= 5 ? "g" : y >= 3 ? "w" : "b");
   const cClass = (x) => (x >= 0 ? "g" : "b");
 
+  // ---- Score d'investissement global (0-100) ----
+  const clampS = (x) => Math.max(0, Math.min(100, x));
+  const subScores = [
+    { key: "renta", label: "Rentabilite nette-nette", val: clampS(((yieldNetNet - 1) / 6) * 100), weight: 0.30 },
+    { key: "tri", label: "Rendement total (TRI)", val: tri != null ? clampS(((tri - 2) / 8) * 100) : 50, weight: 0.30 },
+    { key: "cashflow", label: "Cashflow mensuel", val: clampS(((mCashflowAT + 400) / 600) * 100), weight: 0.25 },
+    { key: "prix", label: "Prix vs marche", val: estValue > 0 ? clampS(((0.10 - (price - estValue) / estValue) / 0.20) * 100) : 50, weight: 0.15 },
+  ];
+  const scoreGlobal = Math.round(subScores.reduce((s, x) => s + x.val * x.weight, 0));
+  let scoreLabel, scoreColor;
+  if (scoreGlobal >= 80) { scoreLabel = "Excellent"; scoreColor = "var(--green)"; }
+  else if (scoreGlobal >= 60) { scoreLabel = "Bon"; scoreColor = "var(--accent)"; }
+  else if (scoreGlobal >= 40) { scoreLabel = "Moyen"; scoreColor = "var(--warn)"; }
+  else { scoreLabel = "Faible"; scoreColor = "var(--bad)"; }
+  const scoreCirc = 2 * Math.PI * 52;
+
   let verdict, vClass;
   if (cashflowAfterTax >= 0) { verdict = "Rentable : apres impot, les loyers couvrent le credit et toutes les charges. Cashflow positif."; vClass = "g"; }
   else if (mCashflowAT >= -200) { verdict = "Equilibre : effort d'epargne mensuel modere apres impot. A arbitrer selon la plus-value attendue."; vClass = "w"; }
@@ -2224,6 +2240,33 @@ function Rentabilite({ estValue, estCity, estCityRaw }) {
           meuble={v("meuble") === 1}
           loyerSaisi={v("rent")}
         />
+        <div className="card">
+          <h2>Score d'investissement</h2>
+          <div className="sub">Synthese globale de la qualite de l'operation</div>
+          <div className="score-wrap">
+            <div className="score-gauge">
+              <svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="var(--line)" strokeWidth="12" />
+                <circle cx="60" cy="60" r="52" fill="none" stroke={scoreColor} strokeWidth="12" strokeLinecap="round"
+                  strokeDasharray={scoreCirc} strokeDashoffset={scoreCirc * (1 - scoreGlobal / 100)}
+                  transform="rotate(-90 60 60)" style={{ transition: "stroke-dashoffset .5s" }} />
+                <text x="60" y="58" textAnchor="middle" fontSize="30" fontWeight="700" fill="var(--txt)">{scoreGlobal}</text>
+                <text x="60" y="76" textAnchor="middle" fontSize="11" fill="var(--muted)">/ 100</text>
+              </svg>
+              <div className="score-label" style={{ color: scoreColor }}>{scoreLabel}</div>
+            </div>
+            <div className="score-bars">
+              {subScores.map((s) => (
+                <div className="score-bar-row" key={s.key}>
+                  <div className="score-bar-top"><span>{s.label}</span><b>{Math.round(s.val)}</b></div>
+                  <div className="score-bar-track"><div className="score-bar-fill" style={{ width: s.val + "%", background: s.val >= 60 ? "var(--green)" : s.val >= 40 ? "var(--warn)" : "var(--bad)" }} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="hint">Score pondere : rentabilite nette-nette (30%), TRI (30%), cashflow (25%), prix vs marche (15%). Base sur tes hypotheses ci-contre.</p>
+        </div>
+
         <div className="card">
           <h2>Analyse de rentabilite</h2>
           <div className="sub">Mise a jour en temps reel</div>
