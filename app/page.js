@@ -666,6 +666,7 @@ export default function Page() {
   const [tab, setTab] = useState("estim");
   const [estValue, setEstValue] = useState(0);
   const [estCity, setEstCity] = useState(null); // city name from geocoder
+  const [travauxCost, setTravauxCost] = useState(0); // cout net des travaux -> Rentabilite
 
   function handleEstimate(val, city) {
     setEstValue(val);
@@ -684,14 +685,14 @@ export default function Page() {
           <button className={"tab" + (tab === "estim" ? " active" : "")} onClick={() => setTab("estim")}>
             1. Estimation
           </button>
+          <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
+            2. Travaux
+          </button>
           <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
-            2. Rentabilite
+            3. Rentabilite
           </button>
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
-            3. Capacite d'emprunt
-          </button>
-          <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
-            4. Travaux
+            4. Capacite d'emprunt
           </button>
           <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
             5. Sources &amp; Données
@@ -699,9 +700,9 @@ export default function Page() {
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
-        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} />}
+        {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} />}
+        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} />}
         {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
-        {tab === "travaux" && <SimulateurTravaux estValue={estValue} />}
         {tab === "sources" && <Sources />}
 
         <button className="btn-print" onClick={() => window.print()}>
@@ -1892,12 +1893,12 @@ function EncadrementCard({ estCity, surface, pieces, meuble, loyerSaisi }) {
   );
 }
 
-function Rentabilite({ estValue, estCity, estCityRaw }) {
+function Rentabilite({ estValue, estCity, estCityRaw, travauxCost }) {
   const [rentaTab, setRentaTab] = useState("classique");
   const [f, setF] = useState({
     price: estValue || 300000,
     notaryRate: 0.075,
-    works: 0,
+    works: travauxCost || 0,
     surface: 40,          // surface en m²
     pieces: 2,            // nombre de pièces
     meuble: 1,            // 1 = meublé, 0 = nu
@@ -3310,7 +3311,7 @@ function statutLocation(dpe) {
   return { txt: "Louable sans restriction", cls: "g" };
 }
 
-function SimulateurTravaux({ estValue }) {
+function SimulateurTravaux({ estValue, onTravaux, onGoToRenta }) {
   const [f, setF] = useState({
     valeur: estValue || 300000,
     dpeAvant: "F",
@@ -3328,6 +3329,7 @@ function SimulateurTravaux({ estValue }) {
   const valeur = v("valeur");
   const gainValeur = valeur * ((1 + fa) / (1 + fb) - 1);
   const coutNet = Math.max(0, v("cout") - v("aides"));
+  useEffect(() => { if (onTravaux) onTravaux(coutNet); }, [coutNet, onTravaux]);
   const plusValueNette = gainValeur - coutNet;
   const roi = coutNet > 0 ? (gainValeur / coutNet) * 100 : 0;
   const gainLoyerAn = v("gainLoyer") * 12;
@@ -3414,7 +3416,12 @@ function SimulateurTravaux({ estValue }) {
           </div>
 
           <div className={"badge " + vClass} style={{ marginTop: 10 }}>{verdict}</div>
-          <p className="hint" style={{ marginTop: 8 }}>Le gain de valeur estime provient de l'amelioration du DPE (valeur verte), calculee comme dans l'estimation. Les couts et aides reels dependent des devis ; fais-toi accompagner (France Renov').</p>
+          {onGoToRenta && (
+            <button className="btn-budget" style={{ marginTop: 14 }} onClick={onGoToRenta}>
+              🔧 Voir ma rentabilite avec ces travaux ({euro0(coutNet)} inclus)
+            </button>
+          )}
+          <p className="hint" style={{ marginTop: 8 }}>Le gain de valeur estime provient de l'amelioration du DPE (valeur verte), calculee comme dans l'estimation. Le cout net des travaux est reporte dans l'onglet Rentabilite. Les couts et aides reels dependent des devis (France Renov').</p>
         </div>
       </div>
     </div>
