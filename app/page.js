@@ -4,6 +4,9 @@ import "leaflet/dist/leaflet.css";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 
+// Comptes proprietaire -> acces premium complet automatique
+const ADMIN_EMAILS = ["rudychoufani98@gmail.com"];
+
 const euro = (n) => Math.round(n).toLocaleString("fr-FR") + " EUR";
 const euro0 = (n) => Math.round(n).toLocaleString("fr-FR");
 const pct = (n) => n.toFixed(2).replace(".", ",") + " %";
@@ -683,6 +686,8 @@ export default function Page() {
 
   useEffect(() => {
     if (!supabase || !user) { setIsPremium(false); return; }
+    // Comptes proprietaire : premium automatique (acces complet)
+    if (ADMIN_EMAILS.includes((user.email || "").toLowerCase())) { setIsPremium(true); return; }
     supabase.from("profiles").select("is_premium").eq("id", user.id).single()
       .then(({ data }) => setIsPremium(!!data?.is_premium));
   }, [user]);
