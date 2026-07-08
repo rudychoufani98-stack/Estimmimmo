@@ -676,11 +676,42 @@ export default function Page() {
   const [user, setUser] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [loadProject, setLoadProject] = useState(null); // projet a charger dans l'Estimation
+  const [loadProject, setLoadProject] = useState(null); // estimation a charger
+  const [estimData, setEstimData] = useState(null);     // {form,res,geo} courant
+  const [travauxData, setTravauxData] = useState(null); // etat courant onglet Travaux
+  const [rentaData, setRentaData] = useState(null);     // etat courant onglet Rentabilite
+  const [loadTravaux, setLoadTravaux] = useState(null); // travaux a restaurer
+  const [loadRenta, setLoadRenta] = useState(null);     // renta a restaurer
+  const [saveMsg, setSaveMsg] = useState("");
 
   function openProject(p) {
-    setLoadProject(p.data || null);
+    const d = p.data || {};
+    const estim = d.estim || d; // nouveau format imbrique OU ancien format plat
+    setLoadProject(estim || null);
+    if (d.type === "projet") { setLoadTravaux(d.travaux || null); setLoadRenta(d.renta || null); }
     setTab("estim");
+  }
+
+  async function saveBien() {
+    if (!supabase || !user || !estimData || !estimData.res) return;
+    const nom = window.prompt("Nom du bien :", (estimData.res.location && estimData.res.location.area) || "Mon bien");
+    if (!nom) return;
+    const { error } = await supabase.from("projects").insert({ user_id: user.id, nom, data: { type: "bien", estim: estimData } });
+    setSaveMsg(error ? "Erreur : " + error.message : "✓ Bien sauvegarde dans « Mes projets »");
+    setTimeout(() => setSaveMsg(""), 4000);
+  }
+
+  async function saveProjetComplet() {
+    if (!supabase || !user) return;
+    if (!estimData || !estimData.res) { setSaveMsg("Fais d'abord une estimation."); setTimeout(() => setSaveMsg(""), 3000); return; }
+    const nom = window.prompt("Nom du projet complet :", (estimData.res.location && estimData.res.location.area) || "Mon projet");
+    if (!nom) return;
+    const { error } = await supabase.from("projects").insert({
+      user_id: user.id, nom,
+      data: { type: "projet", estim: estimData, travaux: travauxData, renta: rentaData },
+    });
+    setSaveMsg(error ? "Erreur : " + error.message : "✓ Projet complet sauvegarde");
+    setTimeout(() => setSaveMsg(""), 4000);
   }
 
   useEffect(() => {
@@ -711,8 +742,12 @@ export default function Page() {
   return (
     <>
       <div className="authbar">
+        {saveMsg && <span className="save-msg">{saveMsg}</span>}
         {user ? (
           <>
+            {isPremium && estimData && estimData.res && (
+              <button className="auth-btn" onClick={saveProjetComplet}>💾 Sauver le projet complet</button>
+            )}
             <span className={"auth-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
             <span className="auth-email">{user.email}</span>
             <button className="auth-btn" onClick={logout}>Deconnexion</button>
@@ -751,14 +786,14 @@ export default function Page() {
           )}
         </div>
 
-        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} initialProject={loadProject} onLoaded={() => setLoadProject(null)} />}
+        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveBien} />}
         {tab === "sources" && <Sources />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} />
         ) : (
           <>
-            {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} />}
-            {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} />}
+            {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} initialData={loadTravaux} onData={setTravauxData} onLoaded={() => setLoadTravaux(null)} />}
+            {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} initialData={loadRenta} onData={setRentaData} onLoaded={() => setLoadRenta(null)} />}
             {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
             {tab === "projets" && <MesProjets user={user} onOpen={openProject} />}
           </>
@@ -1433,13 +1468,18 @@ function MesProjets({ user, onOpen }) {
       {projects && projects.length > 0 && (
         <div className="projets-list">
           {projects.map((p) => {
-            const est = p.data && p.data.res && p.data.res.estimate;
-            const area = p.data && p.data.res && p.data.res.location && p.data.res.location.area;
+            const estim = (p.data && (p.data.estim || p.data)) || {};
+            const est = estim.res && estim.res.estimate;
+            const area = estim.res && estim.res.location && estim.res.location.area;
+            const isProjet = p.data && p.data.type === "projet";
             return (
               <div className="projet-item" key={p.id}>
                 <div className="projet-info">
-                  <div className="projet-nom">{p.nom}</div>
-                  <div className="projet-meta">{area || "—"}{est ? " · " + euroP(est) : ""} · {new Date(p.created_at).toLocaleDateString("fr-FR")}</div>
+                  <div className="projet-nom">{isProjet ? "📁 " : "🏠 "}{p.nom}</div>
+                  <div className="projet-meta">
+                    <span className={"projet-type " + (isProjet ? "t-projet" : "t-bien")}>{isProjet ? "Projet complet" : "Bien"}</span>
+                    {area ? " · " + area : ""}{est ? " · " + euroP(est) : ""} · {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                  </div>
                 </div>
                 <div className="projet-actions">
                   <button className="btn-sm" onClick={() => onOpen(p)}>Ouvrir</button>
@@ -1455,7 +1495,7 @@ function MesProjets({ user, onOpen }) {
 }
 
 /* ======================= TAB 1 : ESTIMATION ============================== */
-function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded }) {
+function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded, onEstimData, onSaveBien }) {
   const [form, setForm] = useState((initialProject && initialProject.form) || {
     address: "10 rue de la Paix, Paris",
     surface: 65,
@@ -1477,29 +1517,12 @@ function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded
   const [error, setError] = useState("");
   const [res, setRes] = useState((initialProject && initialProject.res) || null);
 
-  // save-project state
-  const [saveMsg, setSaveMsg] = useState("");
-
   useEffect(() => {
     if (initialProject) {
       if (initialProject.res && onEstimate) onEstimate(initialProject.res.estimate, (initialProject.geo && initialProject.geo.city) || null);
       if (onLoaded) onLoaded();
     }
   }, []);
-
-  async function saveProject() {
-    if (!supabase || !user) return;
-    const nom = window.prompt("Nom du projet :", (res && res.location && res.location.area) || form.address || "Mon bien");
-    if (!nom) return;
-    setSaveMsg("Sauvegarde...");
-    const { error } = await supabase.from("projects").insert({
-      user_id: user.id,
-      nom,
-      data: { form, res, geo },
-    });
-    setSaveMsg(error ? "Erreur : " + error.message : "✓ Projet sauvegarde dans « Mes projets »");
-    setTimeout(() => setSaveMsg(""), 4000);
-  }
 
   // address autocomplete state
   const [sugg, setSugg] = useState([]);
@@ -1508,6 +1531,9 @@ function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded
   const debRef = useRef(null);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // remonte l'etat courant vers la Page (pour la sauvegarde)
+  useEffect(() => { if (onEstimData) onEstimData({ form, res, geo }); }, [form, res, geo]);
 
   function onAddressChange(val) {
     set("address", val);
@@ -1742,10 +1768,7 @@ function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded
           {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3a7bd5',borderColor:'#e3e9f2'}}/><br/>Recuperation des transactions DVF...</div>}
           {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} onGoToCapacite={onGoToCapacite} />}
           {res && user && (
-            <>
-              <button className="btn-budget" style={{ marginTop: 14 }} onClick={saveProject}>💾 Sauvegarder ce bien dans mes projets</button>
-              {saveMsg && <div className="geo-ok" style={{ marginTop: 4 }}>{saveMsg}</div>}
-            </>
+            <button className="btn-budget" style={{ marginTop: 14 }} onClick={onSaveBien}>💾 Sauvegarder ce bien (estimation seule)</button>
           )}
           {res && !user && <p className="hint" style={{ marginTop: 12 }}>Connecte-toi pour sauvegarder ce bien et le retrouver plus tard.</p>}
         </div>
@@ -2114,9 +2137,9 @@ function EncadrementCard({ estCity, surface, pieces, meuble, loyerSaisi }) {
   );
 }
 
-function Rentabilite({ estValue, estCity, estCityRaw, travauxCost }) {
+function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, onData, onLoaded }) {
   const [rentaTab, setRentaTab] = useState("classique");
-  const [f, setF] = useState({
+  const [f, setF] = useState(initialData || {
     price: estValue || 300000,
     notaryRate: 0.075,
     works: travauxCost || 0,
@@ -2139,9 +2162,11 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost }) {
     horizon: 10,         // duree de detention avant revente (ans)
     appreciation: 1,     // evolution annuelle du prix (%)
   });
-  // keep price synced when arriving from estimation
+  useEffect(() => { if (onData) onData(f); }, [f]);
+  useEffect(() => { if (initialData && onLoaded) onLoaded(); }, []);
+  // keep price synced when arriving from estimation (sauf si projet charge)
   const [synced, setSynced] = useState(false);
-  if (!synced && estValue && f.price !== estValue) {
+  if (!synced && !initialData && estValue && f.price !== estValue) {
     setF((x) => ({ ...x, price: estValue }));
     setSynced(true);
   }
@@ -3532,8 +3557,8 @@ function statutLocation(dpe) {
   return { txt: "Louable sans restriction", cls: "g" };
 }
 
-function SimulateurTravaux({ estValue, onTravaux, onGoToRenta }) {
-  const [f, setF] = useState({
+function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onData, onLoaded }) {
+  const [f, setF] = useState(initialData || {
     valeur: estValue || 300000,
     dpeAvant: "F",
     dpeApres: "C",
@@ -3541,6 +3566,8 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta }) {
     aides: 8000,
     gainLoyer: 0,
   });
+  useEffect(() => { if (onData) onData(f); }, [f]);
+  useEffect(() => { if (initialData && onLoaded) onLoaded(); }, []);
   const set = (k, val) => setF((s) => ({ ...s, [k]: val }));
   const v = (k) => Number(f[k]) || 0;
   const [synced, setSynced] = useState(false);
