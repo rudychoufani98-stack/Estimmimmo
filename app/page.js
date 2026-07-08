@@ -2,6 +2,7 @@
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 const euro = (n) => Math.round(n).toLocaleString("fr-FR") + " EUR";
 const euro0 = (n) => Math.round(n).toLocaleString("fr-FR");
@@ -668,6 +669,29 @@ export default function Page() {
   const [estCity, setEstCity] = useState(null); // city name from geocoder
   const [travauxCost, setTravauxCost] = useState(0); // cout net des travaux -> Rentabilite
 
+  // ---- auth / premium ----
+  const [user, setUser] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user || null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!supabase || !user) { setIsPremium(false); return; }
+    supabase.from("profiles").select("is_premium").eq("id", user.id).single()
+      .then(({ data }) => setIsPremium(!!data?.is_premium));
+  }, [user]);
+
+  async function logout() { if (supabase) await supabase.auth.signOut(); }
+
+  const PREMIUM_TABS = ["travaux", "renta", "capacite"];
+  const locked = PREMIUM_TABS.includes(tab) && !isPremium;
+
   function handleEstimate(val, city) {
     setEstValue(val);
     if (city) setEstCity(city);
@@ -675,6 +699,18 @@ export default function Page() {
 
   return (
     <>
+      <div className="authbar">
+        {user ? (
+          <>
+            <span className={"auth-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
+            <span className="auth-email">{user.email}</span>
+            <button className="auth-btn" onClick={logout}>Deconnexion</button>
+          </>
+        ) : (
+          <button className="auth-btn primary" onClick={() => setAuthOpen(true)}>Se connecter</button>
+        )}
+      </div>
+
       <header className="top">
         <h1>Estim<span>Immo</span></h1>
         <p>Estimation par transactions reelles (DVF) &amp; analyse de rentabilite</p>
@@ -686,13 +722,13 @@ export default function Page() {
             1. Estimation
           </button>
           <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
-            2. Travaux
+            2. Travaux{!isPremium ? " 🔒" : ""}
           </button>
           <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
-            3. Rentabilite
+            3. Rentabilite{!isPremium ? " 🔒" : ""}
           </button>
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
-            4. Capacite d'emprunt
+            4. Capacite d'emprunt{!isPremium ? " 🔒" : ""}
           </button>
           <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
             5. Sources &amp; Données
@@ -700,10 +736,17 @@ export default function Page() {
         </div>
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} />}
-        {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} />}
-        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} />}
-        {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
         {tab === "sources" && <Sources />}
+        {locked ? (
+          <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} />
+        ) : (
+          <>
+            {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} />}
+            {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} />}
+            {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
+          </>
+        )}
+        {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
 
         <button className="btn-print" onClick={() => window.print()}>
           ⬇ Télécharger / Imprimer PDF
@@ -1260,6 +1303,82 @@ function TableauAmortissement({ loan, rate, duration, mInsurance }) {
           <p className="hint" style={{ marginTop: 8 }}>Tableau indicatif — taux fixe, amortissement constant. Les mensualités réelles peuvent varier si taux révisable ou remboursement anticipé.</p>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ======================= AUTH & PAYWALL =================================== */
+function AuthModal({ onClose }) {
+  const [mode, setMode] = useState("login"); // "login" | "signup"
+  const [email, setEmail] = useState("");
+  const [pwd, setPwd] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+
+  async function submit() {
+    if (!supabase) { setError("Service d'authentification non configure."); return; }
+    setLoading(true); setError(""); setInfo("");
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({ email, password: pwd });
+        if (error) { setError(error.message); return; }
+        setInfo("Compte cree ! Verifie ta boite mail pour confirmer, puis connecte-toi.");
+        setMode("login");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
+        if (error) { setError(error.message); return; }
+        onClose();
+      }
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Fermer">&times;</button>
+        <h2>{mode === "login" ? "Connexion" : "Creer un compte"}</h2>
+        <div className="sub">{mode === "login" ? "Accede a tes analyses et projets." : "Gratuit : l'estimation. Premium : rentabilite, travaux et projets."}</div>
+        <label>Email</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="toi@email.com" />
+        <label>Mot de passe</label>
+        <input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="6 caracteres minimum" onKeyDown={(e) => e.key === "Enter" && submit()} />
+        {error && <div className="error">{error}</div>}
+        {info && <div className="geo-ok" style={{ marginTop: 10 }}>{info}</div>}
+        <button className="btn" onClick={submit} disabled={loading}>
+          {loading ? "..." : mode === "login" ? "Se connecter" : "Creer mon compte"}
+        </button>
+        <p className="hint" style={{ textAlign: "center", marginTop: 14 }}>
+          {mode === "login" ? "Pas encore de compte ? " : "Deja un compte ? "}
+          <a style={{ cursor: "pointer" }} onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); }}>
+            {mode === "login" ? "Creer un compte" : "Se connecter"}
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Paywall({ isLoggedIn, onLogin }) {
+  return (
+    <div className="card paywall">
+      <div className="paywall-ico">🔒</div>
+      <h2>Fonctionnalite Premium</h2>
+      <p className="paywall-txt">
+        L'estimation est <b>gratuite</b>. Pour la <b>rentabilite</b>, les <b>travaux</b>, la <b>capacite d'emprunt</b> et la <b>sauvegarde de tes projets</b>, passe Premium.
+      </p>
+      <div className="paywall-price">7,90 EUR<span>/mois</span></div>
+      <ul className="paywall-list">
+        <li>Analyse de rentabilite complete (fiscalite, TRI, cashflow)</li>
+        <li>Simulateur de travaux &amp; capacite d'emprunt</li>
+        <li>Projets immobiliers illimites, sauvegardes</li>
+      </ul>
+      {isLoggedIn ? (
+        <button className="btn" disabled title="Paiement bientot disponible">Passer Premium (bientot)</button>
+      ) : (
+        <button className="btn" onClick={onLogin}>Se connecter / creer un compte</button>
+      )}
+      <p className="hint" style={{ textAlign: "center", marginTop: 10 }}>Le paiement securise arrive tres bientot.</p>
     </div>
   );
 }

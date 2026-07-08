@@ -402,6 +402,32 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .nego-gl b{display:block;font-size:12.5px;color:var(--accent);margin-bottom:2px}
 .nego-gl span{font-size:12px;color:var(--muted);line-height:1.45}
 
+/* Auth bar */
+.authbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:12px 18px 0;max-width:1180px;margin:0 auto}
+.auth-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.auth-badge.premium{background:rgba(221,138,44,.14);border-color:rgba(221,138,44,.3);color:var(--warn)}
+.auth-email{font-size:12.5px;color:var(--muted)}
+.auth-btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:var(--shadow-sm)}
+.auth-btn:hover{border-color:var(--accent)}
+.auth-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;width:100%;max-width:400px;position:relative;box-shadow:0 20px 60px rgba(20,30,50,.3)}
+.modal h2{margin:0 0 4px;font-size:20px}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:26px;line-height:1;color:var(--muted)}
+.modal-close:hover{color:var(--txt)}
+
+/* Paywall */
+.paywall{text-align:center;max-width:460px;margin:0 auto}
+.paywall-ico{font-size:40px;margin-bottom:6px}
+.paywall-txt{font-size:14px;color:var(--muted);line-height:1.6;margin:0 0 14px}
+.paywall-price{font-size:34px;font-weight:800;color:var(--accent)}
+.paywall-price span{font-size:15px;font-weight:600;color:var(--muted)}
+.paywall-list{text-align:left;max-width:340px;margin:16px auto;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.paywall-list li{font-size:13.5px;color:var(--txt);line-height:1.5}
+.paywall-list li::marker{color:var(--green)}
+
 /* Simulateur de travaux */
 .travaux-statut{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .travaux-arrow{color:var(--muted);font-size:18px;font-weight:700}
