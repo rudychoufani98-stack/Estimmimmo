@@ -733,6 +733,7 @@ export default function Page() {
 
   const PREMIUM_TABS = ["travaux", "renta", "capacite"];
   const locked = PREMIUM_TABS.includes(tab) && !isPremium;
+  const isAdmin = !!(user && ADMIN_EMAILS.includes((user.email || "").toLowerCase()));
 
   function handleEstimate(val, city) {
     setEstValue(val);
@@ -776,9 +777,11 @@ export default function Page() {
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
             4. Capacite d'emprunt{!isPremium ? " 🔒" : ""}
           </button>
-          <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
-            5. Sources &amp; Données
-          </button>
+          {isAdmin && (
+            <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
+              5. Sources &amp; Données
+            </button>
+          )}
           {user && (
             <button className={"tab" + (tab === "projets" ? " active" : "")} onClick={() => setTab("projets")}>
               📁 Mes projets{!isPremium ? " 🔒" : ""}
@@ -786,10 +789,8 @@ export default function Page() {
           )}
         </div>
 
-        {tab === "estim" && (user
-          ? <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveBien} />
-          : <LoginGate onLogin={() => setAuthOpen(true)} />)}
-        {tab === "sources" && <Sources />}
+        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveBien} />}
+        {isAdmin && tab === "sources" && <Sources />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
         ) : (
@@ -1573,7 +1574,7 @@ function MesProjets({ user, onOpen }) {
 }
 
 /* ======================= TAB 1 : ESTIMATION ============================== */
-function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded, onEstimData, onSaveBien }) {
+function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject, onLoaded, onEstimData, onSaveBien }) {
   const [form, setForm] = useState((initialProject && initialProject.form) || {
     address: "10 rue de la Paix, Paris",
     surface: 65,
@@ -1635,7 +1636,12 @@ function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded
     setOpenSug(false);
   }
 
+  const [needAccount, setNeedAccount] = useState(false);
+  // apres connexion depuis le teaser -> lance l'estimation automatiquement
+  useEffect(() => { if (user && needAccount) { setNeedAccount(false); run(); } }, [user]);
+
   async function run() {
+    if (!user) { setNeedAccount(true); return; } // teaser : compte requis pour voir la valo
     setLoading(true);
     setError("");
     setRes(null);
@@ -1842,13 +1848,27 @@ function Estimation({ onEstimate, onGoToCapacite, user, initialProject, onLoaded
       <div>
         <div className="card">
           <h2>Resultat de l'estimation</h2>
-          {!res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables reels s'afficheront ici.</div>}
+          {needAccount && !user && (
+            <div className="teaser">
+              <div className="teaser-blur">
+                <div className="teaser-fake-val">◼ ◼ ◼ ◼ EUR</div>
+                <div className="teaser-fake-line" />
+                <div className="teaser-fake-line short" />
+              </div>
+              <div className="teaser-cta">
+                <div className="teaser-lock">🔒</div>
+                <h3>Ton estimation est prete !</h3>
+                <p>Cree ton compte gratuit pour voir la <b>valorisation</b>, la fourchette de prix et les <b>transactions comparables reelles</b>.</p>
+                <button className="btn" onClick={onLogin}>Voir mon estimation (compte gratuit)</button>
+              </div>
+            </div>
+          )}
+          {!needAccount && !res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables reels s'afficheront ici.</div>}
           {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3a7bd5',borderColor:'#e3e9f2'}}/><br/>Recuperation des transactions DVF...</div>}
           {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} onGoToCapacite={onGoToCapacite} />}
           {res && user && (
             <button className="btn-budget" style={{ marginTop: 14 }} onClick={onSaveBien}>💾 Sauvegarder ce bien (estimation seule)</button>
           )}
-          {res && !user && <p className="hint" style={{ marginTop: 12 }}>Connecte-toi pour sauvegarder ce bien et le retrouver plus tard.</p>}
         </div>
       </div>
     </div>
