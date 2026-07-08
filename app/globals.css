@@ -428,6 +428,17 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 20px 40p
 .paywall-list li{font-size:13.5px;color:var(--txt);line-height:1.5}
 .paywall-list li::marker{color:var(--green)}
 
+/* Mes projets */
+.projets-wrap{max-width:640px;margin:0 auto}
+.projets-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.projet-item{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.projet-info{flex:1;min-width:0}
+.projet-nom{font-size:14.5px;font-weight:700;color:var(--txt)}
+.projet-meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.projet-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.projet-del{background:none;border:none;font-size:16px;cursor:pointer;opacity:.6;padding:4px}
+.projet-del:hover{opacity:1}
+
 /* Simulateur de travaux */
 .travaux-statut{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .travaux-arrow{color:var(--muted);font-size:18px;font-weight:700}
