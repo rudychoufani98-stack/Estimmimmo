@@ -1360,26 +1360,53 @@ function TableauAmortissement({ loan, rate, duration, mInsurance }) {
 }
 
 /* ======================= AUTH & PAYWALL =================================== */
+function pwdStrength(p) {
+  let s = 0;
+  if (p.length >= 8) s++;
+  if (p.length >= 12) s++;
+  if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
+  if (/[0-9]/.test(p)) s++;
+  if (/[^A-Za-z0-9]/.test(p)) s++;
+  return Math.min(s, 4);
+}
+function authErrorFr(msg) {
+  const m = (msg || "").toLowerCase();
+  if (m.includes("invalid login")) return "Email ou mot de passe incorrect.";
+  if (m.includes("email not confirmed")) return "Confirme ton email avant de te connecter (lien recu par mail).";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Un compte existe deja avec cet email. Connecte-toi.";
+  if (m.includes("password should be")) return "Mot de passe trop court (8 caracteres minimum).";
+  if (m.includes("unable to validate email")) return "Adresse email invalide.";
+  if (m.includes("rate limit")) return "Trop de tentatives, reessaie dans quelques minutes.";
+  return msg;
+}
+
 function AuthModal({ onClose }) {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
+  const strength = pwdStrength(pwd);
+  const strengthLabel = ["Trop faible", "Faible", "Moyen", "Bon", "Fort"][strength];
+  const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  const canSubmit = emailOk && (mode === "login" ? pwd.length > 0 : pwd.length >= 8);
+
   async function submit() {
     if (!supabase) { setError("Service d'authentification non configure."); return; }
+    if (mode === "signup" && pwd.length < 8) { setError("Choisis un mot de passe d'au moins 8 caracteres."); return; }
     setLoading(true); setError(""); setInfo("");
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password: pwd });
-        if (error) { setError(error.message); return; }
+        if (error) { setError(authErrorFr(error.message)); return; }
         setInfo("Compte cree ! Verifie ta boite mail pour confirmer, puis connecte-toi.");
-        setMode("login");
+        setMode("login"); setPwd("");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
-        if (error) { setError(error.message); return; }
+        if (error) { setError(authErrorFr(error.message)); return; }
         onClose();
       }
     } finally { setLoading(false); }
@@ -1387,25 +1414,48 @@ function AuthModal({ onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal auth-modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Fermer">&times;</button>
-        <h2>{mode === "login" ? "Connexion" : "Creer un compte"}</h2>
-        <div className="sub">{mode === "login" ? "Accede a tes analyses et projets." : "Gratuit : l'estimation. Premium : rentabilite, travaux et projets."}</div>
+        <div className="auth-logo">Estim<span>Immo</span></div>
+        <h2>{mode === "login" ? "Bon retour 👋" : "Cree ton compte"}</h2>
+        <div className="sub">{mode === "login" ? "Connecte-toi pour retrouver tes analyses et projets." : "Gratuit : l'estimation. Premium : rentabilite, travaux, capacite et projets sauvegardes."}</div>
+
         <label>Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="toi@email.com" />
+        <input type="email" value={email} autoComplete="email" onChange={(e) => setEmail(e.target.value)} placeholder="toi@email.com" />
+
         <label>Mot de passe</label>
-        <input type="password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="6 caracteres minimum" onKeyDown={(e) => e.key === "Enter" && submit()} />
+        <div className="pwd-wrap">
+          <input type={showPwd ? "text" : "password"} value={pwd} autoComplete={mode === "login" ? "current-password" : "new-password"}
+            onChange={(e) => setPwd(e.target.value)} placeholder={mode === "signup" ? "8 caracteres minimum" : "Ton mot de passe"}
+            onKeyDown={(e) => e.key === "Enter" && canSubmit && submit()} />
+          <button type="button" className="pwd-toggle" onClick={() => setShowPwd((s) => !s)} aria-label="Afficher / masquer">
+            {showPwd ? "🙈" : "👁"}
+          </button>
+        </div>
+
+        {mode === "signup" && pwd.length > 0 && (
+          <div className="pwd-strength">
+            <div className="pwd-bars">
+              {[0, 1, 2, 3].map((i) => <span key={i} className={i < strength ? "on s" + strength : ""} />)}
+            </div>
+            <span className="pwd-label">{strengthLabel}</span>
+          </div>
+        )}
+
         {error && <div className="error">{error}</div>}
         {info && <div className="geo-ok" style={{ marginTop: 10 }}>{info}</div>}
-        <button className="btn" onClick={submit} disabled={loading}>
+
+        <button className="btn" onClick={submit} disabled={loading || !canSubmit}>
           {loading ? "..." : mode === "login" ? "Se connecter" : "Creer mon compte"}
         </button>
+
         <p className="hint" style={{ textAlign: "center", marginTop: 14 }}>
           {mode === "login" ? "Pas encore de compte ? " : "Deja un compte ? "}
-          <a style={{ cursor: "pointer" }} onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); }}>
+          <a style={{ cursor: "pointer", fontWeight: 600 }} onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); }}>
             {mode === "login" ? "Creer un compte" : "Se connecter"}
           </a>
         </p>
+        <p className="hint" style={{ textAlign: "center", fontSize: 11 }}>🔒 Connexion chiffree. Ton mot de passe est stocke de facon securisee (jamais en clair).</p>
       </div>
     </div>
   );
