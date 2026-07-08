@@ -786,10 +786,12 @@ export default function Page() {
           )}
         </div>
 
-        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveBien} />}
+        {tab === "estim" && (user
+          ? <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveBien} />
+          : <LoginGate onLogin={() => setAuthOpen(true)} />)}
         {tab === "sources" && <Sources />}
         {locked || (tab === "projets" && !isPremium) ? (
-          <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} />
+          <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
         ) : (
           <>
             {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} initialData={loadTravaux} onData={setTravauxData} onLoaded={() => setLoadTravaux(null)} />}
@@ -1461,13 +1463,39 @@ function AuthModal({ onClose }) {
   );
 }
 
-function Paywall({ isLoggedIn, onLogin }) {
+const STRIPE_LINK = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "";
+
+function goToStripe(user) {
+  if (!STRIPE_LINK) { alert("Le paiement n'est pas encore configure."); return; }
+  const sep = STRIPE_LINK.includes("?") ? "&" : "?";
+  const url = `${STRIPE_LINK}${sep}client_reference_id=${encodeURIComponent(user.id)}&prefilled_email=${encodeURIComponent(user.email || "")}`;
+  window.location.href = url;
+}
+
+function LoginGate({ onLogin }) {
+  return (
+    <div className="card paywall">
+      <div className="paywall-ico">👋</div>
+      <h2>Cree ton compte gratuit</h2>
+      <p className="paywall-txt">
+        Pour lancer une <b>estimation par transactions reelles (DVF)</b>, cree ton compte gratuit en 30 secondes.
+      </p>
+      <ul className="paywall-list">
+        <li>Estimation illimitee a partir des ventes reelles</li>
+        <li>Sauvegarde de tes biens et projets</li>
+      </ul>
+      <button className="btn" onClick={onLogin}>Creer un compte / se connecter</button>
+    </div>
+  );
+}
+
+function Paywall({ isLoggedIn, onLogin, user }) {
   return (
     <div className="card paywall">
       <div className="paywall-ico">🔒</div>
-      <h2>Fonctionnalite Premium</h2>
+      <h2>Passe Premium pour debloquer</h2>
       <p className="paywall-txt">
-        L'estimation est <b>gratuite</b>. Pour la <b>rentabilite</b>, les <b>travaux</b>, la <b>capacite d'emprunt</b> et la <b>sauvegarde de tes projets</b>, passe Premium.
+        L'<b>estimation</b> est incluse avec ton compte. Pour la <b>rentabilite</b>, les <b>travaux</b>, la <b>capacite d'emprunt</b> et la <b>sauvegarde de projets</b>, passe Premium.
       </p>
       <div className="paywall-price">7,90 EUR<span>/mois</span></div>
       <ul className="paywall-list">
@@ -1476,11 +1504,11 @@ function Paywall({ isLoggedIn, onLogin }) {
         <li>Projets immobiliers illimites, sauvegardes</li>
       </ul>
       {isLoggedIn ? (
-        <button className="btn" disabled title="Paiement bientot disponible">Passer Premium (bientot)</button>
+        <button className="btn" onClick={() => goToStripe(user)}>💳 Passer Premium — 7,90 EUR/mois</button>
       ) : (
         <button className="btn" onClick={onLogin}>Se connecter / creer un compte</button>
       )}
-      <p className="hint" style={{ textAlign: "center", marginTop: 10 }}>Le paiement securise arrive tres bientot.</p>
+      <p className="hint" style={{ textAlign: "center", marginTop: 10 }}>🔒 Paiement securise par Stripe. Annulable a tout moment.</p>
     </div>
   );
 }
