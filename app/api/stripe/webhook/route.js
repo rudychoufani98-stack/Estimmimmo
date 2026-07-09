@@ -3,8 +3,19 @@
 //   STRIPE_WEBHOOK_SECRET      (whsec_...)
 //   SUPABASE_SERVICE_ROLE_KEY  (cle service_role Supabase - contourne RLS)
 //   NEXT_PUBLIC_SUPABASE_URL   (deja presente)
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// Sur Cloudflare, les secrets sont dans l'env du worker (pas process.env).
+function readEnv(name) {
+  try {
+    const { env } = getCloudflareContext();
+    if (env && env[name] != null) return env[name];
+  } catch {}
+  return process.env[name];
+}
 
 // Verifie la signature Stripe (schema t=...,v1=... ; HMAC-SHA256 sur `${t}.${body}`)
 async function verifyStripe(body, sigHeader, secret) {
@@ -23,9 +34,9 @@ async function verifyStripe(body, sigHeader, secret) {
 }
 
 export async function POST(req) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = readEnv("STRIPE_WEBHOOK_SECRET");
+  const svcKey = readEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const sbUrl = readEnv("NEXT_PUBLIC_SUPABASE_URL") || "https://pjkxspeclcgtxhpitfyw.supabase.co";
   if (!secret || !svcKey || !sbUrl) {
     return Response.json({ error: "Webhook non configure (secrets manquants)." }, { status: 500 });
   }
