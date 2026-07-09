@@ -1483,7 +1483,7 @@ function AuthModal({ onClose }) {
   );
 }
 
-const STRIPE_LINK = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "";
+const STRIPE_LINK = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "https://buy.stripe.com/6oU3cx2wsdCKedEbEw0Jq00";
 
 function goToStripe(user) {
   if (!STRIPE_LINK) { alert("Le paiement n'est pas encore configure."); return; }

@@ -43,7 +43,24 @@ export async function POST(req) {
 
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
-  if (!(await verifyStripe(body, sig, secret))) {
+  const ok = await verifyStripe(body, sig, secret);
+  if (!ok) {
+    // Diagnostic (pas de secret complet expose)
+    const parts = Object.fromEntries((sig || "").split(",").map((p) => p.split("=")));
+    let computed = "";
+    try {
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const s = await crypto.subtle.sign("HMAC", key, enc.encode(`${parts.t}.${body}`));
+      computed = [...new Uint8Array(s)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    } catch {}
+    console.log("WEBHOOK_SIG_FAIL", JSON.stringify({
+      secretPrefix: secret ? secret.slice(0, 8) : "NONE",
+      bodyLen: body.length,
+      t: parts.t,
+      v1Prefix: (parts.v1 || "").slice(0, 12),
+      computedPrefix: computed.slice(0, 12),
+    }));
     return Response.json({ error: "Signature invalide." }, { status: 400 });
   }
 
