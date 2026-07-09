@@ -750,6 +750,9 @@ export default function Page() {
               <button className="auth-btn" onClick={saveProjetComplet}>💾 Sauver le projet complet</button>
             )}
             <span className={"auth-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
+            {isPremium && (
+              <a className="auth-btn" href="https://billing.stripe.com/p/login/6oU3cx2wsdCKedEbEw0Jq00" target="_blank" rel="noopener noreferrer">Gerer mon abonnement</a>
+            )}
             <span className="auth-email">{user.email}</span>
             <button className="auth-btn" onClick={logout}>Deconnexion</button>
           </>
