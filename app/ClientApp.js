@@ -1387,6 +1387,7 @@ function AuthModal({ onClose }) {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [pwd2, setPwd2] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1395,18 +1396,20 @@ function AuthModal({ onClose }) {
   const strength = pwdStrength(pwd);
   const strengthLabel = ["Trop faible", "Faible", "Moyen", "Bon", "Fort"][strength];
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
-  const canSubmit = emailOk && (mode === "login" ? pwd.length > 0 : pwd.length >= 8);
+  const pwdMatch = pwd === pwd2;
+  const canSubmit = emailOk && (mode === "login" ? pwd.length > 0 : pwd.length >= 8 && pwdMatch);
 
   async function submit() {
     if (!supabase) { setError("Service d'authentification non configure."); return; }
     if (mode === "signup" && pwd.length < 8) { setError("Choisis un mot de passe d'au moins 8 caracteres."); return; }
+    if (mode === "signup" && !pwdMatch) { setError("Les deux mots de passe ne correspondent pas."); return; }
     setLoading(true); setError(""); setInfo("");
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password: pwd });
         if (error) { setError(authErrorFr(error.message)); return; }
         setInfo("Compte cree ! Verifie ta boite mail pour confirmer, puis connecte-toi.");
-        setMode("login"); setPwd("");
+        setMode("login"); setPwd(""); setPwd2("");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
         if (error) { setError(authErrorFr(error.message)); return; }
@@ -1445,6 +1448,22 @@ function AuthModal({ onClose }) {
           </div>
         )}
 
+        {mode === "signup" && (
+          <>
+            <label>Confirmer le mot de passe</label>
+            <div className="pwd-wrap">
+              <input type={showPwd ? "text" : "password"} value={pwd2} autoComplete="new-password"
+                onChange={(e) => setPwd2(e.target.value)} placeholder="Retape ton mot de passe"
+                onKeyDown={(e) => e.key === "Enter" && canSubmit && submit()} />
+            </div>
+            {pwd2.length > 0 && (
+              <div className={pwdMatch ? "geo-ok" : "geo-warn"} style={{ marginTop: 6 }}>
+                {pwdMatch ? "✓ Les mots de passe correspondent" : "Les mots de passe ne correspondent pas"}
+              </div>
+            )}
+          </>
+        )}
+
         {error && <div className="error">{error}</div>}
         {info && <div className="geo-ok" style={{ marginTop: 10 }}>{info}</div>}
 
@@ -1454,7 +1473,7 @@ function AuthModal({ onClose }) {
 
         <p className="hint" style={{ textAlign: "center", marginTop: 14 }}>
           {mode === "login" ? "Pas encore de compte ? " : "Deja un compte ? "}
-          <a style={{ cursor: "pointer", fontWeight: 600 }} onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); }}>
+          <a style={{ cursor: "pointer", fontWeight: 600 }} onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); setPwd2(""); }}>
             {mode === "login" ? "Creer un compte" : "Se connecter"}
           </a>
         </p>
