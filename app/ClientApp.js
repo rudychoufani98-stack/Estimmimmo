@@ -791,6 +791,9 @@ export default function Page() {
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
             4. Capacite d'emprunt{!isPremium ? " 🔒" : ""}
           </button>
+          <button className={"tab" + (tab === "contact" ? " active" : "")} onClick={() => setTab("contact")}>
+            ✉️ Contact{isAdmin ? " (admin)" : ""}
+          </button>
           {isAdmin && (
             <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
               5. Sources &amp; Données
@@ -805,6 +808,7 @@ export default function Page() {
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveCurrentProject} />}
         {isAdmin && tab === "sources" && <Sources />}
+        {tab === "contact" && <Contact user={user} isAdmin={isAdmin} />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
         ) : (
@@ -3822,6 +3826,90 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
           <p className="hint" style={{ marginTop: 8 }}>Le gain de valeur estime provient de l'amelioration du DPE (valeur verte), calculee comme dans l'estimation. Le cout net des travaux est reporte dans l'onglet Rentabilite. Les couts et aides reels dependent des devis (France Renov').</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ======================= CONTACT ========================================= */
+function Contact({ user, isAdmin }) {
+  const [form, setForm] = useState({ nom: "", email: (user && user.email) || "", sujet: "Prendre RDV pour un bien", message: "" });
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState("");
+  const [sending, setSending] = useState(false);
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function send() {
+    if (!form.email.trim() || !form.message.trim()) { setErr("Email et message sont requis."); return; }
+    setSending(true); setErr("");
+    const { error } = await supabase.from("contacts").insert({
+      user_id: (user && user.id) || null, nom: form.nom, email: form.email, sujet: form.sujet, message: form.message,
+    });
+    setSending(false);
+    if (error) { setErr("Erreur : " + error.message); return; }
+    setSent(true);
+  }
+
+  // Admin : liste des messages recus
+  const [msgs, setMsgs] = useState(null);
+  useEffect(() => {
+    if (isAdmin && supabase) {
+      supabase.from("contacts").select("*").order("created_at", { ascending: false })
+        .then(({ data }) => setMsgs(data || []));
+    }
+  }, [isAdmin]);
+
+  if (isAdmin) {
+    return (
+      <div className="card projets-wrap">
+        <h2>✉️ Messages reçus</h2>
+        <div className="sub">Demandes de RDV et d'avis expert de tes visiteurs.</div>
+        {msgs === null && <div className="placeholder">Chargement...</div>}
+        {msgs && msgs.length === 0 && <div className="placeholder">Aucun message pour l'instant.</div>}
+        {msgs && msgs.map((m) => (
+          <div className="contact-msg" key={m.id}>
+            <div className="contact-msg-head">
+              <b>{m.nom || "—"}</b> · <a href={"mailto:" + m.email}>{m.email}</a>
+              <span className="contact-date">{new Date(m.created_at).toLocaleString("fr-FR")}</span>
+            </div>
+            <div className="contact-sujet">{m.sujet}</div>
+            <div className="contact-body">{m.message}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="card projets-wrap">
+      <h2>✉️ Rentrer en contact</h2>
+      <div className="sub">Une question, un RDV pour visiter un bien, ou un avis d'expert sur ton projet ? Écris-nous, on te répond vite.</div>
+      {sent ? (
+        <div className="geo-ok" style={{ marginTop: 12, fontSize: 14 }}>✓ Message envoyé ! Nous te répondrons par email à {form.email}.</div>
+      ) : (
+        <>
+          <div className="row">
+            <div>
+              <label>Ton nom</label>
+              <input value={form.nom} onChange={(e) => set("nom", e.target.value)} placeholder="Prénom Nom" />
+            </div>
+            <div>
+              <label>Ton email</label>
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="toi@email.com" />
+            </div>
+          </div>
+          <label>Sujet</label>
+          <select value={form.sujet} onChange={(e) => set("sujet", e.target.value)}>
+            <option>Prendre RDV pour un bien</option>
+            <option>Avis d'expert sur mon projet</option>
+            <option>Question sur une estimation</option>
+            <option>Autre</option>
+          </select>
+          <label>Ton message</label>
+          <textarea rows={5} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Décris ton bien, ta demande, tes disponibilités pour un RDV..." style={{ width: "100%", padding: "11px 12px", background: "var(--panel2)", border: "1px solid var(--line)", borderRadius: 10, color: "var(--txt)", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
+          {err && <div className="error">{err}</div>}
+          <button className="btn" onClick={send} disabled={sending}>{sending ? "Envoi..." : "Envoyer mon message"}</button>
+        </>
+      )}
     </div>
   );
 }
