@@ -774,7 +774,7 @@ export default function Page() {
 
       <header className="top">
         <h1>Estim<span>Immo</span></h1>
-        <p>Estimation par transactions reelles (DVF) &amp; analyse de rentabilite</p>
+        <p>Estime n'importe quel bien en France à partir des <b>ventes réelles</b>, et analyse sa <b>rentabilité</b> de A à Z.</p>
       </header>
 
       <div className="wrap">
@@ -805,6 +805,20 @@ export default function Page() {
             </button>
           )}
         </div>
+
+        {tab === "estim" && (
+          <div className="intro">
+            <div className="intro-lead">
+              <b>EstimImmo</b> est ton copilote pour acheter, louer ou investir dans l'immobilier en France. On combine les <b>transactions officielles (DVF)</b>, le géocodage IGN et les données de marché pour te donner une estimation fiable — puis tous les outils pour décider.
+            </div>
+            <div className="intro-features">
+              <div className="intro-feat"><span>🏠</span><b>Estimation réelle</b><p>À partir des ventes récentes autour du bien, ajustée à ses caractéristiques (étage, DPE, vue…).</p></div>
+              <div className="intro-feat"><span>📊</span><b>Rentabilité complète</b><p>Cashflow, fiscalité (LMNP, micro-BIC…), TRI et plus-value à la revente. Mode Airbnb inclus.</p></div>
+              <div className="intro-feat"><span>🏦</span><b>Capacité d'emprunt</b><p>Combien la banque peut te prêter, avec le taux du marché en direct et des conseils de négociation.</p></div>
+              <div className="intro-feat"><span>🔧</span><b>Travaux & valeur verte</b><p>Le retour sur investissement d'une rénovation énergétique et son impact sur la valeur.</p></div>
+            </div>
+          </div>
+        )}
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveCurrentProject} />}
         {isAdmin && tab === "sources" && <Sources />}
