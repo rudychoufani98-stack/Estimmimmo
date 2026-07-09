@@ -683,35 +683,45 @@ export default function Page() {
   const [loadTravaux, setLoadTravaux] = useState(null); // travaux a restaurer
   const [loadRenta, setLoadRenta] = useState(null);     // renta a restaurer
   const [saveMsg, setSaveMsg] = useState("");
+  const [currentProject, setCurrentProject] = useState(null); // { id, nom } du projet en cours
+
+  function flash(m) { setSaveMsg(m); setTimeout(() => setSaveMsg(""), 3500); }
+
+  function newProject() {
+    const nom = window.prompt("Nom du nouveau projet immobilier :", "");
+    if (!nom) return;
+    setCurrentProject({ id: null, nom });
+    flash("📁 Projet « " + nom + " » cree — sauvegarde quand tu veux");
+  }
 
   function openProject(p) {
     const d = p.data || {};
     const estim = d.estim || d; // nouveau format imbrique OU ancien format plat
     setLoadProject(estim || null);
-    if (d.type === "projet") { setLoadTravaux(d.travaux || null); setLoadRenta(d.renta || null); }
+    setLoadTravaux(d.travaux || null);
+    setLoadRenta(d.renta || null);
+    setCurrentProject({ id: p.id, nom: p.nom });
     setTab("estim");
   }
 
-  async function saveBien() {
-    if (!supabase || !user || !estimData || !estimData.res) return;
-    const nom = window.prompt("Nom du bien :", (estimData.res.location && estimData.res.location.area) || "Mon bien");
-    if (!nom) return;
-    const { error } = await supabase.from("projects").insert({ user_id: user.id, nom, data: { type: "bien", estim: estimData } });
-    setSaveMsg(error ? "Erreur : " + error.message : "✓ Bien sauvegarde dans « Mes projets »");
-    setTimeout(() => setSaveMsg(""), 4000);
-  }
-
-  async function saveProjetComplet() {
+  async function saveCurrentProject() {
     if (!supabase || !user) return;
-    if (!estimData || !estimData.res) { setSaveMsg("Fais d'abord une estimation."); setTimeout(() => setSaveMsg(""), 3000); return; }
-    const nom = window.prompt("Nom du projet complet :", (estimData.res.location && estimData.res.location.area) || "Mon projet");
-    if (!nom) return;
-    const { error } = await supabase.from("projects").insert({
-      user_id: user.id, nom,
-      data: { type: "projet", estim: estimData, travaux: travauxData, renta: rentaData },
-    });
-    setSaveMsg(error ? "Erreur : " + error.message : "✓ Projet complet sauvegarde");
-    setTimeout(() => setSaveMsg(""), 4000);
+    let nom = currentProject && currentProject.nom;
+    if (!nom) {
+      nom = window.prompt("Nom du projet :", (estimData && estimData.res && estimData.res.location && estimData.res.location.area) || "Mon projet");
+      if (!nom) return;
+    }
+    const data = { type: "projet", estim: estimData, travaux: travauxData, renta: rentaData };
+    if (currentProject && currentProject.id) {
+      const { error } = await supabase.from("projects").update({ nom, data, updated_at: new Date().toISOString() }).eq("id", currentProject.id);
+      flash(error ? "Erreur : " + error.message : "✓ Projet « " + nom + " » mis a jour");
+      setCurrentProject({ id: currentProject.id, nom });
+    } else {
+      const { data: ins, error } = await supabase.from("projects").insert({ user_id: user.id, nom, data }).select("id").single();
+      if (error) { flash("Erreur : " + error.message); return; }
+      setCurrentProject({ id: ins && ins.id, nom });
+      flash("✓ Projet « " + nom + " » sauvegarde");
+    }
   }
 
   useEffect(() => {
@@ -746,9 +756,10 @@ export default function Page() {
         {saveMsg && <span className="save-msg">{saveMsg}</span>}
         {user ? (
           <>
-            {isPremium && estimData && estimData.res && (
-              <button className="auth-btn" onClick={saveProjetComplet}>💾 Sauver le projet complet</button>
-            )}
+            {currentProject && currentProject.nom
+              ? <span className="proj-chip">📁 {currentProject.nom}</span>
+              : <button className="auth-btn" onClick={newProject}>➕ Nouveau projet</button>}
+            <button className="auth-btn primary" onClick={saveCurrentProject}>💾 Sauvegarder</button>
             <span className={"auth-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
             {isPremium && (
               <a className="auth-btn" href="https://billing.stripe.com/p/login/6oU3cx2wsdCKedEbEw0Jq00" target="_blank" rel="noopener noreferrer">Gerer mon abonnement</a>
@@ -792,7 +803,7 @@ export default function Page() {
           )}
         </div>
 
-        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveBien} />}
+        {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveCurrentProject} />}
         {isAdmin && tab === "sources" && <Sources />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
@@ -1889,7 +1900,7 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
           {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3a7bd5',borderColor:'#e3e9f2'}}/><br/>Recuperation des transactions DVF...</div>}
           {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} onGoToCapacite={onGoToCapacite} />}
           {res && user && (
-            <button className="btn-budget" style={{ marginTop: 14 }} onClick={onSaveBien}>💾 Sauvegarder ce bien (estimation seule)</button>
+            <button className="btn-budget" style={{ marginTop: 14 }} onClick={onSaveBien}>💾 Sauvegarder le projet</button>
           )}
         </div>
       </div>
