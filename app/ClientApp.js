@@ -832,7 +832,8 @@ export default function Page() {
 /* ======================= CAPACITE D'EMPRUNT ================================ */
 function CapaciteEmprunt({ estValue }) {
   const [f, setF] = useState({
-    income: 3800,          // revenus nets mensuels du foyer
+    income: 3800,          // valeur saisie (net mensuel OU brut annuel selon incomeMode)
+    incomeMode: "net",     // "net" = net mensuel | "brut" = brut annuel
     charges: 0,            // mensualites de credits en cours
     apport: 40000,
     duration: 20,
@@ -862,7 +863,9 @@ function CapaciteEmprunt({ estValue }) {
   };
 
   // Mensualite max selon la regle HCSF (assurance comprise)
-  const maxMensualite = Math.max(0, v("income") * (v("endettement") / 100) - v("charges"));
+  // brut annuel -> net mensuel (approx : ~75% du brut, /12)
+  const netMensuel = f.incomeMode === "brut" ? (v("income") * 0.75) / 12 : v("income");
+  const maxMensualite = Math.max(0, netMensuel * (v("endettement") / 100) - v("charges"));
 
   const r = v("rate") / 100 / 12;
   const n = v("duration") * 12;
@@ -894,8 +897,18 @@ function CapaciteEmprunt({ estValue }) {
           <div className="sub">Revenus nets du foyer (avant impot), tous emprunteurs confondus</div>
           <div className="row">
             <div>
-              <label>Revenus nets mensuels</label>
-              <div className="unit"><input type="number" value={f.income} onChange={(e) => set("income", e.target.value)} /><small>EUR</small></div>
+              <label>Revenus du foyer</label>
+              <div className="unit">
+                <input type="number" value={f.income} onChange={(e) => set("income", e.target.value)} />
+                <small>EUR</small>
+              </div>
+              <select value={f.incomeMode} onChange={(e) => set("incomeMode", e.target.value)} style={{ marginTop: 6 }}>
+                <option value="net">Net mensuel (sur ton compte)</option>
+                <option value="brut">Brut annuel (fiche de paie)</option>
+              </select>
+              {f.incomeMode === "brut" && (
+                <p className="hint">≈ {Math.round(netMensuel).toLocaleString("fr-FR")} EUR net/mois (estimation : brut × 75% ÷ 12)</p>
+              )}
             </div>
             <div>
               <label>Credits en cours / mois</label>
