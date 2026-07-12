@@ -1494,6 +1494,185 @@ footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px
 .faq-item p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.6 }
 .faq-item p b { color: var(--txt) }
 
+/* ---- User Menu Dropdown ---- */
+.um-wrap { position: relative }
+
+.um-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: 40px;
+  padding: 5px 12px 5px 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-xs);
+}
+.um-trigger:hover { border-color: var(--accent); box-shadow: var(--shadow-sm) }
+
+.um-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.um-name { font-size: 13px; font-weight: 600; color: var(--txt); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.um-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: var(--panel2); border: 1.5px solid var(--line); color: var(--muted) }
+.um-badge.premium { background: linear-gradient(135deg, rgba(245,158,11,.2), rgba(251,191,36,.12)); border-color: rgba(245,158,11,.35); color: #b45309 }
+.um-caret { font-size: 9px; color: var(--muted); margin-left: 2px }
+
+.um-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 300px;
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  overflow: hidden;
+  animation: modalIn .15s cubic-bezier(.34,1.56,.64,1);
+}
+
+.um-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 14px;
+  background: linear-gradient(135deg, rgba(59,111,212,.06), rgba(124,58,237,.04));
+}
+.um-header-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59,111,212,.25);
+}
+.um-header-name { font-size: 14px; font-weight: 700; color: var(--txt) }
+.um-header-email { font-size: 12px; color: var(--muted); margin-top: 1px; word-break: break-all }
+.um-admin-tag { font-size: 11px; font-weight: 700; color: #b45309; background: rgba(245,158,11,.15); border-radius: 20px; padding: 1px 8px; display: inline-block; margin-top: 4px }
+
+.um-divider { height: 1px; background: var(--line); margin: 4px 0 }
+
+.um-section-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; padding: 8px 16px 4px }
+
+.um-plan-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 10px 6px;
+  padding: 10px 12px;
+  background: var(--panel2);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+}
+.um-plan-name { font-size: 13px; font-weight: 700; color: var(--txt) }
+.um-plan-desc { font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.4 }
+.um-plan-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; background: var(--panel); border: 1.5px solid var(--line); color: var(--muted) }
+.um-plan-badge.active { background: var(--green-light); border-color: rgba(16,185,129,.3); color: var(--green) }
+
+.um-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: none;
+  color: var(--txt);
+  transition: background var(--transition);
+  text-align: left;
+}
+.um-item:hover { background: var(--panel2) }
+.um-item-icon { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center }
+.um-item-label { flex: 1; font-size: 13.5px; font-weight: 500 }
+.um-item-arrow { font-size: 12px; color: var(--muted) }
+
+.um-item-upgrade {
+  background: linear-gradient(135deg, rgba(245,158,11,.08), rgba(251,191,36,.05));
+  border-top: 1px solid rgba(245,158,11,.15);
+  border-bottom: 1px solid rgba(245,158,11,.15);
+}
+.um-item-upgrade:hover { background: rgba(245,158,11,.14) }
+.um-item-upgrade .um-item-label { color: #92400e; font-weight: 700 }
+.um-upgrade-price { font-size: 12px; font-weight: 700; color: #b45309; background: rgba(245,158,11,.15); padding: 2px 8px; border-radius: 20px; flex-shrink: 0 }
+
+.um-item-link { color: var(--txt) }
+.um-item-logout .um-item-label { color: var(--bad) }
+.um-item-logout:hover { background: var(--bad-light) }
+.um-item-logout .um-item-icon { filter: none }
+
 /* ---- Travaux ---- */
 .travaux-statut { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
 .travaux-arrow { color: var(--muted); font-size: 18px; font-weight: 700 }
+
+/* ---- Rentabilité sections ---- */
+.renta-section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin: -24px -24px 20px;
+  border-radius: 14px 14px 0 0;
+}
+.renta-section-icon { font-size: 24px; line-height: 1; flex-shrink: 0 }
+.renta-section-title { font-size: 15px; font-weight: 800; letter-spacing: -.3px }
+.renta-section-sub { font-size: 12px; opacity: .75; margin-top: 2px; font-weight: 400 }
+
+.renta-header-blue {
+  background: linear-gradient(135deg, rgba(59,111,212,.13), rgba(91,141,232,.07));
+  color: #1e3a8a;
+  border-bottom: 1.5px solid rgba(59,111,212,.15);
+}
+.renta-header-green {
+  background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(52,211,153,.07));
+  color: #065f46;
+  border-bottom: 1.5px solid rgba(16,185,129,.16);
+}
+.renta-header-purple {
+  background: linear-gradient(135deg, rgba(124,58,237,.11), rgba(139,92,246,.07));
+  color: #4c1d95;
+  border-bottom: 1.5px solid rgba(124,58,237,.15);
+}
+.renta-header-orange {
+  background: linear-gradient(135deg, rgba(245,158,11,.12), rgba(251,191,36,.07));
+  color: #78350f;
+  border-bottom: 1.5px solid rgba(245,158,11,.18);
+}
+.renta-header-teal {
+  background: linear-gradient(135deg, rgba(20,184,166,.12), rgba(45,212,191,.07));
+  color: #134e4a;
+  border-bottom: 1.5px solid rgba(20,184,166,.18);
+}
+
+.renta-hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(59,111,212,.06);
+  border: 1.5px solid rgba(59,111,212,.14);
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-size: 13px;
+  color: var(--txt);
+  margin: 12px 0;
+  line-height: 1.5;
+}

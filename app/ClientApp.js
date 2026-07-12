@@ -760,12 +760,7 @@ export default function Page() {
               ? <span className="proj-chip">📁 {currentProject.nom}</span>
               : <button className="auth-btn" onClick={newProject}>➕ Nouveau projet</button>}
             <button className="auth-btn primary" onClick={saveCurrentProject}>💾 Sauvegarder</button>
-            <span className={"auth-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
-            {isPremium && (
-              <a className="auth-btn" href="https://billing.stripe.com/p/login/6oU3cx2wsdCKedEbEw0Jq00" target="_blank" rel="noopener noreferrer">Gerer mon abonnement</a>
-            )}
-            <span className="auth-email">{user.email}</span>
-            <button className="auth-btn" onClick={logout}>Deconnexion</button>
+            <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} />
           </>
         ) : (
           <button className="auth-btn primary" onClick={() => setAuthOpen(true)}>Se connecter</button>
@@ -1637,6 +1632,97 @@ function MesProjets({ user, onOpen }) {
   );
 }
 
+/* ======================= USER MENU DROPDOWN ============================== */
+function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const initials = (user.email || "?").slice(0, 2).toUpperCase();
+
+  React.useEffect(() => {
+    function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, []);
+
+  return (
+    <div className="um-wrap" ref={ref}>
+      <button className="um-trigger" onClick={() => setOpen(o => !o)}>
+        <span className="um-avatar">{initials}</span>
+        <span className="um-name">{user.email.split("@")[0]}</span>
+        <span className={"um-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
+        <span className="um-caret">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="um-dropdown">
+          {/* Header */}
+          <div className="um-header">
+            <div className="um-header-avatar">{initials}</div>
+            <div>
+              <div className="um-header-name">{user.email.split("@")[0]}</div>
+              <div className="um-header-email">{user.email}</div>
+              {isAdmin && <div className="um-admin-tag">👑 Admin</div>}
+            </div>
+          </div>
+
+          <div className="um-divider" />
+
+          {/* Abonnement */}
+          <div className="um-section-label">Mon abonnement</div>
+          <div className="um-plan-box">
+            <div className="um-plan-left">
+              <div className="um-plan-name">{isPremium ? "Plan Premium" : "Plan Gratuit"}</div>
+              <div className="um-plan-desc">{isPremium ? "Accès illimité à toutes les fonctionnalités" : "Estimation uniquement — passez à Premium pour débloquer tout"}</div>
+            </div>
+            <span className={"um-plan-badge" + (isPremium ? " active" : "")}>{isPremium ? "Actif" : "Limité"}</span>
+          </div>
+
+          {isPremium ? (
+            <a className="um-item um-item-link" href="https://billing.stripe.com/p/login/6oU3cx2wsdCKedEbEw0Jq00" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+              <span className="um-item-icon">💳</span>
+              <span className="um-item-label">Gérer mon abonnement</span>
+              <span className="um-item-arrow">↗</span>
+            </a>
+          ) : (
+            <button className="um-item um-item-upgrade" onClick={() => { onUpgrade(); setOpen(false); }}>
+              <span className="um-item-icon">⚡</span>
+              <span className="um-item-label">Passer à Premium</span>
+              <span className="um-upgrade-price">9,90€/mois</span>
+            </button>
+          )}
+
+          <div className="um-divider" />
+
+          {/* Navigation */}
+          <div className="um-section-label">Mon espace</div>
+          <button className="um-item" onClick={() => { onGoProjects(); setOpen(false); }}>
+            <span className="um-item-icon">📁</span>
+            <span className="um-item-label">Mes projets sauvegardés</span>
+          </button>
+
+          <div className="um-divider" />
+
+          {/* Aide */}
+          <div className="um-section-label">Support</div>
+          <a className="um-item um-item-link" href="mailto:rudychoufani98@gmail.com" onClick={() => setOpen(false)}>
+            <span className="um-item-icon">✉️</span>
+            <span className="um-item-label">Contacter le support</span>
+            <span className="um-item-arrow">↗</span>
+          </a>
+
+          <div className="um-divider" />
+
+          {/* Déconnexion */}
+          <button className="um-item um-item-logout" onClick={() => { onLogout(); setOpen(false); }}>
+            <span className="um-item-icon">🚪</span>
+            <span className="um-item-label">Se déconnecter</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ======================= TAB 1 : ESTIMATION ============================== */
 function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject, onLoaded, onEstimData, onSaveBien }) {
   const [form, setForm] = useState((initialProject && initialProject.form) || {
@@ -2487,11 +2573,18 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         <RentabiliteAirbnb estValue={estValue} estCity={estCity} classicYieldGross={yieldGross} classicCashflowAT={mCashflowAT} />
       ) : (
       <div className="grid">
-      {/* inputs */}
+      {/* ── COLONNE GAUCHE : inputs ── */}
       <div>
-        <div className="card">
-          <h2>Acquisition</h2>
-          <div className="sub">{estValue ? "Prix pre-rempli depuis votre estimation." : "Saisissez le prix d'achat."}</div>
+
+        {/* Section 1 — Acquisition */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-blue">
+            <span className="renta-section-icon">🏠</span>
+            <div>
+              <div className="renta-section-title">Acquisition</div>
+              <div className="renta-section-sub">{estValue ? "Prix pré-rempli depuis votre estimation." : "Saisissez le prix d'achat."}</div>
+            </div>
+          </div>
           <div className="row">
             <div>
               <label>Prix d'achat</label>
@@ -2509,8 +2602,15 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
           <div className="unit"><input type="number" value={f.works} onChange={(e) => set("works", e.target.value)} /><small>EUR</small></div>
         </div>
 
-        <div className="card">
-          <h2>Revenus &amp; charges</h2>
+        {/* Section 2 — Revenus & charges */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-green">
+            <span className="renta-section-icon">💶</span>
+            <div>
+              <div className="renta-section-title">Revenus &amp; charges</div>
+              <div className="renta-section-sub">Loyer, copropriété, taxe foncière, vacance</div>
+            </div>
+          </div>
           <div className="row">
             <div>
               <label>Surface habitable</label>
@@ -2553,11 +2653,10 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="unit"><input type="number" value={f.taxe} onChange={(e) => set("taxe", e.target.value)} /><small>EUR</small></div>
             </div>
           </div>
-          <p className="hint">
-            Loyer charges comprises encaisse : <b>{euro0(v("rent") + v("chargesProvision"))} EUR/mois</b>.
-            Sur les {euro0(v("chargesCopro"))} EUR de copro annuels, {euro0(recoveredCharges)} EUR sont refactures au locataire ;
-            <b> {euro0(nonRecovCopro)} EUR/an restent a votre charge</b> (charges non recuperables).
-          </p>
+          <div className="renta-hint-box">
+            <span>💡</span>
+            <span>Loyer CC encaissé : <b>{euro0(v("rent") + v("chargesProvision"))} €/mois</b> — charges non récupérables : <b>{euro0(nonRecovCopro)} €/an</b></span>
+          </div>
           <div className="row">
             <div>
               <label>Vacance locative</label>
@@ -2567,7 +2666,6 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
                 <option value="0.08">⚠️ Prudent — 8 % (1 mois/an)</option>
                 <option value="0.125">🔴 Pessimiste — 12,5 % (1,5 mois/an)</option>
               </select>
-              <p className="hint">Paris/Lyon/Bordeaux : souvent 2–4 %. Villes moyennes : 6–10 %. Zones rurales : 10–15 %.</p>
             </div>
             <div>
               <label>Gestion locative</label>
@@ -2582,8 +2680,15 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
           <div className="unit"><input type="number" value={f.insurancePNO} onChange={(e) => set("insurancePNO", e.target.value)} /><small>EUR</small></div>
         </div>
 
-        <div className="card">
-          <h2>Financement</h2>
+        {/* Section 3 — Financement */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-purple">
+            <span className="renta-section-icon">🏦</span>
+            <div>
+              <div className="renta-section-title">Financement</div>
+              <div className="renta-section-sub">Apport, durée, taux et assurance emprunteur</div>
+            </div>
+          </div>
           <div className="row">
             <div>
               <label>Apport</label>
@@ -2606,9 +2711,15 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
           </div>
         </div>
 
-        <div className="card">
-          <h2>Fiscalite</h2>
-          <div className="sub">Impot sur les revenus locatifs (IR + prelevements sociaux 17,2%)</div>
+        {/* Section 4 — Fiscalité */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-orange">
+            <span className="renta-section-icon">📋</span>
+            <div>
+              <div className="renta-section-title">Fiscalité</div>
+              <div className="renta-section-sub">IR + prélèvements sociaux 17,2% sur revenus locatifs</div>
+            </div>
+          </div>
           <label>Regime fiscal</label>
           <select value={f.regime} onChange={(e) => setF((s) => ({ ...s, regime: e.target.value }))}>
             <option value="microbic">Meuble - Micro-BIC (abattement 50%)</option>
@@ -2624,12 +2735,18 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
             <option value="0.41">41%</option>
             <option value="0.45">45%</option>
           </select>
-          <p className="hint">LMNP reel : l'amortissement du bien efface souvent l'impot pendant des annees (estimation simplifiee). Le reel deduit interets et charges. A confirmer avec un comptable.</p>
+          <p className="hint">LMNP réel : l'amortissement du bien efface souvent l'impôt pendant des années. A confirmer avec un comptable.</p>
         </div>
 
-        <div className="card">
-          <h2>Revente &amp; plus-value</h2>
-          <div className="sub">Projection patrimoniale et rendement total (TRI)</div>
+        {/* Section 5 — Revente */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-teal">
+            <span className="renta-section-icon">📈</span>
+            <div>
+              <div className="renta-section-title">Revente &amp; plus-value</div>
+              <div className="renta-section-sub">Projection patrimoniale et TRI sur l'opération complète</div>
+            </div>
+          </div>
           <div className="row">
             <div>
               <label>Horizon de revente</label>
@@ -2640,11 +2757,11 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="unit"><input type="number" step="0.1" value={f.appreciation} onChange={(e) => set("appreciation", e.target.value)} /><small>%/an</small></div>
             </div>
           </div>
-          <p className="hint">Plus-value : exoneration d'IR a 22 ans, de prelevements sociaux a 30 ans (residence secondaire / locatif). La residence principale est totalement exoneree.</p>
+          <p className="hint">Exonération IR à 22 ans, PS à 30 ans (résidence secondaire / locatif).</p>
         </div>
       </div>
 
-      {/* results */}
+      {/* ── COLONNE DROITE : résultats ── */}
       <div>
         <EncadrementCard
           estCity={estCityRaw}
@@ -2653,9 +2770,16 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
           meuble={v("meuble") === 1}
           loyerSaisi={v("rent")}
         />
-        <div className="card">
-          <h2>Score d'investissement</h2>
-          <div className="sub">Synthese globale de la qualite de l'operation</div>
+
+        {/* Score global */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-blue">
+            <span className="renta-section-icon">🎯</span>
+            <div>
+              <div className="renta-section-title">Score d'investissement</div>
+              <div className="renta-section-sub">Synthèse globale de la qualité de l'opération</div>
+            </div>
+          </div>
           <div className="score-wrap">
             <div className="score-gauge">
               <svg viewBox="0 0 120 120">
@@ -2677,77 +2801,98 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               ))}
             </div>
           </div>
-          <p className="hint">Score pondere : rentabilite nette-nette (30%), TRI (30%), cashflow (25%), prix vs marche (15%). Base sur tes hypotheses ci-contre.</p>
+          <p className="hint">Score pondéré : rentabilité nette-nette (30%), TRI (30%), cashflow (25%), prix vs marché (15%).</p>
         </div>
 
-        <div className="card">
-          <h2>Analyse de rentabilite</h2>
-          <div className="sub">Mise a jour en temps reel</div>
-
+        {/* Rendements */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-green">
+            <span className="renta-section-icon">📊</span>
+            <div>
+              <div className="renta-section-title">Rendements</div>
+              <div className="renta-section-sub">Brut · Net · Cash-on-cash — mis à jour en temps réel</div>
+            </div>
+          </div>
           <div className="kpis">
-            <div className="kpi"><div className="k">Rentabilite brute</div><div className={"v " + yClass(yieldGross)}>{pct(yieldGross)}</div></div>
-            <div className="kpi"><div className="k">Rentabilite nette</div><div className={"v " + yClass(yieldNet)}>{pct(yieldNet)}</div></div>
+            <div className="kpi"><div className="k">Rentabilité brute</div><div className={"v " + yClass(yieldGross)}>{pct(yieldGross)}</div></div>
+            <div className="kpi"><div className="k">Rentabilité nette</div><div className={"v " + yClass(yieldNet)}>{pct(yieldNet)}</div></div>
             <div className="kpi"><div className="k">Rendement / apport</div><div className={"v " + cClass(cashOnCash)}>{pct(cashOnCash)}</div></div>
           </div>
 
-          <div className="section-t">Cout total de l'operation</div>
+          <div className="section-t">Coût total de l'opération</div>
           <div className="line-items">
             <div className="li"><span className="lbl">Prix d'achat</span><span>{euro(price)}</span></div>
             <div className="li"><span className="lbl">Frais de notaire ({(v("notaryRate")*100).toFixed(1).replace(".",",")}%)</span><span>{euro(notaire)}</span></div>
             {v("works") > 0 && <div className="li"><span className="lbl">Travaux</span><span>{euro(v("works"))}</span></div>}
-            <div className="li total"><span>Cout total</span><span className="v">{euro(totalCost)}</span></div>
+            <div className="li total"><span>Coût total</span><span className="v">{euro(totalCost)}</span></div>
           </div>
 
-          <div className="section-t">Credit</div>
+          <div className="section-t">Crédit immobilier</div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Montant emprunte</span><span>{euro(loan)}</span></div>
-            <div className="li"><span className="lbl">Mensualite (capital + interets)</span><span>{euro(mPrincipal)}</span></div>
+            <div className="li"><span className="lbl">Montant emprunté</span><span>{euro(loan)}</span></div>
+            <div className="li"><span className="lbl">Mensualité (capital + intérêts)</span><span>{euro(mPrincipal)}</span></div>
             <div className="li"><span className="lbl">Assurance emprunteur / mois</span><span>{euro(mLoanIns)}</span></div>
-            <div className="li total"><span>Mensualite totale</span><span className="v">{euro(mPayment)}</span></div>
-            <div className="li"><span className="lbl">Cout total des interets</span><span>{euro(totalInterest)}</span></div>
+            <div className="li total"><span>Mensualité totale</span><span className="v">{euro(mPayment)}</span></div>
+            <div className="li"><span className="lbl">Coût total des intérêts</span><span>{euro(totalInterest)}</span></div>
           </div>
+        </div>
 
-          <div className="section-t">Flux annuel (apres credit)</div>
+        {/* Cashflow */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-purple">
+            <span className="renta-section-icon">💰</span>
+            <div>
+              <div className="renta-section-title">Cashflow mensuel</div>
+              <div className="renta-section-sub">Flux de trésorerie avant et après impôt</div>
+            </div>
+          </div>
+          <div className="kpis" style={{ marginBottom: 16 }}>
+            <div className="kpi"><div className="k">Cashflow / mois (av. impôt)</div><div className={"v " + cClass(mCashflow)}>{mCashflow >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflow))} €</div></div>
+            <div className="kpi"><div className="k">Effort épargne / mois</div><div className={"v " + (mCashflow >= 0 ? "g" : "w")}>{mCashflow >= 0 ? "0 €" : euro0(-mCashflow) + " €"}</div></div>
+            <div className="kpi"><div className="k">Mensualité crédit</div><div className="v">{euro0(mPayment)} €</div></div>
+          </div>
+          <div className="section-t">Flux annuel (après crédit)</div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Loyers HC encaisses</span><span className="pos">+ {euro(annualRentNet)}</span></div>
-            <div className="li"><span className="lbl">Charges copro non recuperables</span><span className="neg">- {euro(nonRecovCopro)}</span></div>
-            <div className="li"><span className="lbl">Taxe fonciere</span><span className="neg">- {euro(v("taxe"))}</span></div>
+            <div className="li"><span className="lbl">Loyers HC encaissés</span><span className="pos">+ {euro(annualRentNet)}</span></div>
+            <div className="li"><span className="lbl">Charges copro non récupérables</span><span className="neg">- {euro(nonRecovCopro)}</span></div>
+            <div className="li"><span className="lbl">Taxe foncière</span><span className="neg">- {euro(v("taxe"))}</span></div>
             <div className="li"><span className="lbl">Gestion + assurance PNO</span><span className="neg">- {euro(mgmtCost + v("insurancePNO"))}</span></div>
-            <div className="li"><span className="lbl">Remboursement credit</span><span className="neg">- {euro(annualLoan)}</span></div>
+            <div className="li"><span className="lbl">Remboursement crédit</span><span className="neg">- {euro(annualLoan)}</span></div>
             <div className="li total"><span>Cashflow annuel</span>
               <span className={annualCashflow >= 0 ? "pos" : "neg"}>{annualCashflow >= 0 ? "+ " : "- "}{euro(Math.abs(annualCashflow))}</span></div>
           </div>
+        </div>
 
-          <div className="kpis" style={{ marginTop: 14 }}>
-            <div className="kpi"><div className="k">Cashflow / mois (av. impot)</div><div className={"v " + cClass(mCashflow)}>{mCashflow >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflow))} EUR</div></div>
-            <div className="kpi"><div className="k">Effort d'epargne / mois</div><div className={"v " + (mCashflow >= 0 ? "g" : "w")}>{mCashflow >= 0 ? "0 EUR" : euro0(-mCashflow) + " EUR"}</div></div>
-            <div className="kpi"><div className="k">Mensualite</div><div className="v">{euro0(mPayment)} EUR</div></div>
+        {/* Fiscalité & net-net */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-orange">
+            <span className="renta-section-icon">🧾</span>
+            <div>
+              <div className="renta-section-title">Impôt &amp; rentabilité nette-nette</div>
+              <div className="renta-section-sub">Régime {regimeLabel} · TMI {Math.round(v("tmi") * 100)}%</div>
+            </div>
           </div>
-
-          <div className="section-t">Impot &amp; rentabilite nette-nette</div>
+          <div className="kpis" style={{ marginBottom: 16 }}>
+            <div className="kpi"><div className="k">Rentabilité nette-nette</div><div className={"v " + yClass(yieldNetNet)}>{pct(yieldNetNet)}</div></div>
+            <div className="kpi"><div className="k">Cashflow / mois (ap. impôt)</div><div className={"v " + cClass(mCashflowAT)}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} €</div></div>
+            <div className="kpi"><div className="k">Impôt / mois</div><div className="v w">{euro0(incomeTax / 12)} €</div></div>
+          </div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Regime</span><span style={{ fontSize: 12.5 }}>{regimeLabel}</span></div>
             <div className="li"><span className="lbl">Base imposable / an</span><span>{euro(taxableBase)}</span></div>
-            <div className="li"><span className="lbl">Impot estime (IR {Math.round(v("tmi") * 100)}% + PS 17,2%)</span><span className="neg">- {euro(incomeTax)}/an</span></div>
-            <div className="li total"><span>Cashflow apres impot</span>
+            <div className="li"><span className="lbl">Impôt estimé (IR {Math.round(v("tmi") * 100)}% + PS 17,2%)</span><span className="neg">- {euro(incomeTax)}/an</span></div>
+            <div className="li total"><span>Cashflow après impôt</span>
               <span className={cashflowAfterTax >= 0 ? "pos" : "neg"}>{cashflowAfterTax >= 0 ? "+ " : "- "}{euro(Math.abs(cashflowAfterTax))}/an</span></div>
           </div>
 
-          <div className="kpis" style={{ marginTop: 14 }}>
-            <div className="kpi"><div className="k">Rentabilite nette-nette</div><div className={"v " + yClass(yieldNetNet)}>{pct(yieldNetNet)}</div></div>
-            <div className="kpi"><div className="k">Cashflow / mois (ap. impot)</div><div className={"v " + cClass(mCashflowAT)}>{mCashflowAT >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflowAT))} EUR</div></div>
-            <div className="kpi"><div className="k">Impot / mois</div><div className="v w">{euro0(incomeTax / 12)} EUR</div></div>
-          </div>
-
-          <div className="section-t">Comparateur des 4 regimes fiscaux</div>
+          <div className="section-t">Comparateur des 4 régimes fiscaux</div>
           <div className="tbl-scroll" style={{ maxHeight: "none" }}>
             <table>
               <thead>
-                <tr><th>Regime</th><th>Deduction</th><th className="num">Base / an</th><th className="num">Impot / an</th></tr>
+                <tr><th>Régime</th><th>Déduction</th><th className="num">Base / an</th><th className="num">Impôt / an</th></tr>
               </thead>
               <tbody>
                 {regimes.map((rg) => (
-                  <tr key={rg.key} style={rg.key === bestRegime.key ? { background: "rgba(34,197,94,.12)" } : undefined}>
+                  <tr key={rg.key} style={rg.key === bestRegime.key ? { background: "rgba(16,185,129,.10)" } : undefined}>
                     <td>{rg.key === bestRegime.key ? "★ " : ""}{rg.label}{!rg.eligible ? <span className="neg" style={{ fontSize: 11 }}> (seuil dépassé)</span> : ""}</td>
                     <td style={{ fontSize: 12, color: "var(--muted)" }}>{rg.abatt}</td>
                     <td className="num">{euro0(rg.base)}</td>
@@ -2758,46 +2903,51 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
             </table>
           </div>
           <div className="badge g" style={{ display: "block", marginTop: 10 }}>
-            ★ Regime optimal : <b>{bestRegime.label}</b> &middot; impot {bestRegime.tax <= 0 ? "nul (voire economie de " + euro(-bestRegime.tax) + ")" : euro(bestRegime.tax) + "/an"}
-            {bestRegime.tax < incomeTax && <> &middot; soit {euro(incomeTax - bestRegime.tax)}/an de moins que votre choix actuel</>}
+            ★ Régime optimal : <b>{bestRegime.label}</b> · impôt {bestRegime.tax <= 0 ? "nul (voire économie de " + euro(-bestRegime.tax) + ")" : euro(bestRegime.tax) + "/an"}
+            {bestRegime.tax < incomeTax && <> · soit {euro(incomeTax - bestRegime.tax)}/an de moins que votre choix actuel</>}
           </div>
-
           {interestSaving > 0 && (
             <div className="line-items" style={{ marginTop: 10 }}>
-              <div className="li"><span className="lbl">Economie d'impot grace aux interets d'emprunt (au reel)</span><span className="pos">{euro(interestSaving)}/an</span></div>
-              {deficitImputable > 0 && <div className="li"><span className="lbl">Deficit foncier imputable sur revenu global</span><span className="pos">{euro(deficitImputable)}</span></div>}
-              {deficitReporte > 0 && <div className="li"><span className="lbl">Deficit reporte (10 ans, sur revenus fonciers)</span><span>{euro(deficitReporte)}</span></div>}
+              <div className="li"><span className="lbl">Économie d'impôt grâce aux intérêts (au réel)</span><span className="pos">{euro(interestSaving)}/an</span></div>
+              {deficitImputable > 0 && <div className="li"><span className="lbl">Déficit foncier imputable sur revenu global</span><span className="pos">{euro(deficitImputable)}</span></div>}
+              {deficitReporte > 0 && <div className="li"><span className="lbl">Déficit reporté (10 ans, sur revenus fonciers)</span><span>{euro(deficitReporte)}</span></div>}
             </div>
           )}
-          <p className="hint" style={{ marginTop: 8 }}>Les interets ne sont deductibles qu'au reel (nu ou LMNP), jamais en micro ni sur une residence principale. Deduire 1 EUR d'interet economise votre TMI, pas 1 EUR : ca allege le cout, ne le rend pas gratuit. Estimation simplifiee, a valider avec un comptable.</p>
+          <p className="hint" style={{ marginTop: 8 }}>Les intérêts ne sont déductibles qu'au réel (nu ou LMNP). Estimation simplifiée, à valider avec un comptable.</p>
+        </div>
 
-          <div className="section-t">Revente &amp; plus-value a {horizon} ans</div>
-          <div className="hero" style={{ background: tri != null && tri >= 0 ? "linear-gradient(135deg,#14532d,#22c55e)" : "linear-gradient(135deg,#7f1d1d,#ef4444)" }}>
-            <div className="lbl">Rendement total de l'operation (TRI)</div>
-            <div className="val">{tri != null ? pct(tri) : "n/a"}</div>
-            <div className="range">Patrimoine net cree : {patrimoineNet >= 0 ? "+ " : "- "}{euro(Math.abs(patrimoineNet))}</div>
+        {/* TRI & revente */}
+        <div className="card renta-section">
+          <div className="renta-section-header renta-header-teal">
+            <span className="renta-section-icon">🚀</span>
+            <div>
+              <div className="renta-section-title">Revente &amp; plus-value à {horizon} ans</div>
+              <div className="renta-section-sub">TRI · patrimoine net créé · simulation complète</div>
+            </div>
           </div>
-
+          <div className="hero" style={{ background: tri != null && tri >= 0 ? "linear-gradient(135deg,#065f46,#10b981)" : "linear-gradient(135deg,#7f1d1d,#ef4444)", marginBottom: 14 }}>
+            <div className="lbl">Rendement total de l'opération (TRI)</div>
+            <div className="val">{tri != null ? pct(tri) : "n/a"}</div>
+            <div className="range">Patrimoine net créé : {patrimoineNet >= 0 ? "+ " : "- "}{euro(Math.abs(patrimoineNet))}</div>
+          </div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Prix de revente estime ({pct(v("appreciation"))}/an)</span><span>{euro(resalePrice)}</span></div>
-            <div className="li"><span className="lbl">Cout total d'acquisition</span><span>{euro(totalCost)}</span></div>
+            <div className="li"><span className="lbl">Prix de revente estimé ({pct(v("appreciation"))}/an)</span><span>{euro(resalePrice)}</span></div>
+            <div className="li"><span className="lbl">Coût total d'acquisition</span><span>{euro(totalCost)}</span></div>
             <div className="li"><span className="lbl">Plus-value brute</span><span className={pvBrute > 0 ? "pos" : ""}>{euro(pvBrute)}</span></div>
-            <div className="li"><span className="lbl">Abattement IR / PS (detention {horizon} ans)</span><span>{Math.round(abIR * 100)}% / {Math.round(abPS * 100)}%</span></div>
-            <div className="li"><span className="lbl">Impot sur la plus-value (IR 19% + PS 17,2%)</span><span className="neg">- {euro(pvTax)}</span></div>
+            <div className="li"><span className="lbl">Abattement IR / PS (détention {horizon} ans)</span><span>{Math.round(abIR * 100)}% / {Math.round(abPS * 100)}%</span></div>
+            <div className="li"><span className="lbl">Impôt sur la plus-value (IR 19% + PS 17,2%)</span><span className="neg">- {euro(pvTax)}</span></div>
             <div className="li total"><span>Plus-value nette</span><span className="v">{euro(pvNette)}</span></div>
           </div>
-
-          <div className="section-t">A la revente</div>
+          <div className="section-t">Bilan à la revente</div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Capital rembourse sur {horizon} ans</span><span className="pos">{euro(capitalRembourse)}</span></div>
-            <div className="li"><span className="lbl">Capital restant du (solde du pret)</span><span className="neg">{euro(crd)}</span></div>
-            <div className="li"><span className="lbl">Cashflow cumule apres impot ({horizon} ans)</span><span className={cumulCashflow >= 0 ? "pos" : "neg"}>{cumulCashflow >= 0 ? "+ " : "- "}{euro(Math.abs(cumulCashflow))}</span></div>
-            <div className="li"><span className="lbl">Capitaux recuperes a la revente</span><span>{euro(exitEquity)}</span></div>
-            <div className="li total"><span>Patrimoine net cree (vs apport)</span><span className={patrimoineNet >= 0 ? "pos" : "neg"}>{patrimoineNet >= 0 ? "+ " : "- "}{euro(Math.abs(patrimoineNet))}</span></div>
+            <div className="li"><span className="lbl">Capital remboursé sur {horizon} ans</span><span className="pos">{euro(capitalRembourse)}</span></div>
+            <div className="li"><span className="lbl">Capital restant dû (solde du prêt)</span><span className="neg">{euro(crd)}</span></div>
+            <div className="li"><span className="lbl">Cashflow cumulé après impôt ({horizon} ans)</span><span className={cumulCashflow >= 0 ? "pos" : "neg"}>{cumulCashflow >= 0 ? "+ " : "- "}{euro(Math.abs(cumulCashflow))}</span></div>
+            <div className="li"><span className="lbl">Capitaux récupérés à la revente</span><span>{euro(exitEquity)}</span></div>
+            <div className="li total"><span>Patrimoine net créé (vs apport)</span><span className={patrimoineNet >= 0 ? "pos" : "neg"}>{patrimoineNet >= 0 ? "+ " : "- "}{euro(Math.abs(patrimoineNet))}</span></div>
           </div>
-          <p className="hint" style={{ marginTop: 8 }}>Le TRI agrege apport, cashflows annuels et revente : c'est le vrai rendement de l'operation. Hypotheses : cashflow annuel constant, prix +{pct(v("appreciation"))}/an, hors frais d'agence a la revente et surtaxe sur plus-value &gt; 50 000 EUR.</p>
-
-          <div className={"badge " + vClass}>{verdict}</div>
+          <p className="hint" style={{ marginTop: 8 }}>Le TRI agrège apport, cashflows annuels et revente. Hypothèses : cashflow constant, prix +{pct(v("appreciation"))}/an.</p>
+          <div className={"badge " + vClass} style={{ display: "block", marginTop: 12 }}>{verdict}</div>
         </div>
       </div>
     </div>
