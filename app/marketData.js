@@ -226,3 +226,25 @@ export const METRICS = [
   { key: "y1",    label: "Évolution 1 an",         fmt: (c) => (c.y1 > 0 ? "+" : "") + c.y1.toFixed(1).replace(".", ",") + " %" },
   { key: "pm2",   label: "Prix au m²",             fmt: (c) => fmtNum(c.pm2) + " €/m²" },
 ];
+
+// ---- Île-de-France : réglementation & profils ----
+// Communes où l'encadrement des loyers s'applique (Paris, Plaine Commune, Est Ensemble)
+export const IDF_ENCADREMENT = new Set([
+  "75056",
+  "93066", "93001", "93070", "93031", "93072", "93079", "93059", "93039",
+  "93048", "93006", "93008", "93055", "93053", "93063", "93045", "93061", "93010",
+]);
+export const isEncadree = (insee) => insee.startsWith("751") || IDF_ENCADREMENT.has(insee);
+// Petite couronne : changement d'usage souvent exigé pour le meublé touristique
+export const isPetiteCouronne = (insee) => ["75", "92", "93", "94"].includes(insee.slice(0, 2));
+
+export const DEPT_INFO = {
+  "75": "Paris : le marché le plus liquide et patrimonial de France. Demande locative inépuisable, mais prix d'entrée et fiscalité élevés — rendements faibles, pari sur la valeur long terme.",
+  "92": "Hauts-de-Seine : l'ouest parisien des cadres (La Défense, Boulogne, Neuilly). Marché cher et résilient, locataires très solvables, vacance quasi nulle. Logique patrimoniale sécurisée.",
+  "93": "Seine-Saint-Denis : le département le plus abordable de la petite couronne, en pleine mutation (Grand Paris Express, JO 2024). Rendements élevés et fort potentiel de plus-value, mais sélectivité indispensable (quartier par quartier, gestion locative exigeante).",
+  "94": "Val-de-Marne : bon compromis prix/proximité de Paris (Vincennes, Saint-Maur côté premium ; Créteil, Choisy plus accessibles). Desserte en forte amélioration avec la ligne 15.",
+  "77": "Seine-et-Marne : la grande couronne la plus abordable. Autour de Marne-la-Vallée et Meaux, demande familiale portée par le RER et Disney. Rendements corrects, horizon plus long.",
+  "78": "Yvelines : marché familial haut de gamme (Versailles, Saint-Germain). Excellents lycées, demande stable de cadres — valeurs sûres, rendements modérés.",
+  "91": "Essonne : prix accessibles, tiré par le pôle Paris-Saclay (universités, R&D) au nord et des villes plus populaires au sud. Bon terrain de rendement en grande couronne.",
+  "95": "Val-d'Oise : l'un des meilleurs rapports prix/rendement de la région (Argenteuil, Cergy). Demande locative forte, mais bien choisir la commune et la proximité de la gare.",
+};

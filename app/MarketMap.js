@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   CITIES, IDF_COMMUNES, METRO_INSEE, METRICS,
   fmtNum, colorScale, score, metricNorm, monthLabel,
+  isEncadree, isPetiteCouronne, DEPT_INFO,
 } from "./marketData";
 
 // Exécute `worker(item, i)` sur toute la liste avec `poolSize` tâches en parallèle
@@ -121,8 +122,100 @@ function CityDetail({ city, live, isMetro, zonesLoading, onBreakdown, onEstimate
   );
 }
 
+// --- Fiche détaillée d'une commune d'Île-de-France --------------------------
+function communeNarrative(z, zones, live) {
+  const sorted = [...zones].sort((a, b) => a.medianPm2 - b.medianPm2);
+  const rank = sorted.findIndex((s) => s.code === z.code);
+  const pct = sorted.length > 1 ? rank / (sorted.length - 1) : 0.5;
+  const out = [];
+
+  if (pct <= 0.33) out.push(`${z.name} fait partie des communes les plus abordables d'Île-de-France (${fmtNum(z.medianPm2)} €/m² médian réel) : ticket d'entrée réduit, fort effet de levier et rendement locatif potentiellement élevé.`);
+  else if (pct <= 0.66) out.push(`${z.name} se situe dans la moyenne des prix franciliens (${fmtNum(z.medianPm2)} €/m² médian réel) : équilibre entre rendement locatif et sécurité patrimoniale.`);
+  else out.push(`${z.name} fait partie des communes les plus chères d'Île-de-France (${fmtNum(z.medianPm2)} €/m² médian réel) : logique patrimoniale — rendement modeste mais valeur résiliente et demande soutenue.`);
+
+  const t = live && live.data && live.data.trendPct;
+  if (t != null) {
+    const f = (x) => (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",");
+    out.push(t <= -2 ? `Les prix y reculent (${f(t)} %/an sur les dernières ventes) : marge de négociation réelle pour un acheteur.`
+      : t < 2 ? `Les prix y sont globalement stables (${f(t)} %/an sur les dernières ventes).`
+      : `Les prix y progressent (${f(t)} %/an sur les dernières ventes) : marché dynamique.`);
+  }
+  const n = (live && live.data && live.data.count) || z.count;
+  out.push(n >= 800 ? `Marché très liquide (${fmtNum(n)} ventes analysées) : facile d'acheter et de revendre.`
+    : n >= 300 ? `Marché correctement animé (${fmtNum(n)} ventes analysées).`
+    : `Marché étroit (${fmtNum(n)} ventes analysées) : comparez bien avant d'acheter.`);
+
+  const dept = DEPT_INFO[z.code.startsWith("751") ? "75" : z.code.slice(0, 2)];
+  if (dept) out.push(dept);
+  return out;
+}
+
+function CommuneDetail({ zone, zones, onBack, onEstimate }) {
+  const [live, setLive] = useState({ loading: true, data: null });
+  useEffect(() => {
+    let stop = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/market?insee=${zone.code}`);
+        const d = await r.json();
+        if (!stop) setLive({ loading: false, data: d && d.medianPm2 ? d : null });
+      } catch { if (!stop) setLive({ loading: false, data: null }); }
+    })();
+    return () => { stop = true; };
+  }, [zone.code]);
+
+  const enc = isEncadree(zone.code);
+  const pc = isPetiteCouronne(zone.code);
+  return (
+    <div className="city-detail">
+      <button className="cd-back" onClick={onBack}>← Île-de-France</button>
+      <h3 className="cd-name">{zone.name}</h3>
+
+      <div className="cd-refs">
+        <div><span>Prix médian réel</span><b>{fmtNum(zone.medianPm2)} €/m²</b></div>
+        <div><span>Ventes analysées</span><b>{fmtNum((live.data && live.data.count) || zone.count)}</b></div>
+        <div><span>Tendance</span><b className={(live.data && live.data.trendPct) >= 0 ? "pos" : "neg"}>
+          {live.loading ? "…" : live.data && live.data.trendPct != null ? (live.data.trendPct > 0 ? "+" : "") + String(live.data.trendPct).replace(".", ",") + " %/an" : "n.d."}
+        </b></div>
+      </div>
+
+      <div className="cd-narrative">
+        <div className="cd-narrative-head">Pourquoi cette commune ?</div>
+        {communeNarrative(zone, zones, live).map((p, i) => <p key={i}>{p}</p>)}
+      </div>
+
+      <div className="cd-narrative">
+        <div className="cd-narrative-head">Réglementation locative</div>
+        <p>
+          {enc
+            ? "🔒 Encadrement des loyers en vigueur : en location nue comme en meublé longue durée, les loyers sont plafonnés (loyer de référence majoré à respecter, à vérifier sur le simulateur de la DRIHL)."
+            : "✅ Pas d'encadrement des loyers : le loyer est libre à la première mise en location."}
+          {" "}
+          {pc
+            ? "Meublé touristique (Airbnb) : 120 nuits/an maximum pour une résidence principale avec numéro d'enregistrement ; pour une résidence secondaire, le changement d'usage (souvent avec compensation) est généralement exigé en petite couronne."
+            : "Meublé touristique (Airbnb) : 120 nuits/an maximum pour une résidence principale ; en grande couronne les règles sont généralement plus souples, un enregistrement en mairie peut être demandé."}
+          {" "}Règles évolutives (loi Le Meur, 2024) — à confirmer en mairie avant d'investir.
+        </p>
+      </div>
+
+      {live.data && live.data.byYear && live.data.byYear.length > 0 && (
+        <div className="cd-live">
+          <div className="cd-live-head">Prix médian par année (DVF)</div>
+          <div className="cd-live-years">
+            {live.data.byYear.map((e) => (
+              <div key={e.year}><span>{e.year}</span><b>{fmtNum(e.med)} €</b><small>{e.n} ventes</small></div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button className="btn" onClick={onEstimate}>Estimer un bien à {zone.name}</button>
+    </div>
+  );
+}
+
 // --- Panneau détail par secteur / commune ---------------------------------
-function ZonePanel({ city, zones, year, region, progress, onBack }) {
+function ZonePanel({ city, zones, year, region, progress, onBack, onZoneClick }) {
   const prices = zones.map((z) => z.medianPm2);
   const min = prices.length ? Math.min(...prices) : 0;
   const max = prices.length ? Math.max(...prices) : 0;
@@ -144,7 +237,9 @@ function ZonePanel({ city, zones, year, region, progress, onBack }) {
       <div className="zone-legend"><span>Plus abordable</span><div className="zl-bar" /><span>Plus cher</span></div>
       <div className="zone-list">
         {zones.map((z, i) => (
-          <div className="zone-item" key={z.code}>
+          <div className="zone-item" key={z.code} onClick={onZoneClick ? () => onZoneClick(z) : undefined}
+               style={onZoneClick ? { cursor: "pointer" } : undefined}
+               title={onZoneClick ? "Voir l'analyse de " + z.name : undefined}>
             <span className="zone-rank">{i + 1}</span>
             <span className="zone-name">{z.name}</span>
             <span className="zone-count">{z.count} ventes</span>
@@ -164,6 +259,12 @@ export default function MarketMap({ onEstimateCity }) {
   const [selected, setSelected] = useState(null);
   const [live, setLive] = useState({ loading: false, data: null });
   const [breakdown, setBreakdown] = useState({ loading: false, data: null });
+  const [selectedZone, setSelectedZone] = useState(null); // commune IdF cliquée
+
+  function openZone(z) {
+    setSelectedZone(z);
+    if (mapRef.current) mapRef.current.setView([z.lat, z.lon], 12, { animate: true });
+  }
 
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -190,7 +291,7 @@ export default function MarketMap({ onEstimateCity }) {
   }
 
   // Dessine les bulles de communes/secteurs, colorées par prix (vert = moins cher)
-  function drawZones(zones, fit = true) {
+  function drawZones(zones, fit = true, clickable = false) {
     const L = LRef.current;
     if (!L || !zoneLayerRef.current) return;
     if (cityLayerRef.current) cityLayerRef.current.clearLayers();
@@ -204,6 +305,7 @@ export default function MarketMap({ onEstimateCity }) {
         radius: 9, color: "#fff", weight: 1.5, fillColor: colorScale(t), fillOpacity: 0.9,
       });
       mk.bindTooltip(`<b>${z.name}</b> — ${fmtNum(z.medianPm2)} €/m² (${z.count} ventes)`, { direction: "top" });
+      if (clickable) mk.on("click", () => openZone(z));
       mk.addTo(zoneLayerRef.current);
       pts.push([z.lat, z.lon]);
     }
@@ -262,7 +364,7 @@ export default function MarketMap({ onEstimateCity }) {
         if (d && d.medianPm2) {
           zones.push({ code: com.insee, name: com.name, lat: com.lat, lon: com.lon, medianPm2: d.medianPm2, count: d.count });
           const sorted = [...zones].sort((a, b) => a.medianPm2 - b.medianPm2);
-          drawZones(sorted, false);
+          drawZones(sorted, false, true);
           done++;
           setBreakdown({ loading: true, data: { zones: sorted, region }, progress: { done, total } });
         } else {
@@ -279,6 +381,7 @@ export default function MarketMap({ onEstimateCity }) {
 
   // Retour du détail-secteur vers la fiche ville
   function backToCity() {
+    setSelectedZone(null);
     setBreakdown({ loading: false, data: null });
     if (zoneLayerRef.current) zoneLayerRef.current.clearLayers();
     drawCities();
@@ -288,6 +391,7 @@ export default function MarketMap({ onEstimateCity }) {
   // Retour de la fiche ville vers le classement (vue France)
   function backToRanking() {
     setSelected(null);
+    setSelectedZone(null);
     setBreakdown({ loading: false, data: null });
     if (zoneLayerRef.current) zoneLayerRef.current.clearLayers();
     drawCities();
@@ -356,7 +460,14 @@ export default function MarketMap({ onEstimateCity }) {
         </div>
 
         <div className="market-side">
-          {showZone ? (
+          {showZone && selectedZone ? (
+            <CommuneDetail
+              zone={selectedZone}
+              zones={(breakdown.data && breakdown.data.zones) || []}
+              onBack={() => setSelectedZone(null)}
+              onEstimate={() => onEstimateCity && onEstimateCity(selectedZone)}
+            />
+          ) : showZone ? (
             <ZonePanel
               city={selected}
               zones={(breakdown.data && breakdown.data.zones) || []}
@@ -364,6 +475,7 @@ export default function MarketMap({ onEstimateCity }) {
               region={breakdown.data && breakdown.data.region}
               progress={breakdown.progress}
               onBack={backToCity}
+              onZoneClick={breakdown.data && breakdown.data.region ? openZone : undefined}
             />
           ) : selected ? (
             <CityDetail
