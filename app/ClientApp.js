@@ -751,69 +751,71 @@ export default function Page() {
     if (city) setEstCity(city);
   }
 
+  const TAB_TITLES = {
+    estim: "Estimation du bien",
+    travaux: "Travaux & valeur verte",
+    renta: "Rentabilité locative",
+    capacite: "Capacité d'emprunt",
+    carte: "Carte des marchés",
+    contact: "Contact",
+    sources: "Sources & Données",
+    projets: "Mes projets",
+  };
+
+  const navItem = (key, icon, label, lock) => (
+    <button className={"sn-item" + (tab === key ? " active" : "")} onClick={() => setTab(key)}>
+      <span className="sn-ico">{icon}</span>
+      <span className="sn-txt">{label}{lock && !isPremium ? " 🔒" : ""}</span>
+    </button>
+  );
+
   return (
-    <>
-      <div className="authbar">
-        {saveMsg && <span className="save-msg">{saveMsg}</span>}
-        {user ? (
-          <>
-            {currentProject && currentProject.nom
-              ? <span className="proj-chip">📁 {currentProject.nom}</span>
-              : <button className="auth-btn" onClick={newProject}>➕ Nouveau projet</button>}
-            <button className="auth-btn primary" onClick={saveCurrentProject}>💾 Sauvegarder</button>
-            <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} />
-          </>
-        ) : (
-          <button className="auth-btn primary" onClick={() => setAuthOpen(true)}>Se connecter</button>
-        )}
-      </div>
-
-      <header className="top">
-        <h1>Estim<span>Immo</span></h1>
-        <p>Estime n'importe quel bien en France à partir des <b>ventes réelles</b>, et analyse sa <b>rentabilité</b> de A à Z.</p>
-      </header>
-
-      <div className="wrap">
-        <div className="tab-groups">
-          <div className="tab-group">
-            <div className="tab-group-label">Analyse de votre bien</div>
-            <div className="tabs">
-              <button className={"tab" + (tab === "estim" ? " active" : "")} onClick={() => setTab("estim")}>
-                1. Estimation
-              </button>
-              <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
-                2. Travaux{!isPremium ? " 🔒" : ""}
-              </button>
-              <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
-                3. Rentabilité{!isPremium ? " 🔒" : ""}
-              </button>
-              <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
-                4. Capacité d'emprunt{!isPremium ? " 🔒" : ""}
-              </button>
-              {user && (
-                <button className={"tab" + (tab === "projets" ? " active" : "")} onClick={() => setTab("projets")}>
-                  📁 Mes projets{!isPremium ? " 🔒" : ""}
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="tab-group">
-            <div className="tab-group-label">Informations générales</div>
-            <div className="tabs">
-              <button className={"tab" + (tab === "carte" ? " active" : "")} onClick={() => setTab("carte")}>
-                🗺️ Carte des marchés
-              </button>
-              <button className={"tab" + (tab === "contact" ? " active" : "")} onClick={() => setTab("contact")}>
-                ✉️ Contact{isAdmin ? " (admin)" : ""}
-              </button>
-              {isAdmin && (
-                <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
-                  Sources &amp; Données
-                </button>
-              )}
-            </div>
-          </div>
+    <div className="shell">
+      <aside className="sidenav">
+        <div className="sn-logo">
+          <h1>Estim<span>Immo</span></h1>
+          <p>Outil d'investissement</p>
         </div>
+        <nav className="sn-nav">
+          <div className="sn-label">Analyse de votre bien</div>
+          {navItem("estim", "🏠", "Estimation")}
+          {navItem("travaux", "🔧", "Travaux", true)}
+          {navItem("renta", "📊", "Rentabilité", true)}
+          {navItem("capacite", "🏦", "Capacité d'emprunt", true)}
+          {user && navItem("projets", "📁", "Mes projets", true)}
+          <div className="sn-label">Informations générales</div>
+          {navItem("carte", "🗺️", "Carte des marchés")}
+          {navItem("contact", "✉️", isAdmin ? "Contact (admin)" : "Contact")}
+          {isAdmin && navItem("sources", "📚", "Sources & Données")}
+        </nav>
+        <div className="sn-bottom">
+          Données : DVF (DGFiP/Etalab), IGN, ADEME, Banque de France.
+        </div>
+      </aside>
+
+      <div className="shell-main">
+        <header className="topbar">
+          <div className="tb-title">
+            <h2>{TAB_TITLES[tab] || "EstimImmo"}</h2>
+            <p>Estimation & rentabilité à partir des ventes réelles</p>
+          </div>
+          <div className="authbar">
+            {saveMsg && <span className="save-msg">{saveMsg}</span>}
+            {user ? (
+              <>
+                {currentProject && currentProject.nom
+                  ? <span className="proj-chip">📁 {currentProject.nom}</span>
+                  : <button className="auth-btn" onClick={newProject}>➕ Nouveau projet</button>}
+                <button className="auth-btn primary" onClick={saveCurrentProject}>💾 Sauvegarder</button>
+                <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} />
+              </>
+            ) : (
+              <button className="auth-btn primary" onClick={() => setAuthOpen(true)}>Se connecter</button>
+            )}
+          </div>
+        </header>
+
+        <div className="wrap">
 
         {tab === "estim" && (
           <div className="intro">
@@ -848,12 +850,13 @@ export default function Page() {
         <button className="btn-print" onClick={() => window.print()}>
           ⬇ Télécharger / Imprimer PDF
         </button>
-      </div>
+        </div>
 
-      <footer>
-        EstimImmo &middot; Données : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
-      </footer>
-    </>
+        <footer>
+          EstimImmo &middot; Données : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
+        </footer>
+      </div>
+    </div>
   );
 }
 

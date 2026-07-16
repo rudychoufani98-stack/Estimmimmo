@@ -2,7 +2,7 @@
    ESTIMMIMMO — Design restauré (version en ligne du 13 juillet)
    + section compatibilité pour les composants récents
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
 :root{--accent:#0d9488;--accent-d:#0f766e;--accent-light:rgba(13,148,136,.10);--accent-glow:0 4px 20px rgba(13,148,136,.25);--gold:#d97706;--gold-light:rgba(217,119,6,.10);--bg:#f4f6f8;--panel:#ffffff;--panel2:#f9fafb;--line:#e5e7eb;--txt:#111827;--muted:#6b7280;--green:#16a34a;--green-light:rgba(22,163,74,.10);--warn:#d97706;--warn-light:rgba(217,119,6,.10);--bad:#dc2626;--bad-light:rgba(220,38,38,.10);--purple:#7c3aed;--radius:14px;--radius-sm:9px;--shadow-xs:0 1px 3px rgba(0,0,0,.06);--shadow-sm:0 2px 8px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);--shadow:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);--shadow-lg:0 8px 32px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.06);--transition:.17s cubic-bezier(.4,0,.2,1)}
 *,:after,:before{box-sizing:border-box}
@@ -693,3 +693,76 @@ to{box-shadow:0 0 0 0 rgba(22,163,74,0)}
 .tab-group-label{font-size:10.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);margin:0 0 7px 4px}
 .tab-group .tabs{margin-bottom:0}
 @media (max-width:900px){.tab-groups{gap:14px}}
+
+/* ============================================================
+   DASHBOARD SHELL — design "Investment Precision"
+   (sidebar navy + sauge, Manrope pour les titres)
+   ============================================================ */
+:root{
+  --accent:#376854;
+  --accent-d:#2c5443;
+  --accent-light:rgba(55,104,84,.10);
+  --accent-glow:0 4px 18px rgba(55,104,84,.25);
+  --navy:#041627;
+  --navy-2:#1a2b3c;
+  --mint:#b9eed6;
+  --bg:#f8f9fa;
+  --panel2:#f3f4f5;
+  --line:#e3e5e8;
+  --txt:#191c1d;
+  --muted:#5b5f66;
+}
+h1,h2,h3,h4,.cd-name,.mr-head,.baro-head{font-family:'Manrope','Inter',system-ui,sans-serif}
+.card h2,h2,h3{color:var(--navy)}
+
+/* ---- layout ---- */
+.shell{display:flex;min-height:100vh}
+.shell-main{flex:1;margin-left:240px;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+.shell-main .wrap{width:100%;max-width:1220px;margin:0 auto;padding:22px 22px 40px}
+
+/* ---- sidebar ---- */
+.sidenav{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--navy);display:flex;flex-direction:column;padding:22px 12px 16px;z-index:100}
+.sn-logo{padding:0 10px;margin-bottom:26px}
+.sn-logo h1{margin:0;font-size:21px;font-weight:800;color:#fff;letter-spacing:-.4px}
+.sn-logo h1 span{color:var(--mint)}
+.sn-logo p{margin:2px 0 0;font-size:9.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.sn-nav{flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.sn-label{font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.38);margin:16px 10px 6px}
+.sn-label:first-child{margin-top:0}
+.sn-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;background:none;border:none;border-left:3px solid transparent;border-radius:8px;color:rgba(255,255,255,.72);font:600 13px 'Inter',sans-serif;cursor:pointer;text-align:left;transition:all .15s}
+.sn-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sn-item.active{color:var(--mint);background:rgba(56,72,90,.38);border-left-color:var(--mint);font-weight:700}
+.sn-ico{font-size:15px;width:20px;text-align:center;flex:0 0 20px}
+.sn-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sn-bottom{margin-top:14px;padding:12px 10px 0;border-top:1px solid rgba(255,255,255,.08);font-size:10px;line-height:1.5;color:rgba(255,255,255,.38)}
+
+/* ---- topbar ---- */
+.topbar{position:sticky;top:0;background:rgba(248,249,250,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);min-height:60px;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 22px;z-index:80}
+.tb-title h2{margin:0;font-size:17px;font-weight:800;color:var(--navy);letter-spacing:-.3px}
+.tb-title p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
+.topbar .authbar{position:static;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* l'ancien header et l'ancienne barre en haut ne servent plus */
+header.top{display:none}
+
+/* ---- footer dans le shell ---- */
+.shell-main footer{margin-top:auto;border-top:1px solid var(--line);background:#fff;padding:14px 22px;font-size:11.5px;color:var(--muted)}
+
+/* ---- mobile : la sidebar devient une barre du bas ---- */
+@media (max-width:920px){
+  .sidenav{top:auto;bottom:0;width:100%;height:auto;flex-direction:row;align-items:center;padding:4px 6px;overflow-x:auto;box-shadow:0 -2px 12px rgba(4,22,39,.25)}
+  .sn-logo,.sn-bottom,.sn-label{display:none}
+  .sn-nav{flex-direction:row;gap:2px;overflow-y:visible}
+  .sn-item{flex:0 0 auto;flex-direction:column;gap:3px;padding:7px 10px;border-left:none;border-radius:8px;font-size:9.5px}
+  .sn-item.active{border-left:none;background:rgba(185,238,214,.14)}
+  .sn-ico{font-size:17px;width:auto;flex:none}
+  .sn-txt{max-width:76px}
+  .shell-main{margin-left:0;padding-bottom:66px}
+  .topbar{padding:8px 12px}
+}
+
+/* ---- impression ---- */
+@media print{
+  .sidenav,.topbar{display:none!important}
+  .shell-main{margin-left:0}
+}
