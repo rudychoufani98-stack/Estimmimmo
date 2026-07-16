@@ -774,35 +774,45 @@ export default function Page() {
       </header>
 
       <div className="wrap">
-        <div className="tabs">
-          <button className={"tab" + (tab === "estim" ? " active" : "")} onClick={() => setTab("estim")}>
-            1. Estimation
-          </button>
-          <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
-            2. Travaux{!isPremium ? " 🔒" : ""}
-          </button>
-          <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
-            3. Rentabilité{!isPremium ? " 🔒" : ""}
-          </button>
-          <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
-            4. Capacité d'emprunt{!isPremium ? " 🔒" : ""}
-          </button>
-          <button className={"tab" + (tab === "carte" ? " active" : "")} onClick={() => setTab("carte")}>
-            🗺️ Carte des marchés
-          </button>
-          <button className={"tab" + (tab === "contact" ? " active" : "")} onClick={() => setTab("contact")}>
-            ✉️ Contact{isAdmin ? " (admin)" : ""}
-          </button>
-          {isAdmin && (
-            <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
-              5. Sources &amp; Données
-            </button>
-          )}
-          {user && (
-            <button className={"tab" + (tab === "projets" ? " active" : "")} onClick={() => setTab("projets")}>
-              📁 Mes projets{!isPremium ? " 🔒" : ""}
-            </button>
-          )}
+        <div className="tab-groups">
+          <div className="tab-group">
+            <div className="tab-group-label">Analyse de votre bien</div>
+            <div className="tabs">
+              <button className={"tab" + (tab === "estim" ? " active" : "")} onClick={() => setTab("estim")}>
+                1. Estimation
+              </button>
+              <button className={"tab" + (tab === "travaux" ? " active" : "")} onClick={() => setTab("travaux")}>
+                2. Travaux{!isPremium ? " 🔒" : ""}
+              </button>
+              <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
+                3. Rentabilité{!isPremium ? " 🔒" : ""}
+              </button>
+              <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
+                4. Capacité d'emprunt{!isPremium ? " 🔒" : ""}
+              </button>
+              {user && (
+                <button className={"tab" + (tab === "projets" ? " active" : "")} onClick={() => setTab("projets")}>
+                  📁 Mes projets{!isPremium ? " 🔒" : ""}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="tab-group">
+            <div className="tab-group-label">Informations générales</div>
+            <div className="tabs">
+              <button className={"tab" + (tab === "carte" ? " active" : "")} onClick={() => setTab("carte")}>
+                🗺️ Carte des marchés
+              </button>
+              <button className={"tab" + (tab === "contact" ? " active" : "")} onClick={() => setTab("contact")}>
+                ✉️ Contact{isAdmin ? " (admin)" : ""}
+              </button>
+              {isAdmin && (
+                <button className={"tab" + (tab === "sources" ? " active" : "")} onClick={() => setTab("sources")}>
+                  Sources &amp; Données
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {tab === "estim" && (
