@@ -573,7 +573,7 @@ const BAROMETRE = {
   prix: "+0,5 a +1 %/an (notaires : +1,4 % appartements anciens)",
   taux: "~3,4 % sur 20 ans",
   demande: "acheteurs +3,2 % depuis janvier 2026, volumes encore -25 % vs 2021",
-  resume: "Marche a l'equilibre mais fragile : reprise moderee, soutenue par la detente des taux et une offre limitee. Forte prime aux bons DPE.",
+  resume: "Marche à l'équilibre mais fragile : reprise modérée, soutenue par la detente des taux et une offre limitee. Forte prime aux bons DPE.",
 };
 
 // Barometre des taux de credit immobilier - a rafraichir periodiquement.
@@ -581,7 +581,7 @@ const BAROMETRE = {
 const TAUX_MARCHE = {
   date: "juin 2026",
   trend: "hausse", // "hausse" | "baisse" | "stable"
-  trendNote: "Legere hausse depuis mai 2026 (tensions geopolitiques, prix de l'energie).",
+  trendNote: "Legere hausse depuis mai 2026 (tensions geopolitiques, prix de l'énergie).",
   rates: { 15: 3.20, 20: 3.37, 25: 3.48 }, // taux moyens constates
   best: { 15: 2.85, 20: 3.05, 25: 3.20 },   // meilleurs profils
   source: "Banque de France & barometres courtiers",
@@ -634,7 +634,7 @@ function CompMap({ center, comps }) {
 function MarketBarometer() {
   return (
     <div className="barometre">
-      <div className="baro-head">Barometre national &middot; {BAROMETRE.date}</div>
+      <div className="baro-head">Baromètre national &middot; {BAROMETRE.date}</div>
       <div className="baro-grid">
         <div><span>Prix</span>{BAROMETRE.prix}</div>
         <div><span>Taux</span>{BAROMETRE.taux}</div>
@@ -692,7 +692,7 @@ export default function Page() {
     const nom = window.prompt("Nom du nouveau projet immobilier :", "");
     if (!nom) return;
     setCurrentProject({ id: null, nom });
-    flash("📁 Projet « " + nom + " » cree — sauvegarde quand tu veux");
+    flash("📁 Projet « " + nom + " » créé — sauvegarde quand tu veux");
   }
 
   function openProject(p) {
@@ -715,7 +715,7 @@ export default function Page() {
     const data = { type: "projet", estim: estimData, travaux: travauxData, renta: rentaData };
     if (currentProject && currentProject.id) {
       const { error } = await supabase.from("projects").update({ nom, data, updated_at: new Date().toISOString() }).eq("id", currentProject.id);
-      flash(error ? "Erreur : " + error.message : "✓ Projet « " + nom + " » mis a jour");
+      flash(error ? "Erreur : " + error.message : "✓ Projet « " + nom + " » mis à jour");
       setCurrentProject({ id: currentProject.id, nom });
     } else {
       const { data: ins, error } = await supabase.from("projects").insert({ user_id: user.id, nom, data }).select("id").single();
@@ -782,10 +782,10 @@ export default function Page() {
             2. Travaux{!isPremium ? " 🔒" : ""}
           </button>
           <button className={"tab" + (tab === "renta" ? " active" : "")} onClick={() => setTab("renta")}>
-            3. Rentabilite{!isPremium ? " 🔒" : ""}
+            3. Rentabilité{!isPremium ? " 🔒" : ""}
           </button>
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
-            4. Capacite d'emprunt{!isPremium ? " 🔒" : ""}
+            4. Capacité d'emprunt{!isPremium ? " 🔒" : ""}
           </button>
           <button className={"tab" + (tab === "carte" ? " active" : "")} onClick={() => setTab("carte")}>
             🗺️ Carte des marchés
@@ -841,7 +841,7 @@ export default function Page() {
       </div>
 
       <footer>
-        EstimImmo &middot; Donnees : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
+        EstimImmo &middot; Données : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
       </footer>
     </>
   );
@@ -902,7 +902,7 @@ function CapaciteEmprunt({ estValue }) {
   let verdict = null, vClass = "";
   if (estValue > 0 && loan > 0) {
     if (maxPrice >= estValue) { verdict = `Le bien estime (${euro(estValue)}) est DANS votre budget. Marge : ${euro(maxPrice - estValue)}.`; vClass = "g"; }
-    else { verdict = `Le bien estime (${euro(estValue)}) depasse votre budget de ${euro(estValue - maxPrice)}. Augmentez l'apport, la duree ou les revenus.`; vClass = "w"; }
+    else { verdict = `Le bien estime (${euro(estValue)}) dépasse votre budget de ${euro(estValue - maxPrice)}. Augmentez l'apport, la durée ou les revenus.`; vClass = "w"; }
   }
 
   return (
@@ -912,7 +912,7 @@ function CapaciteEmprunt({ estValue }) {
       <div>
         <div className="card">
           <h2>Vos revenus</h2>
-          <div className="sub">Revenus nets du foyer (avant impot), tous emprunteurs confondus</div>
+          <div className="sub">Revenus nets du foyer (avant impôt), tous emprunteurs confondus</div>
           <div className="row">
             <div>
               <label>Revenus du foyer</label>
@@ -937,9 +937,9 @@ function CapaciteEmprunt({ estValue }) {
           <select value={f.endettement} onChange={(e) => set("endettement", e.target.value)}>
             <option value="35">35 % (plafond HCSF standard)</option>
             <option value="33">33 % (prudent)</option>
-            <option value="40">40 % (revenus eleves / derogation)</option>
+            <option value="40">40 % (revenus élevés / derogation)</option>
           </select>
-          <p className="hint">Regle HCSF : la mensualite totale (assurance comprise) ne doit pas depasser ce taux de vos revenus.</p>
+          <p className="hint">Regle HCSF : la mensualité totale (assurance comprise) ne doit pas depasser ce taux de vos revenus.</p>
         </div>
 
         <div className="card">
@@ -950,13 +950,13 @@ function CapaciteEmprunt({ estValue }) {
               <div className="unit"><input type="number" value={f.apport} onChange={(e) => set("apport", e.target.value)} /><small>EUR</small></div>
             </div>
             <div>
-              <label>Duree</label>
+              <label>Durée</label>
               <div className="unit"><input type="number" value={f.duration} onChange={(e) => set("duration", e.target.value)} /><small>ans</small></div>
             </div>
           </div>
           <div className="row">
             <div>
-              <label>Taux d'interet</label>
+              <label>Taux d'intérêt</label>
               <div className="unit"><input type="number" step="0.01" value={f.rate} onChange={(e) => set("rate", e.target.value)} /><small>%</small></div>
             </div>
             <div>
@@ -995,18 +995,18 @@ function CapaciteEmprunt({ estValue }) {
           <button className="btn-budget" style={{ marginTop: 14 }} onClick={() => set("rate", rateForDuration(v("duration")).rate)}>
             Appliquer le taux marche ({rateForDuration(v("duration")).rate.toFixed(2).replace(".", ",")}% sur {rateForDuration(v("duration")).key} ans)
           </button>
-          <p className="hint">{TAUX_MARCHE.trendNote} Source : {TAUX_MARCHE.source}. Barometre indicatif, mis a jour periodiquement.</p>
+          <p className="hint">{TAUX_MARCHE.trendNote} Source : {TAUX_MARCHE.source}. Baromètre indicatif, mis à jour périodiquement.</p>
         </div>
       </div>
 
       {/* results */}
       <div>
         <div className="card">
-          <h2>Votre capacite</h2>
-          <div className="sub">Mise a jour en temps reel</div>
+          <h2>Votre capacité</h2>
+          <div className="sub">Mise à jour en temps réel</div>
 
           <div className="hero">
-            <div className="lbl">Capacite d'emprunt</div>
+            <div className="lbl">Capacité d'emprunt</div>
             <div className="val">{euro(loan)}</div>
             <div className="range">Budget total avec apport : {euro(budget)}</div>
           </div>
@@ -1021,17 +1021,17 @@ function CapaciteEmprunt({ estValue }) {
           <div className="line-items">
             <div className="li"><span className="lbl">Mensualite maximale (assurance comprise)</span><span>{euro(maxMensualite)}</span></div>
             <div className="li"><span className="lbl">dont assurance emprunteur</span><span className="neg">{euro(mInsurance)}</span></div>
-            <div className="li"><span className="lbl">dont capital + interets</span><span>{euro(mCapitalInterest)}</span></div>
-            <div className="li total"><span>Capacite d'emprunt</span><span className="v">{euro(loan)}</span></div>
+            <div className="li"><span className="lbl">dont capital + intérêts</span><span>{euro(mCapitalInterest)}</span></div>
+            <div className="li total"><span>Capacité d'emprunt</span><span className="v">{euro(loan)}</span></div>
             <div className="li"><span className="lbl">+ Apport</span><span className="pos">+ {euro(v("apport"))}</span></div>
             <div className="li"><span className="lbl">Budget total</span><span>{euro(budget)}</span></div>
             <div className="li"><span className="lbl">- Frais de notaire ({(v("notaryRate") * 100).toFixed(1).replace(".", ",")}%)</span><span className="neg">- {euro(notaire)}</span></div>
             <div className="li total"><span>Prix de bien maximal</span><span className="v">{euro(maxPrice)}</span></div>
-            <div className="li"><span className="lbl">Cout total des interets ({v("duration")} ans)</span><span className="neg">{euro(totalInterest)}</span></div>
+            <div className="li"><span className="lbl">Coût total des intérêts ({v("duration")} ans)</span><span className="neg">{euro(totalInterest)}</span></div>
           </div>
 
           {verdict && <div className={"badge " + vClass}>{verdict}</div>}
-          <p className="hint" style={{ marginTop: 10 }}>Estimation indicative. Les banques tiennent aussi compte du reste a vivre, du saut de charge, de la stabilite professionnelle et du profil global. Duree de pret en general limitee a 25 ans.</p>
+          <p className="hint" style={{ marginTop: 10 }}>Estimation indicative. Les banques tiennent aussi compte du reste a vivre, du saut de charge, de la stabilite professionnelle et du profil global. Durée de pret en general limitee a 25 ans.</p>
         </div>
       </div>
     </div>
@@ -1042,20 +1042,20 @@ function CapaciteEmprunt({ estValue }) {
 
 /* ======================= CONSEILS NEGOCIATION PRET ======================== */
 const NEGO_STEPS = [
-  { n: 1, t: "Prepare ton dossier (2-3 mois avant)", d: "Apport pret, 3 mois de comptes sans decouvert, petits credits soldes. Un dossier propre = un meilleur taux." },
-  { n: 2, t: "Mets les banques en concurrence", d: "Vois un courtier (gratuit, paye seulement si ca marche) ET 2-3 banques toi-meme. But : plusieurs offres ecrites." },
-  { n: 3, t: "Compare le bon chiffre : le TAEG", d: "Jamais le 'taux' affiche seul. Le TAEG inclut TOUT (interets + assurance + frais). C'est le seul vrai cout." },
+  { n: 1, t: "Prepare ton dossier (2-3 mois avant)", d: "Apport pret, 3 mois de comptes sans decouvert, petits crédits soldes. Un dossier propre = un meilleur taux." },
+  { n: 2, t: "Mets les banques en concurrence", d: "Vois un courtier (gratuit, paye seulement si ca marche) ET 2-3 banques toi-même. But : plusieurs offres ecrites." },
+  { n: 3, t: "Compare le bon chiffre : le TAEG", d: "Jamais le 'taux' affiche seul. Le TAEG inclut TOUT (intérêts + assurance + frais). C'est le seul vrai coût." },
   { n: 4, t: "Negocie les 3 gros postes", d: "L'assurance (le plus gros levier), les penalites de remboursement anticipe (IRA), et les frais de dossier." },
   { n: 5, t: "Prends ton temps", d: "Tu as 10 jours de reflexion obligatoires. Ne signe JAMAIS sous pression. Relis chaque ligne." },
 ];
 
 const NEGO_TIPS = [
   {
-    icon: "🛡️", titre: "L'assurance emprunteur", sous: "le plus gros levier", impact: "jusqu'a 15 000 EUR",
+    icon: "🛡️", titre: "L'assurance emprunteur", sous: "le plus gros levier", impact: "jusqu'à 15 000 EUR",
     tips: [
-      "C'est 25 a 35% du cout total du credit. La banque te vend la sienne, mais tu n'es PAS oblige de la prendre.",
-      "Loi Lemoine : tu peux la changer A TOUT MOMENT, sans frais. Prends un devis externe (delegation) et compare.",
-      "Compare le TAEA (le cout de l'assurance), a garanties equivalentes.",
+      "C'est 25 a 35% du coût total du crédit. La banque te vend la sienne, mais tu n'es PAS oblige de la prendre.",
+      "Loi Lemoine : tu peux la changer À TOUT MOMENT, sans frais. Prends un devis externe (delegation) et compare.",
+      "Compare le TAEA (le coût de l'assurance), a garanties equivalentes.",
     ],
     dire: "Je prends une delegation d'assurance, voici mon devis externe a X EUR/mois. Merci d'en tenir compte.",
   },
@@ -1063,15 +1063,15 @@ const NEGO_TIPS = [
     icon: "🏦", titre: "Mettre en concurrence", sous: "ton vrai pouvoir", impact: "0,2 a 0,5 pt de taux",
     tips: [
       "Une banque baisse son taux quand elle sait que tu en vois d'autres. Sans concurrence, tu paies le prix fort.",
-      "Le courtier interroge des dizaines de banques pour toi ; ses frais sont souvent couverts par les economies.",
+      "Le courtier interroge des dizaines de banques pour toi ; ses frais sont souvent couverts par les économies.",
     ],
     dire: "J'ai une offre concurrente a X%. Pouvez-vous faire mieux ? Sinon je signe ailleurs.",
   },
   {
-    icon: "🔓", titre: "Faire sauter les penalites (IRA)", sous: "clause cle", impact: "jusqu'a 3% du capital",
+    icon: "🔓", titre: "Faire sauter les penalites (IRA)", sous: "clause cle", impact: "jusqu'à 3% du capital",
     tips: [
-      "Les IRA = penalites si tu rembourses ton pret en avance (revente, rachat). Plafond : 6 mois d'interets ou 3% du capital restant.",
-      "Elles se negocient a la baisse, voire a zero, AVANT de signer. Apres, c'est trop tard.",
+      "Les IRA = penalites si tu rembourses ton pret en avance (revente, rachat). Plafond : 6 mois d'intérêts ou 3% du capital restant.",
+      "Elles se negocient a la baisse, voire a zero, AVANT de signer. Après, c'est trop tard.",
     ],
     dire: "Je veux que les indemnites de remboursement anticipe soient supprimees dans le contrat.",
   },
@@ -1079,7 +1079,7 @@ const NEGO_TIPS = [
     icon: "💸", titre: "Reduire les frais", sous: "souvent offerts", impact: "300 a 1500 EUR",
     tips: [
       "Frais de dossier : negociables, voire offerts. Demande-le systematiquement.",
-      "Garantie : la caution (Credit Logement) est souvent moins chere que l'hypotheque ET partiellement remboursee a la fin.",
+      "Garantie : la caution (Crédit Logement) est souvent moins chère que l'hypotheque ET partiellement remboursee a la fin.",
       "Refuse les produits 'imposes' inutiles (carte premium...) sauf vraie contrepartie sur le taux.",
     ],
     dire: "Pouvez-vous offrir les frais de dossier ?",
@@ -1087,62 +1087,62 @@ const NEGO_TIPS = [
   {
     icon: "🔧", titre: "Demander de la flexibilite", sous: "gratuit a demander", impact: "securite",
     tips: [
-      "Modularite : pouvoir augmenter ou baisser tes mensualites (souvent +/-30%) selon tes revenus.",
-      "Report d'echeances : suspendre 1 a 12 mensualites en cas de coup dur.",
-      "Ces clauses ne coutent rien mais te protegent. Demande-les des le depart.",
+      "Modularite : pouvoir augmenter ou baisser tes mensualités (souvent +/-30%) selon tes revenus.",
+      "Report d'échéances : suspendre 1 a 12 mensualités en cas de coup dur.",
+      "Ces clauses ne coûtent rien mais te protegent. Demande-les des le depart.",
     ],
   },
   {
     icon: "🎁", titre: "Les prets aides", sous: "a cumuler", impact: "argent gratuit",
     tips: [
-      "PTZ : pret a taux zero pour un 1er achat, sous conditions de ressources.",
+      "PTZ : pret à taux zero pour un 1er achat, sous conditions de ressources.",
       "Pret Action Logement (1% patronal) : taux tres bas si ton employeur cotise.",
-      "PEL/CEL et prets regionaux : verifie tes droits, ils se cumulent.",
+      "PEL/CEL et prets regionaux : vérifie tes droits, ils se cumulent.",
     ],
   },
 ];
 
 const NEGO_GLOSSAIRE = [
-  ["TAEG", "Le cout TOTAL du credit en % (interets + assurance + frais + garantie). LE chiffre a comparer entre banques."],
+  ["TAEG", "Le coût TOTAL du crédit en % (intérêts + assurance + frais + garantie). LE chiffre a comparer entre banques."],
   ["Taux nominal", "Le taux 'affiche', SANS l'assurance ni les frais. Trompeur si on le compare seul."],
-  ["TAEA", "La part du cout liee a l'assurance. Sert a comparer les assurances entre elles."],
-  ["Delegation d'assurance", "Prendre son assurance emprunteur ailleurs qu'a la banque (souvent bien moins chere)."],
-  ["IRA", "Indemnites de Remboursement Anticipe : penalites si tu soldes le pret en avance. A negocier a zero."],
-  ["Caution vs hypotheque", "Deux types de garantie. La caution (Credit Logement) est souvent moins chere et partiellement remboursee."],
-  ["Apport", "L'argent que tu mets toi-meme. Plus il est eleve, meilleur le taux. Vise 10% minimum."],
-  ["Taux d'endettement", "Part de tes revenus qui part dans les credits. Plafond 35% (assurance comprise)."],
+  ["TAEA", "La part du coût liee à l'assurance. Sert a comparer les assurances entre elles."],
+  ["Delegation d'assurance", "Prendre son assurance emprunteur ailleurs qu'a la banque (souvent bien moins chère)."],
+  ["IRA", "Indemnites de Remboursement Anticipe : penalites si tu soldes le pret en avance. A négocier a zero."],
+  ["Caution vs hypotheque", "Deux types de garantie. La caution (Crédit Logement) est souvent moins chère et partiellement remboursee."],
+  ["Apport", "L'argent que tu mets toi-même. Plus il est élevé, meilleur le taux. Vise 10% minimum."],
+  ["Taux d'endettement", "Part de tes revenus qui part dans les crédits. Plafond 35% (assurance comprise)."],
 ];
 
 // Explications detaillees qui s'ouvrent au clic (accordeon, sans redirection)
 const NEGO_DETAILS = [
   { icon: "🎁", titre: "Le PTZ (Pret a Taux Zero)", paras: [
-    "Le PTZ est un pret SANS interets ni frais, accorde par l'Etat pour aider a acheter sa premiere residence principale. Tu rembourses uniquement le capital : 40 000 EUR de PTZ = 40 000 EUR a rendre, zero interet.",
-    "Pour qui ? Les 'primo-accedants' : ne pas avoir ete proprietaire de sa residence principale durant les 2 dernieres annees. Avec des plafonds de revenus selon la zone et la taille du foyer.",
+    "Le PTZ est un pret SANS intérêts ni frais, accorde par l'État pour aider a acheter sa première residence principale. Tu rembourses uniquement le capital : 40 000 EUR de PTZ = 40 000 EUR a rendre, zero intérêt.",
+    "Pour qui ? Les 'primo-accedants' : ne pas avoir ete propriétaire de sa residence principale durant les 2 dernières années. Avec des plafonds de revenus selon la zone et la taille du foyer.",
     "Combien ? Jusqu'a 50% du prix dans le neuf (depuis 2025 le PTZ est elargi a toute la France pour le neuf). Dans l'ancien, surtout en zones detendues avec gros travaux.",
-    "L'atout : le 'differe' de remboursement. Tu peux ne RIEN payer sur le PTZ pendant 5 a 15 ans, puis commencer ensuite — ca allege fortement les premieres annees.",
-    "Il se CUMULE avec ton pret principal : il reduit la somme empruntee au taux normal, donc ton cout total.",
+    "L'atout : le 'differe' de remboursement. Tu peux ne RIEN payer sur le PTZ pendant 5 a 15 ans, puis commencer ensuite — ca allege fortement les premieres années.",
+    "Il se CUMULE avec ton pret principal : il réduit la somme empruntee au taux normal, donc ton coût total.",
   ]},
   { icon: "🛡️", titre: "La delegation d'assurance & la loi Lemoine", paras: [
     "La banque exige une assurance qui rembourse le pret en cas de deces ou d'incapacite. Elle te propose la sienne, mais tu as le DROIT d'en prendre une ailleurs : la 'delegation'.",
-    "Une assurance externe est souvent 2 a 3 fois moins chere a garanties egales, surtout si tu es jeune et en bonne sante : 5 000 a 15 000 EUR d'economie sur la duree.",
-    "Loi Lemoine (2022) : tu peux changer d'assurance A TOUT MOMENT, gratuitement — meme apres la signature. Aucune excuse pour rester sur une offre chere.",
-    "Compare le TAEA et verifie que les garanties (deces, invalidite, incapacite) sont equivalentes a celles demandees par la banque.",
+    "Une assurance externe est souvent 2 a 3 fois moins chère a garanties egales, surtout si tu es jeune et en bonne sante : 5 000 a 15 000 EUR d'économie sur la durée.",
+    "Loi Lemoine (2022) : tu peux changer d'assurance À TOUT MOMENT, gratuitement — même après la signature. Aucune excuse pour rester sur une offre chère.",
+    "Compare le TAEA et vérifie que les garanties (deces, invalidite, incapacite) sont equivalentes a celles demandees par la banque.",
   ]},
   { icon: "🔓", titre: "Les IRA (penalites de remboursement anticipe)", paras: [
     "Si tu rembourses ton pret en avance (revente, rentree d'argent, rachat par une autre banque), la banque peut te facturer des penalites : les IRA.",
-    "Elles sont plafonnees par la loi : maximum 6 mois d'interets OU 3% du capital restant du (le plus petit des deux). Sur un gros pret, ca peut chiffrer en milliers d'euros.",
-    "Bonne nouvelle : elles se negocient a la baisse, voire a ZERO, mais uniquement AVANT de signer. Demande leur suppression dans l'offre. Apres signature, c'est fige.",
+    "Elles sont plafonnees par la loi : maximum 6 mois d'intérêts OU 3% du capital restant du (le plus petit des deux). Sur un gros pret, ca peut chiffrer en milliers d'euros.",
+    "Bonne nouvelle : elles se negocient a la baisse, voire a ZERO, mais uniquement AVANT de signer. Demande leur suppression dans l'offre. Après signature, c'est fige.",
   ]},
   { icon: "⚖️", titre: "Caution ou hypotheque : la garantie", paras: [
     "La banque veut une garantie au cas ou tu ne rembourses plus. Deux options principales : la caution ou l'hypotheque.",
-    "La caution (ex : Credit Logement) : un organisme se porte garant. Souvent moins chere, plus rapide, et une partie est REMBOURSEE a la fin du pret si tout s'est bien passe.",
+    "La caution (ex : Crédit Logement) : un organisme se porte garant. Souvent moins chère, plus rapide, et une partie est REMBOURSEE a la fin du pret si tout s'est bien passe.",
     "L'hypotheque (ou PPD) : ton bien est mis en garantie. Frais notaires en plus, et des frais de mainlevee si tu revends avant la fin. Generalement plus couteuse.",
     "Pour la plupart des dossiers, la caution est preferable. Demande-la.",
   ]},
   { icon: "🧭", titre: "Le courtier : a quoi il sert vraiment", paras: [
     "Un courtier est un intermediaire qui presente ton dossier a des dizaines de banques et negocie le taux, l'assurance et les frais a ta place.",
-    "Il est en general paye uniquement SI le pret aboutit (honoraires ~1% du montant ou forfait 990-1500 EUR). Souvent, l'economie qu'il obtient depasse ses frais.",
-    "Avantage : gain de temps + acces a des taux 'negocies' que tu n'aurais pas seul. Tu peux aussi le mettre en concurrence avec ta propre banque.",
+    "Il est en general paye uniquement SI le pret aboutit (honoraires ~1% du montant ou forfait 990-1500 EUR). Souvent, l'économie qu'il obtient dépasse ses frais.",
+    "Avantage : gain de temps + accès a des taux 'negocies' que tu n'aurais pas seul. Tu peux aussi le mettre en concurrence avec ta propre banque.",
   ]},
 ];
 
@@ -1152,51 +1152,51 @@ const NEGO_FISC_CLASSIQUE = [
     "Location VIDE (non meublee). Abattement forfaitaire de 30% : tu es impose sur 70% des loyers (TMI + 17,2% de prelevements sociaux).",
     "Pour qui : loyers nus < 15 000 EUR/an et peu de charges. Tres simple, aucune comptabilite.",
   ]},
-  { icon: "🧱", titre: "Nu — Reel (charges + deficit foncier)", paras: [
-    "Tu deduis tes charges reelles et tes interets d'emprunt. Si le total depasse les loyers, tu crees un 'deficit foncier'.",
-    "Ce deficit s'impute sur ton REVENU GLOBAL (salaire) jusqu'a 10 700 EUR/an, reduisant ton impot ; le surplus se reporte 10 ans.",
-    "Ideal si gros travaux ou beaucoup d'interets. En nu, PAS d'amortissement (contrairement au meuble).",
+  { icon: "🧱", titre: "Nu — Reel (charges + déficit foncier)", paras: [
+    "Tu déduis tes charges réelles et tes intérêts d'emprunt. Si le total dépasse les loyers, tu crées un 'déficit foncier'.",
+    "Ce déficit s'impute sur ton REVENU GLOBAL (salaire) jusqu'à 10 700 EUR/an, réduisant ton impôt ; le surplus se reporte 10 ans.",
+    "Ideal si gros travaux ou beaucoup d'intérêts. En nu, PAS d'amortissement (contrairement au meuble).",
   ]},
-  { icon: "🛋️", titre: "Meuble longue duree — Micro-BIC (50%)", paras: [
-    "Location MEUBLEE a l'annee (bail 1 an, ou 9 mois etudiant). Abattement de 50% : tu n'es impose que sur la MOITIE des loyers.",
-    "Plafond : 77 700 EUR (revenus 2025) puis 83 600 EUR (revenus 2026). Au-dela, passage au reel.",
-    "Simple, mais avec un credit le LMNP reel est presque toujours plus avantageux.",
+  { icon: "🛋️", titre: "Meuble longue durée — Micro-BIC (50%)", paras: [
+    "Location MEUBLEE à l'année (bail 1 an, ou 9 mois etudiant). Abattement de 50% : tu n'es impose que sur la MOITIE des loyers.",
+    "Plafond : 77 700 EUR (revenus 2025) puis 83 600 EUR (revenus 2026). Au-dela, passage au réel.",
+    "Simple, mais avec un crédit le LMNP réel est presque toujours plus avantageux.",
   ]},
-  { icon: "🏆", titre: "Meuble longue duree — LMNP reel", paras: [
-    "Deduction de TOUTES les charges reelles (interets, taxe fonciere, charges, travaux, comptable) + AMORTISSEMENT du bien (~2-3%/an, une charge 'sur papier').",
-    "Resultat : l'impot sur les loyers tombe souvent a ZERO pendant 8 a 12 ans. Le regime roi des investisseurs meubles avec credit.",
-    "Contrepartie : un comptable (~300-500 EUR/an, deductible). Nuance 2025 : les amortissements deduits sont desormais reintegres dans le calcul de la plus-value a la revente.",
+  { icon: "🏆", titre: "Meuble longue durée — LMNP réel", paras: [
+    "Déduction de TOUTES les charges réelles (intérêts, taxe foncière, charges, travaux, comptable) + AMORTISSEMENT du bien (~2-3%/an, une charge 'sur papier').",
+    "Résultat : l'impôt sur les loyers tombe souvent a ZERO pendant 8 a 12 ans. Le régime roi des investisseurs meubles avec crédit.",
+    "Contrepartie : un comptable (~300-500 EUR/an, déductible). Nuance 2025 : les amortissements déduits sont désormais réintégrés dans le calcul de la plus-value à la revente.",
   ]},
 ];
 
 // Location courte duree / Airbnb (meuble de tourisme) — fiscalite durcie par la loi Le Meur
 const NEGO_FISC_TOURISME = [
   { icon: "🏖️", titre: "Tourisme NON classe — Micro-BIC 30%", paras: [
-    "Airbnb / courte duree NON classe. La loi Le Meur (2024) a fait TOMBER l'abattement de 50% a 30%, et le plafond de 77 700 EUR a seulement 15 000 EUR/an.",
-    "C'est la grosse perte fiscale de 2025 : le tourisme non classe est desormais aligne sur la location nue. Au-dela de 15 000 EUR, tu bascules automatiquement au reel.",
+    "Airbnb / courte durée NON classe. La loi Le Meur (2024) a fait TOMBER l'abattement de 50% a 30%, et le plafond de 77 700 EUR a seulement 15 000 EUR/an.",
+    "C'est la grosse perte fiscale de 2025 : le tourisme non classe est désormais aligne sur la location nue. Au-dela de 15 000 EUR, tu bascules automatiquement au réel.",
   ]},
   { icon: "⭐", titre: "Tourisme CLASSE — Micro-BIC 50%", paras: [
-    "Si tu fais CLASSER ton meuble de tourisme (1 a 5 etoiles, via un organisme agree / Atout France), l'abattement reste a 50%, plafond 77 700 EUR.",
-    "Le classement coute peu (~150-300 EUR, valable 5 ans) et quasiment DOUBLE ton abattement vs non classe. Quasi indispensable si tu restes au micro.",
+    "Si tu fais CLASSER ton meuble de tourisme (1 a 5 etoiles, via un organisme agréé / Atout France), l'abattement reste a 50%, plafond 77 700 EUR.",
+    "Le classement coûte peu (~150-300 EUR, valable 5 ans) et quasiment DOUBLE ton abattement vs non classe. Quasi indispensable si tu restes au micro.",
   ]},
-  { icon: "🏆", titre: "Tourisme — LMNP reel (amortissement)", paras: [
-    "Comme en meuble classique : deduction des charges + amortissement du bien -> impot souvent nul. Souvent le meilleur choix des que les recettes montent.",
-    "Meme nuance qu'en LMNP : reintegration des amortissements dans la plus-value depuis 2025. Comptable recommande.",
+  { icon: "🏆", titre: "Tourisme — LMNP réel (amortissement)", paras: [
+    "Comme en meuble classique : déduction des charges + amortissement du bien -> impôt souvent nul. Souvent le meilleur choix des que les recettes montent.",
+    "Même nuance qu'en LMNP : réintégration des amortissements dans la plus-value depuis 2025. Comptable recommande.",
   ]},
   { icon: "⚠️", titre: "Les regles Airbnb a respecter (non fiscal, mais crucial)", paras: [
-    "Numero d'enregistrement en mairie : desormais generalise par la loi Le Meur.",
-    "Grandes villes : autorisation de changement d'usage souvent exigee pour un logement entier dedie a la courte duree.",
-    "Ta RESIDENCE PRINCIPALE : location courte duree limitee a 120 nuits/an (parfois 90 selon la ville).",
+    "Numéro d'enregistrement en mairie : désormais généralisé par la loi Le Meur.",
+    "Grandes villes : autorisation de changement d'usage souvent exigee pour un logement entier dedie a la courte durée.",
+    "Ta RESIDENCE PRINCIPALE : location courte durée limitee a 120 nuits/an (parfois 90 selon la ville).",
     "DPE obligatoire : interdiction progressive des passoires thermiques en meuble de tourisme.",
   ]},
 ];
 
 const NEGO_FISC_CHOIX = {
   icon: "🤔", titre: "Location classique ou Airbnb ? Comment choisir", paras: [
-    "Airbnb rapporte souvent 2 a 3x plus de loyer qu'une location classique... mais beaucoup plus de gestion, de rotation, de reglementation, et une fiscalite durcie (loi Le Meur).",
+    "Airbnb rapporte souvent 2 a 3x plus de loyer qu'une location classique... mais beaucoup plus de gestion, de rotation, de reglementation, et une fiscalité durcie (loi Le Meur).",
     "Classique = revenus stables, peu de gestion, moins de contraintes. Airbnb = rendement max mais chronophage et tres regule.",
-    "Cote fiscal au micro : la location meublee classique (50%) bat desormais le tourisme NON classe (30%). Se faire CLASSER ou passer au REEL remet le tourisme devant.",
-    "L'onglet Rentabilite a un mode Airbnb (revenus saisonniers) et un comparateur qui calcule l'impot des regimes sur ton bien reel.",
+    "Cote fiscal au micro : la location meublee classique (50%) bat désormais le tourisme NON classe (30%). Se faire CLASSER ou passer au REEL remet le tourisme devant.",
+    "L'onglet Rentabilité a un mode Airbnb (revenus saisonniers) et un comparateur qui calcule l'impôt des régimes sur ton bien réel.",
   ],
 };
 
@@ -1222,7 +1222,7 @@ function NegoTips() {
   return (
     <div className="card" style={{ marginTop: 18 }}>
       <h2>💡 Negocier son pret immobilier : le guide complet</h2>
-      <div className="sub">Meme si tu n'y connais rien : comprends, prepare, et obtiens le meilleur credit.</div>
+      <div className="sub">Même si tu n'y connais rien : comprends, prepare, et obtiens le meilleur crédit.</div>
 
       <div className="nego-mindset">
         <b>La regle d'or :</b> la 1re offre d'une banque n'est qu'un point de depart. <b>Tout se negocie</b> &mdash; le taux, l'assurance, les frais, les clauses. Ton vrai pouvoir : faire jouer plusieurs banques. Ne sois jamais presse de signer.
@@ -1265,12 +1265,12 @@ function NegoTips() {
         {NEGO_DETAILS.map((d, i) => <Explainer key={i} {...d} />)}
       </div>
 
-      <div className="section-t">🧾 Quel regime fiscal locatif choisir ? (clique pour ouvrir)</div>
-      <div className="fisc-sub">🏠 Location classique (longue duree)</div>
+      <div className="section-t">🧾 Quel régime fiscal locatif choisir ? (clique pour ouvrir)</div>
+      <div className="fisc-sub">🏠 Location classique (longue durée)</div>
       <div className="explain-list">
         {NEGO_FISC_CLASSIQUE.map((d, i) => <Explainer key={i} {...d} />)}
       </div>
-      <div className="fisc-sub" style={{ marginTop: 14 }}>🏖️ Location courte duree / Airbnb (meuble de tourisme)</div>
+      <div className="fisc-sub" style={{ marginTop: 14 }}>🏖️ Location courte durée / Airbnb (meuble de tourisme)</div>
       <div className="explain-list">
         {NEGO_FISC_TOURISME.map((d, i) => <Explainer key={i} {...d} />)}
       </div>
@@ -1278,7 +1278,7 @@ function NegoTips() {
         <Explainer {...NEGO_FISC_CHOIX} />
       </div>
 
-      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation (regles applicables aux revenus 2025/2026). Un comptable est vivement recommande pour le regime reel et l'Airbnb.</p>
+      <p className="hint" style={{ marginTop: 14 }}>Conseils generaux a adapter a ta situation (regles applicables aux revenus 2025/2026). Un comptable est vivement recommande pour le régime réel et l'Airbnb.</p>
     </div>
   );
 }
@@ -1421,7 +1421,7 @@ function authErrorFr(msg) {
   const m = (msg || "").toLowerCase();
   if (m.includes("invalid login")) return "Email ou mot de passe incorrect.";
   if (m.includes("email not confirmed")) return "Confirme ton email avant de te connecter (lien recu par mail).";
-  if (m.includes("already registered") || m.includes("already been registered")) return "Un compte existe deja avec cet email. Connecte-toi.";
+  if (m.includes("already registered") || m.includes("already been registered")) return "Un compte existe déjà avec cet email. Connecte-toi.";
   if (m.includes("password should be")) return "Mot de passe trop court (8 caracteres minimum).";
   if (m.includes("unable to validate email")) return "Adresse email invalide.";
   if (m.includes("rate limit")) return "Trop de tentatives, reessaie dans quelques minutes.";
@@ -1453,7 +1453,7 @@ function AuthModal({ onClose }) {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password: pwd });
         if (error) { setError(authErrorFr(error.message)); return; }
-        setInfo("Compte cree ! Verifie ta boite mail pour confirmer, puis connecte-toi.");
+        setInfo("Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.");
         setMode("login"); setPwd(""); setPwd2("");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
@@ -1469,7 +1469,7 @@ function AuthModal({ onClose }) {
         <button className="modal-close" onClick={onClose} aria-label="Fermer">&times;</button>
         <div className="auth-logo">Estim<span>Immo</span></div>
         <h2>{mode === "login" ? "Bon retour 👋" : "Cree ton compte"}</h2>
-        <div className="sub">{mode === "login" ? "Connecte-toi pour retrouver tes analyses et projets." : "Gratuit : l'estimation. Premium : rentabilite, travaux, capacite et projets sauvegardes."}</div>
+        <div className="sub">{mode === "login" ? "Connecte-toi pour retrouver tes analyses et projets." : "Gratuit : l'estimation. Premium : rentabilité, travaux, capacité et projets sauvegardes."}</div>
 
         <label>Email</label>
         <input type="email" value={email} autoComplete="email" onChange={(e) => setEmail(e.target.value)} placeholder="toi@email.com" />
@@ -1517,7 +1517,7 @@ function AuthModal({ onClose }) {
         </button>
 
         <p className="hint" style={{ textAlign: "center", marginTop: 14 }}>
-          {mode === "login" ? "Pas encore de compte ? " : "Deja un compte ? "}
+          {mode === "login" ? "Pas encore de compte ? " : "Déjà un compte ? "}
           <a style={{ cursor: "pointer", fontWeight: 600 }} onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setInfo(""); setPwd2(""); }}>
             {mode === "login" ? "Creer un compte" : "Se connecter"}
           </a>
@@ -1543,10 +1543,10 @@ function LoginGate({ onLogin }) {
       <div className="paywall-ico">👋</div>
       <h2>Cree ton compte gratuit</h2>
       <p className="paywall-txt">
-        Pour lancer une <b>estimation par transactions reelles (DVF)</b>, cree ton compte gratuit en 30 secondes.
+        Pour lancer une <b>estimation par transactions réelles (DVF)</b>, créé ton compte gratuit en 30 secondes.
       </p>
       <ul className="paywall-list">
-        <li>Estimation illimitee a partir des ventes reelles</li>
+        <li>Estimation illimitée à partir des ventes réelles</li>
         <li>Sauvegarde de tes biens et projets</li>
       </ul>
       <button className="btn" onClick={onLogin}>Creer un compte / se connecter</button>
@@ -1558,14 +1558,14 @@ function Paywall({ isLoggedIn, onLogin, user }) {
   return (
     <div className="card paywall">
       <div className="paywall-ico">🔒</div>
-      <h2>Passe Premium pour debloquer</h2>
+      <h2>Passe Premium pour débloquer</h2>
       <p className="paywall-txt">
-        L'<b>estimation</b> est incluse avec ton compte. Pour la <b>rentabilite</b>, les <b>travaux</b>, la <b>capacite d'emprunt</b> et la <b>sauvegarde de projets</b>, passe Premium.
+        L'<b>estimation</b> est incluse avec ton compte. Pour la <b>rentabilité</b>, les <b>travaux</b>, la <b>capacité d'emprunt</b> et la <b>sauvegarde de projets</b>, passe Premium.
       </p>
       <div className="paywall-price">7,90 EUR<span>/mois</span></div>
       <ul className="paywall-list">
-        <li>Analyse de rentabilite complete (fiscalite, TRI, cashflow)</li>
-        <li>Simulateur de travaux &amp; capacite d'emprunt</li>
+        <li>Analyse de rentabilité complète (fiscalité, TRI, cashflow)</li>
+        <li>Simulateur de travaux &amp; capacité d'emprunt</li>
         <li>Projets immobiliers illimites, sauvegardes</li>
       </ul>
       {isLoggedIn ? (
@@ -1573,7 +1573,7 @@ function Paywall({ isLoggedIn, onLogin, user }) {
       ) : (
         <button className="btn" onClick={onLogin}>Se connecter / creer un compte</button>
       )}
-      <p className="hint" style={{ textAlign: "center", marginTop: 10 }}>🔒 Paiement securise par Stripe. Annulable a tout moment.</p>
+      <p className="hint" style={{ textAlign: "center", marginTop: 10 }}>🔒 Paiement sécurise par Stripe. Annulable a tout moment.</p>
     </div>
   );
 }
@@ -1602,7 +1602,7 @@ function MesProjets({ user, onOpen }) {
   return (
     <div className="card projets-wrap">
       <h2>📁 Mes projets</h2>
-      <div className="sub">Tes biens sauvegardes, prives et securises (visibles seulement par toi).</div>
+      <div className="sub">Tes biens sauvegardes, prives et sécurises (visibles seulement par toi).</div>
       {err && <div className="error">{err}</div>}
       {projects === null && <div className="placeholder">Chargement...</div>}
       {projects && projects.length === 0 && (
@@ -1831,10 +1831,10 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
       {/* ---- inputs ---- */}
       <div>
         <div className="card">
-          <h2>Le bien a estimer</h2>
-          <div className="sub">Adresse precise = comparables plus proches</div>
+          <h2>Le bien à estimer</h2>
+          <div className="sub">Adresse précise = comparables plus proches</div>
 
-          <label>Adresse complete</label>
+          <label>Adresse complète</label>
           <div className="autocomplete">
             <input
               value={form.address}
@@ -1856,9 +1856,9 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
             )}
           </div>
           {geo ? (
-            <div className="geo-ok">✓ Localise : {geo.postcode} {geo.city}{geo.type !== "housenumber" ? " — precisez le numero pour plus de precision" : ""}</div>
+            <div className="geo-ok">✓ Localise : {geo.postcode} {geo.city}{geo.type !== "housenumber" ? " — précisez le numéro pour plus de précision" : ""}</div>
           ) : (
-            <div className="geo-warn">Choisissez une adresse dans la liste pour localiser precisement le bien.</div>
+            <div className="geo-warn">Choisissez une adresse dans la liste pour localiser précisément le bien.</div>
           )}
 
           <div className="row">
@@ -1904,7 +1904,7 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
 
           <div className="row">
             <div>
-              <label>Etage</label>
+              <label>Étage</label>
               <input type="number" value={form.floor} onChange={(e) => set("floor", e.target.value)} />
             </div>
             <div>
@@ -1917,11 +1917,11 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
 
           <div className="row">
             <div>
-              <label>Etat / standing</label>
+              <label>État / standing</label>
               <select value={form.condition} onChange={(e) => set("condition", e.target.value)}>
-                <option value="1.10">Refait a neuf (+10%)</option>
-                <option value="1">Bon etat</option>
-                <option value="0.92">Travaux a prevoir (-8%)</option>
+                <option value="1.10">Refait à neuf (+10%)</option>
+                <option value="1">Bon état</option>
+                <option value="0.92">Travaux à prévoir (-8%)</option>
                 <option value="0.82">Gros travaux (-18%)</option>
               </select>
             </div>
@@ -1935,17 +1935,17 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
 
           <div className="row">
             <div>
-              <label>Periode de construction</label>
+              <label>Période de construction</label>
               <select value={form.period} onChange={(e) => set("period", e.target.value)}>
                 <option>avant 1914</option>
                 <option>1914-1947</option>
                 <option>1948-1974</option>
                 <option>1975-2000</option>
-                <option>apres 2000</option>
+                <option>après 2000</option>
               </select>
             </div>
             <div>
-              <label>Exterieur</label>
+              <label>Extérieur</label>
               <select value={form.balcony ? "1" : "0"} onChange={(e) => set("balcony", e.target.value === "1")}>
                 <option value="0">Sans balcon</option>
                 <option value="1">Balcon / terrasse</option>
@@ -1962,12 +1962,12 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
               </select>
             </div>
             <div>
-              <label>Vue / vis-a-vis</label>
+              <label>Vue / vis-à-vis</label>
               <select value={form.vue} onChange={(e) => set("vue", e.target.value)}>
                 <option value="exceptionnelle">Vue exceptionnelle (+8%)</option>
-                <option value="degagee">Vue degagee (+4%)</option>
+                <option value="degagee">Vue dégagée (+4%)</option>
                 <option value="standard">Standard</option>
-                <option value="visavis">Vis-a-vis / sombre (-4%)</option>
+                <option value="visavis">Vis-à-vis / sombre (-4%)</option>
               </select>
             </div>
           </div>
@@ -1992,17 +1992,17 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
           <MarketBarometer />
 
           <button className="btn" onClick={run} disabled={loading}>
-            {loading ? <><span className="spinner" />Analyse des transactions...</> : "Estimer avec les donnees reelles"}
+            {loading ? <><span className="spinner" />Analyse des transactions...</> : "Estimer avec les données réelles"}
           </button>
           {error && <div className="error">{error}</div>}
-          <p className="hint">L'outil interroge les ventes officielles enregistrees (DVF) autour de l'adresse, puis ajuste selon les caracteristiques du bien.</p>
+          <p className="hint">L'outil interroge les ventes officielles enregistrées (DVF) autour de l'adresse, puis ajuste selon les caractéristiques du bien.</p>
         </div>
       </div>
 
       {/* ---- results ---- */}
       <div>
         <div className="card">
-          <h2>Resultat de l'estimation</h2>
+          <h2>Résultat de l'estimation</h2>
           {needAccount && !user && (
             <div className="teaser">
               <div className="teaser-blur">
@@ -2013,12 +2013,12 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
               <div className="teaser-cta">
                 <div className="teaser-lock">🔒</div>
                 <h3>Ton estimation est prete !</h3>
-                <p>Cree ton compte gratuit pour voir la <b>valorisation</b>, la fourchette de prix et les <b>transactions comparables reelles</b>.</p>
+                <p>Cree ton compte gratuit pour voir la <b>valorisation</b>, la fourchette de prix et les <b>transactions comparables réelles</b>.</p>
                 <button className="btn" onClick={onLogin}>Voir mon estimation (compte gratuit)</button>
               </div>
             </div>
           )}
-          {!needAccount && !res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables reels s'afficheront ici.</div>}
+          {!needAccount && !res && !loading && <div className="placeholder">Renseignez le bien puis lancez l'analyse.<br/>Les comparables réels s'afficheront ici.</div>}
           {loading && <div className="placeholder"><span className="spinner" style={{borderTopColor:'#3a7bd5',borderColor:'#e3e9f2'}}/><br/>Recuperation des transactions DVF...</div>}
           {res && <EstimResult res={res} surface={Number(form.surface)} prixDemande={Number(form.prixDemande) || 0} period={form.period} onGoToCapacite={onGoToCapacite} />}
           {res && user && (
@@ -2031,7 +2031,7 @@ function Estimation({ onEstimate, onGoToCapacite, user, onLogin, initialProject,
 }
 
 function fraisNotaire(prix, period) {
-  const neuf = period === "apres 2000" || period === "2010-2023" || period === "2024+";
+  const neuf = period === "après 2000" || period === "2010-2023" || period === "2024+";
   const taux = neuf ? 0.025 : 0.075;
   return { montant: Math.round(prix * taux), taux, neuf };
 }
@@ -2044,7 +2044,7 @@ function EstimResult({ res, surface, prixDemande, period, onGoToCapacite }) {
   return (
     <>
       <div className="hero">
-        <div className="lbl">Valeur estimee</div>
+        <div className="lbl">Valeur estimée</div>
         <div className="val">{euro(res.estimate)}</div>
         <div className="range">Fourchette : {euro(res.low)} &ndash; {euro(res.high)}</div>
         <div className="loc">{res.location.area} &middot; {euro0(res.adjustedPm2)} EUR/m2</div>
@@ -2139,7 +2139,7 @@ function EstimResult({ res, surface, prixDemande, period, onGoToCapacite }) {
               );
             })}
           </div>
-          <p className="hint">Prix/m2 median par annee dans la commune. Les ventes anciennes sont reindexees a aujourd'hui selon cette tendance, pour refleter la demande actuelle.</p>
+          <p className="hint">Prix/m2 médian par année dans la commune. Les ventes anciennes sont reindexees a aujourd'hui selon cette tendance, pour refleter la demande actuelle.</p>
         </div>
       )}
 
@@ -2161,7 +2161,7 @@ function EstimResult({ res, surface, prixDemande, period, onGoToCapacite }) {
       <CompMap center={res.location} comps={res.comparables} />
       <p className="hint"><span className="dot-green" /> Bien estime &nbsp; <span className="dot-blue" /> Ventes comparables (cliquez un point pour le detail).</p>
 
-      <div className="section-t">Transactions reelles comparables ({res.comparables.length})</div>
+      <div className="section-t">Transactions réelles comparables ({res.comparables.length})</div>
       <div className="tbl-scroll">
         <table>
           <thead>
@@ -2464,7 +2464,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
   if (regime === "microfoncier") { taxableBase = annualRentGross * 0.7; regimeLabel = "Nu - Micro-foncier (abattement 30%)"; }
   else if (regime === "microbic") { taxableBase = annualRentGross * 0.5; regimeLabel = "Meuble - Micro-BIC (abattement 50%)"; }
   else if (regime === "reel") { taxableBase = Math.max(0, annualRentNet - deductible); regimeLabel = "Nu - Reel (charges deduites)"; }
-  else { taxableBase = Math.max(0, annualRentNet - deductible - amort); regimeLabel = "Meuble - LMNP reel (amortissement)"; }
+  else { taxableBase = Math.max(0, annualRentNet - deductible - amort); regimeLabel = "Meuble - LMNP réel (amortissement)"; }
   const incomeTax = Math.max(0, taxableBase) * taxRate;
   const cashflowAfterTax = annualCashflow - incomeTax;
   const mCashflowAT = cashflowAfterTax / 12;
@@ -2546,7 +2546,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
   // ---- Score d'investissement global (0-100) ----
   const clampS = (x) => Math.max(0, Math.min(100, x));
   const subScores = [
-    { key: "renta", label: "Rentabilite nette-nette", val: clampS(((yieldNetNet - 1) / 6) * 100), weight: 0.30 },
+    { key: "renta", label: "Rentabilité nette-nette", val: clampS(((yieldNetNet - 1) / 6) * 100), weight: 0.30 },
     { key: "tri", label: "Rendement total (TRI)", val: tri != null ? clampS(((tri - 2) / 8) * 100) : 50, weight: 0.30 },
     { key: "cashflow", label: "Cashflow mensuel", val: clampS(((mCashflowAT + 400) / 600) * 100), weight: 0.25 },
     { key: "prix", label: "Prix vs marche", val: estValue > 0 ? clampS(((0.10 - (price - estValue) / estValue) / 0.20) * 100) : 50, weight: 0.15 },
@@ -2560,9 +2560,9 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
   const scoreCirc = 2 * Math.PI * 52;
 
   let verdict, vClass;
-  if (cashflowAfterTax >= 0) { verdict = "Rentable : apres impot, les loyers couvrent le credit et toutes les charges. Cashflow positif."; vClass = "g"; }
-  else if (mCashflowAT >= -200) { verdict = "Equilibre : effort d'epargne mensuel modere apres impot. A arbitrer selon la plus-value attendue."; vClass = "w"; }
-  else { verdict = "Non rentable en l'etat : effort d'epargne mensuel important apres impot. Renegociez le prix, l'apport, le loyer ou changez de regime fiscal."; vClass = "b"; }
+  if (cashflowAfterTax >= 0) { verdict = "Rentable : après impôt, les loyers couvrent le crédit et toutes les charges. Cashflow positif."; vClass = "g"; }
+  else if (mCashflowAT >= -200) { verdict = "Équilibre : effort d'épargne mensuel modéré après impôt. À arbitrer selon la plus-value attendue."; vClass = "w"; }
+  else { verdict = "Non rentable en l'état : effort d'épargne mensuel important après impôt. Renégociez le prix, l'apport, le loyer ou changez de régime fiscal."; vClass = "b"; }
 
   return (
     <>
@@ -2654,7 +2654,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="unit"><input type="number" value={f.chargesCopro} onChange={(e) => set("chargesCopro", e.target.value)} /><small>EUR</small></div>
             </div>
             <div>
-              <label>Taxe fonciere / an</label>
+              <label>Taxe foncière / an</label>
               <div className="unit"><input type="number" value={f.taxe} onChange={(e) => set("taxe", e.target.value)} /><small>EUR</small></div>
             </div>
           </div>
@@ -2700,13 +2700,13 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="unit"><input type="number" value={f.apport} onChange={(e) => set("apport", e.target.value)} /><small>EUR</small></div>
             </div>
             <div>
-              <label>Duree</label>
+              <label>Durée</label>
               <div className="unit"><input type="number" value={f.duration} onChange={(e) => set("duration", e.target.value)} /><small>ans</small></div>
             </div>
           </div>
           <div className="row">
             <div>
-              <label>Taux d'interet</label>
+              <label>Taux d'intérêt</label>
               <div className="unit"><input type="number" step="0.01" value={f.rate} onChange={(e) => set("rate", e.target.value)} /><small>%</small></div>
             </div>
             <div>
@@ -2725,12 +2725,12 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="renta-section-sub">IR + prélèvements sociaux 17,2% sur revenus locatifs</div>
             </div>
           </div>
-          <label>Regime fiscal</label>
+          <label>Régime fiscal</label>
           <select value={f.regime} onChange={(e) => setF((s) => ({ ...s, regime: e.target.value }))}>
             <option value="microbic">Meuble - Micro-BIC (abattement 50%)</option>
-            <option value="lmnp">Meuble - LMNP reel (amortissement)</option>
+            <option value="lmnp">Meuble - LMNP réel (amortissement)</option>
             <option value="microfoncier">Nu - Micro-foncier (abattement 30%)</option>
-            <option value="reel">Nu - Reel (deduction des charges)</option>
+            <option value="reel">Nu - Reel (déduction des charges)</option>
           </select>
           <label>Tranche marginale d'imposition (TMI)</label>
           <select value={f.tmi} onChange={(e) => set("tmi", e.target.value)}>
@@ -2758,7 +2758,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="unit"><input type="number" value={f.horizon} onChange={(e) => set("horizon", e.target.value)} /><small>ans</small></div>
             </div>
             <div>
-              <label>Evolution annuelle du prix</label>
+              <label>Évolution annuelle du prix</label>
               <div className="unit"><input type="number" step="0.1" value={f.appreciation} onChange={(e) => set("appreciation", e.target.value)} /><small>%/an</small></div>
             </div>
           </div>
@@ -3909,9 +3909,9 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
   const sAvant = statutLocation(f.dpeAvant), sApres = statutLocation(f.dpeApres);
 
   let verdict, vClass;
-  if (plusValueNette >= 0) { verdict = "Rentable : les travaux creent plus de valeur qu'ils ne coutent (apres aides)."; vClass = "g"; }
-  else if (sAvant.cls === "b" || sAvant.cls === "w") { verdict = "A faire malgre tout : la valeur creee ne couvre pas tout le cout, mais tu debloques la location (passoire) et securises ton bien face a la loi Climat."; vClass = "w"; }
-  else { verdict = "Peu rentable financierement en l'etat. A justifier surtout par le confort et l'economie d'energie."; vClass = "b"; }
+  if (plusValueNette >= 0) { verdict = "Rentable : les travaux créent plus de valeur qu'ils ne coûtent (après aides)."; vClass = "g"; }
+  else if (sAvant.cls === "b" || sAvant.cls === "w") { verdict = "À faire malgré tout : la valeur créée ne couvre pas tout le coût, mais tu débloques la location (passoire) et sécurises ton bien face à la loi Climat."; vClass = "w"; }
+  else { verdict = "Peu rentable financierement en l'état. A justifier surtout par le confort et l'économie d'énergie."; vClass = "b"; }
 
   const dpeOpts = ["A", "B", "C", "D", "E", "F", "G"];
 
@@ -3930,23 +3930,23 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
               <select value={f.dpeAvant} onChange={(e) => set("dpeAvant", e.target.value)}>{dpeOpts.map((d) => <option key={d}>{d}</option>)}</select>
             </div>
             <div>
-              <label>DPE vise (apres travaux)</label>
+              <label>DPE vise (après travaux)</label>
               <select value={f.dpeApres} onChange={(e) => set("dpeApres", e.target.value)}>{dpeOpts.map((d) => <option key={d}>{d}</option>)}</select>
             </div>
           </div>
           <div className="row">
             <div>
-              <label>Cout des travaux</label>
+              <label>Coût des travaux</label>
               <div className="unit"><input type="number" value={f.cout} onChange={(e) => set("cout", e.target.value)} /><small>EUR</small></div>
             </div>
             <div>
-              <label>Aides estimees</label>
+              <label>Aides estimées</label>
               <div className="unit"><input type="number" value={f.aides} onChange={(e) => set("aides", e.target.value)} /><small>EUR</small></div>
             </div>
           </div>
-          <label>Gain de loyer / mois apres travaux (optionnel)</label>
+          <label>Gain de loyer / mois après travaux (optionnel)</label>
           <div className="unit"><input type="number" value={f.gainLoyer} onChange={(e) => set("gainLoyer", e.target.value)} /><small>EUR</small></div>
-          <p className="hint">Aides cumulables : <b>MaPrimeRenov'</b>, <b>CEE</b> (primes energie), <b>eco-PTZ</b> (pret 0% jusqu'a 50 000 EUR), TVA 5,5%. En locatif, les travaux sont deductibles (deficit foncier). Estime le total ici.</p>
+          <p className="hint">Aides cumulables : <b>MaPrimeRenov'</b>, <b>CEE</b> (primes énergie), <b>eco-PTZ</b> (pret 0% jusqu'à 50 000 EUR), TVA 5,5%. En locatif, les travaux sont deductibles (déficit foncier). Estime le total ici.</p>
         </div>
       </div>
 
@@ -3954,17 +3954,17 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
       <div>
         <div className="card">
           <h2>Impact des travaux</h2>
-          <div className="sub">Mise a jour en temps reel</div>
+          <div className="sub">Mise à jour en temps réel</div>
 
           <div className="hero" style={{ background: plusValueNette >= 0 ? "linear-gradient(135deg,#2f9e6a,#4bb583)" : "linear-gradient(135deg,#dd8a2c,#e8a955)" }}>
-            <div className="lbl">Plus-value nette creee</div>
+            <div className="lbl">Plus-value nette créée</div>
             <div className="val">{plusValueNette >= 0 ? "+ " : "- "}{euro(Math.abs(plusValueNette))}</div>
             <div className="range">ROI des travaux : {roi.toFixed(0)}%</div>
           </div>
 
           <div className="kpis">
             <div className="kpi"><div className="k">Gain de valeur (verte)</div><div className="v g">+ {euro0(gainValeur)}</div></div>
-            <div className="kpi"><div className="k">Cout net (apres aides)</div><div className="v">{euro0(coutNet)}</div></div>
+            <div className="kpi"><div className="k">Coût net (après aides)</div><div className="v">{euro0(coutNet)}</div></div>
             <div className="kpi"><div className="k">ROI travaux</div><div className={"v " + (roi >= 100 ? "g" : roi >= 60 ? "w" : "b")}>{roi.toFixed(0)}%</div></div>
           </div>
 
@@ -3977,9 +3977,9 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
 
           <div className="section-t">Detail</div>
           <div className="line-items">
-            <div className="li"><span className="lbl">Cout des travaux</span><span className="neg">- {euro(v("cout"))}</span></div>
+            <div className="li"><span className="lbl">Coût des travaux</span><span className="neg">- {euro(v("cout"))}</span></div>
             <div className="li"><span className="lbl">Aides (MaPrimeRenov', CEE...)</span><span className="pos">+ {euro(v("aides"))}</span></div>
-            <div className="li total"><span>Cout net</span><span className="v">{euro(coutNet)}</span></div>
+            <div className="li total"><span>Coût net</span><span className="v">{euro(coutNet)}</span></div>
             <div className="li"><span className="lbl">Gain de valeur du bien</span><span className="pos">+ {euro(gainValeur)}</span></div>
             <div className="li total"><span>Plus-value nette</span><span className={plusValueNette >= 0 ? "pos" : "neg"}>{plusValueNette >= 0 ? "+ " : "- "}{euro(Math.abs(plusValueNette))}</span></div>
             {gainLoyerAn > 0 && <div className="li"><span className="lbl">Gain de loyer / an</span><span className="pos">+ {euro(gainLoyerAn)}</span></div>}
@@ -3989,10 +3989,10 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
           <div className={"badge " + vClass} style={{ marginTop: 10 }}>{verdict}</div>
           {onGoToRenta && (
             <button className="btn-budget" style={{ marginTop: 14 }} onClick={onGoToRenta}>
-              🔧 Voir ma rentabilite avec ces travaux ({euro0(coutNet)} inclus)
+              🔧 Voir ma rentabilité avec ces travaux ({euro0(coutNet)} inclus)
             </button>
           )}
-          <p className="hint" style={{ marginTop: 8 }}>Le gain de valeur estime provient de l'amelioration du DPE (valeur verte), calculee comme dans l'estimation. Le cout net des travaux est reporte dans l'onglet Rentabilite. Les couts et aides reels dependent des devis (France Renov').</p>
+          <p className="hint" style={{ marginTop: 8 }}>Le gain de valeur estime provient de l'amélioration du DPE (valeur verte), calculee comme dans l'estimation. Le coût net des travaux est reporte dans l'onglet Rentabilité. Les coûts et aides réels dependent des devis (France Renov').</p>
         </div>
       </div>
     </div>

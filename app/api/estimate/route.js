@@ -475,7 +475,7 @@ export async function POST(req) {
       const geo = await geoRes.json();
       const feat = geo?.features?.[0];
       if (!feat) {
-        return Response.json({ error: "Adresse introuvable. Precisez le numero et la ville." }, { status: 404 });
+        return Response.json({ error: "Adresse introuvable. Precisez le numéro et la ville." }, { status: 404 });
       }
       const [flon, flat] = feat.geometry.coordinates;
       const p = feat.properties;
@@ -504,7 +504,7 @@ export async function POST(req) {
 
     if (!rows.length) {
       return Response.json(
-        { error: "Aucune donnee DVF disponible pour cette commune (zone non couverte : Alsace-Moselle, Mayotte, ou commune sans transaction)." },
+        { error: "Aucune donnée DVF disponible pour cette commune (zone non couverte : Alsace-Moselle, Mayotte, ou commune sans transaction)." },
         { status: 404 }
       );
     }
@@ -570,10 +570,10 @@ export async function POST(req) {
     if (elevator) floorPct = Math.min(floor, 8) * 0.008;
     else floorPct = -Math.max(0, floor - 1) * 0.02;
     floorPct = Math.max(-0.16, Math.min(floorPct, 0.07));
-    if (floorPct !== 0) add(elevator ? `Etage ${floor} avec ascenseur` : `Etage ${floor} sans ascenseur`, floorPct);
+    if (floorPct !== 0) add(elevator ? `Étage ${floor} avec ascenseur` : `Étage ${floor} sans ascenseur`, floorPct);
 
     // condition (passed as multiplier from UI: 1.10 / 1 / 0.92 / 0.82)
-    if (condition !== 1) add("Etat du bien", condition - 1);
+    if (condition !== 1) add("État du bien", condition - 1);
 
     // DPE (loi Climat - fort impact)
     const dpeMap = { A: 0.04, B: 0.03, C: 0.01, D: 0, E: -0.03, F: -0.07, G: -0.11 };
@@ -592,7 +592,7 @@ export async function POST(req) {
 
     // vue
     const vueMap = { exceptionnelle: 0.08, degagee: 0.04, standard: 0, visavis: -0.04 };
-    const vueLbl = { exceptionnelle: "Vue exceptionnelle", degagee: "Vue degagee", visavis: "Vis-a-vis rapproche / sombre" };
+    const vueLbl = { exceptionnelle: "Vue exceptionnelle", degagee: "Vue dégagée", visavis: "Vis-à-vis rapproché / sombre" };
     if (vueMap[vue]) add(vueLbl[vue], vueMap[vue]);
 
     // transports (Overpass) - computed earlier
@@ -611,7 +611,7 @@ export async function POST(req) {
 
     // occupation (bien loue = decote)
     const occupMap = { libre: 0, bail_cours: -0.15, loi_1948: -0.25 };
-    const occupLbl = { bail_cours: "Bien occupe — bail en cours (-15%)", loi_1948: "Bien occupe — locataire protege loi 1948 (-25%)" };
+    const occupLbl = { bail_cours: "Bien occupe — bail en cours (-15%)", loi_1948: "Bien occupe — locataire protégé loi 1948 (-25%)" };
     if (occupMap[occupation]) add(occupLbl[occupation], occupMap[occupation]);
 
     // conjoncture auto-detectee (Notaires de France / Meilleurs Agents)
