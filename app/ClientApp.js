@@ -3,6 +3,7 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
+import MarketMap from "./MarketMap";
 
 // Comptes proprietaire -> acces premium complet automatique
 const ADMIN_EMAILS = ["rudychoufani98@gmail.com"];
@@ -786,6 +787,9 @@ export default function Page() {
           <button className={"tab" + (tab === "capacite" ? " active" : "")} onClick={() => setTab("capacite")}>
             4. Capacite d'emprunt{!isPremium ? " 🔒" : ""}
           </button>
+          <button className={"tab" + (tab === "carte" ? " active" : "")} onClick={() => setTab("carte")}>
+            🗺️ Carte des marchés
+          </button>
           <button className={"tab" + (tab === "contact" ? " active" : "")} onClick={() => setTab("contact")}>
             ✉️ Contact{isAdmin ? " (admin)" : ""}
           </button>
@@ -817,6 +821,7 @@ export default function Page() {
 
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveCurrentProject} />}
         {isAdmin && tab === "sources" && <Sources />}
+        {tab === "carte" && <MarketMap onEstimateCity={() => setTab("estim")} />}
         {tab === "contact" && <Contact user={user} isAdmin={isAdmin} />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
