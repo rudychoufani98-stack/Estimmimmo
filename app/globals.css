@@ -766,3 +766,47 @@ header.top{display:none}
   .sidenav,.topbar{display:none!important}
   .shell-main{margin-left:0}
 }
+
+/* ============================================================
+   FINITIONS "design final Stitch" — système global
+   ============================================================ */
+:root{
+  --navy:#0b1d2e;            /* primary-container des maquettes */
+  --mint:#b6ebd2;
+  --line:#dcdee3;
+  --muted:#44474c;
+}
+
+/* sidebar : 280px, navy maquette, libellés en petites capitales */
+.sidenav{width:280px;background:var(--navy);padding:18px 10px 14px}
+.shell-main{margin-left:280px}
+.sn-logo{display:flex;align-items:center;gap:12px;padding:8px 12px;margin-bottom:20px}
+.sn-logo-ico{width:40px;height:40px;border-radius:10px;background:var(--mint);display:flex;align-items:center;justify-content:center;font-size:19px;flex:0 0 40px}
+.sn-logo h1{font-size:20px}
+.sn-logo p{letter-spacing:1.2px}
+.sn-item{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:11px 13px;border-radius:6px}
+.sn-item.active{background:rgba(182,235,210,.10)}
+.sn-label{color:rgba(255,255,255,.4)}
+.sn-premium{width:100%;background:var(--mint);color:var(--navy);border:none;border-radius:10px;padding:11px 12px;font:800 11px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;margin-bottom:10px}
+.sn-premium:hover{filter:brightness(1.05)}
+.sn-premium:active{transform:scale(.97)}
+.sn-data{margin:0;font-size:9.5px;line-height:1.5;color:rgba(255,255,255,.35)}
+
+/* topbar : bouton sombre à la maquette */
+.topbar{background:rgba(248,249,250,.94)}
+.topbar .auth-btn.primary{background:var(--accent);border-color:var(--accent)}
+
+/* formulaires : labels en petites capitales, focus menthe */
+.card label,.market-wrap label{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#74777d}
+.card input:focus,.card select:focus,.card textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(182,235,210,.55)}
+
+/* titres navy */
+h1,h2,h3,h4{color:var(--navy)}
+.sn-logo h1,.sn-logo p{color:#fff}
+.sn-logo h1 span{color:var(--mint)}
+
+@media (max-width:920px){
+  .shell-main{margin-left:0}
+  .sidenav{width:100%}
+  .sn-premium{display:none}
+}

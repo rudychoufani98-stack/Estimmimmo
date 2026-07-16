@@ -773,8 +773,11 @@ export default function Page() {
     <div className="shell">
       <aside className="sidenav">
         <div className="sn-logo">
-          <h1>Estim<span>Immo</span></h1>
-          <p>Outil d'investissement</p>
+          <div className="sn-logo-ico">📊</div>
+          <div>
+            <h1>Estim<span>Immo</span></h1>
+            <p>Expertise Immobilière</p>
+          </div>
         </div>
         <nav className="sn-nav">
           <div className="sn-label">Analyse de votre bien</div>
@@ -789,7 +792,12 @@ export default function Page() {
           {isAdmin && navItem("sources", "📚", "Sources & Données")}
         </nav>
         <div className="sn-bottom">
-          Données : DVF (DGFiP/Etalab), IGN, ADEME, Banque de France.
+          {!isPremium && (
+            <button className="sn-premium" onClick={() => (user ? goStripe(user) : setAuthOpen(true))}>
+              ⭐ Passer à Premium
+            </button>
+          )}
+          <p className="sn-data">Données : DVF (DGFiP/Etalab), IGN, ADEME, Banque de France.</p>
         </div>
       </aside>
 
