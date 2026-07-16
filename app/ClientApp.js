@@ -1639,11 +1639,11 @@ function MesProjets({ user, onOpen }) {
 
 /* ======================= USER MENU DROPDOWN ============================== */
 function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects }) {
-  const [open, setOpen] = React.useState(false);
-  const ref = React.useRef(null);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const initials = (user.email || "?").slice(0, 2).toUpperCase();
 
-  React.useEffect(() => {
+  useEffect(() => {
     function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
