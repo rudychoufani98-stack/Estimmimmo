@@ -810,3 +810,42 @@ h1,h2,h3,h4{color:var(--navy)}
   .sidenav{width:100%}
   .sn-premium{display:none}
 }
+
+/* ============================================================
+   RÉSULTAT D'ESTIMATION — mise en page façon maquette finale
+   ============================================================ */
+.hero{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;text-align:left;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.hero .lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#74777d}
+.conf-pill{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 11px;border-radius:20px;white-space:nowrap}
+.conf-pill.g{background:var(--mint);color:#1d4f3d}
+.conf-pill.w{background:#fef3c7;color:#92400e}
+.conf-pill.b{background:#fee2e2;color:#991b1b}
+.hero .val{font-family:'Manrope','Inter',sans-serif;font-size:46px;font-weight:800;letter-spacing:-1.5px;line-height:1.1;color:var(--navy);margin:2px 0 2px}
+.hero .loc{font-size:12.5px;color:var(--muted)}
+.hero-range{display:flex;align-items:center;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.hero-range>div:not(.hr-sep){display:flex;flex-direction:column;gap:2px}
+.hero-range span{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#74777d}
+.hero-range b{font-size:17px;font-family:'Manrope',sans-serif;color:var(--navy)}
+.hr-sep{width:1px;height:34px;background:var(--line)}
+
+/* KPI en tuiles blanches */
+.kpis .kpi{background:#fff;border:1px solid var(--line);border-radius:12px}
+.kpis .kpi .k{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#74777d}
+
+/* titres de section en petites capitales */
+.section-t{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--navy)}
+
+/* liste des ajustements avec pastilles ✓/− */
+.line-items .li .lbl{display:flex;align-items:center;gap:8px}
+.li-ico{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 18px}
+.li-ico.pos{background:var(--mint);color:#1d4f3d}
+.li-ico.neg{background:#fee2e2;color:#991b1b}
+
+/* tableau comparables : zèbre + en-têtes capitales */
+.tbl-scroll table thead th{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#f3f4f5;color:#74777d}
+.tbl-scroll table tbody tr:nth-child(even){background:#f8f9fa}
+.tbl-scroll table tbody tr:hover{background:rgba(182,235,210,.15)}
+
+/* frais de notaire : carte propre */
+.notaire-box{background:#fff;border:1px solid var(--line);border-radius:12px}

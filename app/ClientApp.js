@@ -2065,10 +2065,17 @@ function EstimResult({ res, surface, prixDemande, period, onGoToCapacite }) {
   return (
     <>
       <div className="hero">
-        <div className="lbl">Valeur estimée</div>
+        <div className="hero-top">
+          <div className="lbl">Valeur estimée du bien</div>
+          <span className={"conf-pill " + confColor}>Confiance : {res.confidence}</span>
+        </div>
         <div className="val">{euro(res.estimate)}</div>
-        <div className="range">Fourchette : {euro(res.low)} &ndash; {euro(res.high)}</div>
         <div className="loc">{res.location.area} &middot; {euro0(res.adjustedPm2)} EUR/m2</div>
+        <div className="hero-range">
+          <div><span>Fourchette basse</span><b>{euro(res.low)}</b></div>
+          <div className="hr-sep" />
+          <div><span>Fourchette haute</span><b>{euro(res.high)}</b></div>
+        </div>
       </div>
 
       {onGoToCapacite && (
@@ -2170,7 +2177,10 @@ function EstimResult({ res, surface, prixDemande, period, onGoToCapacite }) {
           <div className="line-items">
             {res.adjustments.map((a, i) => (
               <div className="li" key={i}>
-                <span className="lbl">{a.label}</span>
+                <span className="lbl">
+                  <span className={"li-ico " + (a.pct >= 0 ? "pos" : "neg")}>{a.pct >= 0 ? "✓" : "−"}</span>
+                  {a.label}
+                </span>
                 <span className={a.pct >= 0 ? "pos" : "neg"}>{a.pct >= 0 ? "+" : ""}{a.pct.toString().replace(".", ",")} %</span>
               </div>
             ))}
