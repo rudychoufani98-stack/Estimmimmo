@@ -822,7 +822,6 @@ export default function Page() {
     <div className="shell">
       <aside className="sidenav">
         <div className="sn-logo">
-          <div className="sn-logo-ico"><span className="material-symbols-outlined">analytics</span></div>
           <div>
             <h1>Estim<span>Immo</span></h1>
             <p>Expertise Immobilière</p>
