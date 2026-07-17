@@ -852,22 +852,23 @@ export default function Page() {
 
       <div className="shell-main">
         <header className="topbar">
-          <div className="tb-title">
-            <h2>{TAB_TITLES[tab] || "EstimImmo"}</h2>
-            <p>Estimation & rentabilité à partir des ventes réelles</p>
+          <div className="tb-crumb">
+            <span>EstimImmo</span>
+            <span className="material-symbols-outlined">chevron_right</span>
+            <b>{TAB_TITLES[tab] || "Tableau de bord"}</b>
           </div>
           <div className="authbar">
-            {saveMsg && <span className="save-msg">{saveMsg}</span>}
+            {saveMsg && <span className="save-msg"><span className="material-symbols-outlined">check_circle</span>{saveMsg}</span>}
             {user ? (
               <>
                 {currentProject && currentProject.nom
-                  ? <span className="proj-chip">📁 {currentProject.nom}</span>
-                  : <button className="auth-btn" onClick={newProject}>➕ Nouveau projet</button>}
-                <button className="auth-btn primary" onClick={saveCurrentProject}>💾 Sauvegarder</button>
+                  ? <span className="proj-chip"><span className="material-symbols-outlined">folder</span>{currentProject.nom}</span>
+                  : <button className="auth-btn" onClick={newProject}><span className="material-symbols-outlined">add</span>Nouveau projet</button>}
+                <button className="auth-btn primary" onClick={saveCurrentProject}><span className="material-symbols-outlined">save</span>Sauvegarder</button>
                 <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} />
               </>
             ) : (
-              <button className="auth-btn primary" onClick={() => setAuthOpen(true)}>Se connecter</button>
+              <button className="auth-btn primary" onClick={() => setAuthOpen(true)}><span className="material-symbols-outlined">login</span>Se connecter</button>
             )}
           </div>
         </header>
@@ -882,13 +883,25 @@ export default function Page() {
         {tab === "estim" && (
           <div className="intro">
             <div className="intro-lead">
-              <b>EstimImmo</b> est ton copilote pour acheter, louer ou investir dans l'immobilier en France. On combine les <b>transactions officielles (DVF)</b>, le géocodage IGN et les données de marché pour te donner une estimation fiable — puis tous les outils pour décider.
+              <b>EstimImmo</b> combine les <b>transactions officielles (DVF)</b>, le géocodage IGN et les données de marché pour estimer n'importe quel bien en France — puis tous les outils pour décider : rentabilité, financement et travaux.
             </div>
             <div className="intro-features">
-              <div className="intro-feat"><span>🏠</span><b>Estimation réelle</b><p>À partir des ventes récentes autour du bien, ajustée à ses caractéristiques (étage, DPE, vue…).</p></div>
-              <div className="intro-feat"><span>📊</span><b>Rentabilité complète</b><p>Cashflow, fiscalité (LMNP, micro-BIC…), TRI et plus-value à la revente. Mode Airbnb inclus.</p></div>
-              <div className="intro-feat"><span>🏦</span><b>Capacité d'emprunt</b><p>Combien la banque peut te prêter, avec le taux du marché en direct et des conseils de négociation.</p></div>
-              <div className="intro-feat"><span>🔧</span><b>Travaux & valeur verte</b><p>Le retour sur investissement d'une rénovation énergétique et son impact sur la valeur.</p></div>
+              <button className="intro-feat" onClick={() => setTab("estim")}>
+                <span className="if-ico"><span className="material-symbols-outlined">analytics</span></span>
+                <b>Estimation réelle</b><p>À partir des ventes récentes autour du bien, ajustée à ses caractéristiques (étage, DPE, vue…).</p>
+              </button>
+              <button className="intro-feat" onClick={() => setTab("renta")}>
+                <span className="if-ico"><span className="material-symbols-outlined">trending_up</span></span>
+                <b>Rentabilité complète</b><p>Cashflow, fiscalité (LMNP, micro-BIC…), TRI et plus-value à la revente. Mode Airbnb inclus.</p>
+              </button>
+              <button className="intro-feat" onClick={() => setTab("capacite")}>
+                <span className="if-ico"><span className="material-symbols-outlined">account_balance</span></span>
+                <b>Capacité d'emprunt</b><p>Combien la banque peut te prêter, avec le taux du marché en direct et des conseils de négociation.</p>
+              </button>
+              <button className="intro-feat" onClick={() => setTab("travaux")}>
+                <span className="if-ico"><span className="material-symbols-outlined">home_repair_service</span></span>
+                <b>Travaux & valeur verte</b><p>Le retour sur investissement d'une rénovation énergétique et son impact sur la valeur.</p>
+              </button>
             </div>
           </div>
         )}
