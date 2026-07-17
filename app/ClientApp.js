@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import MarketMap from "./MarketMap";
+import { LegalModal, CookieConsent } from "./Legal";
 
 // Comptes proprietaire -> acces premium complet automatique
 const ADMIN_EMAILS = ["rudychoufani98@gmail.com"];
@@ -685,8 +686,43 @@ export default function Page() {
   const [loadRenta, setLoadRenta] = useState(null);     // renta a restaurer
   const [saveMsg, setSaveMsg] = useState("");
   const [currentProject, setCurrentProject] = useState(null); // { id, nom } du projet en cours
+  const [legalPage, setLegalPage] = useState(null); // "mentions" | "privacy" | "cgu"
 
   function flash(m) { setSaveMsg(m); setTimeout(() => setSaveMsg(""), 3500); }
+
+  // ---- RGPD : export & suppression des données ----
+  async function exportMyData() {
+    if (!supabase || !user) return;
+    const [proj, cont] = await Promise.all([
+      supabase.from("projects").select("*").eq("user_id", user.id),
+      supabase.from("contacts").select("*").eq("user_id", user.id),
+    ]);
+    const payload = {
+      compte: { id: user.id, email: user.email, cree_le: user.created_at },
+      projets: (proj.data) || [],
+      messages_contact: (cont.data) || [],
+      exporte_le: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "estimimmo-mes-donnees.json"; a.click();
+    URL.revokeObjectURL(url);
+    flash("✓ Vos données ont été exportées");
+  }
+
+  async function deleteMyAccount() {
+    if (!supabase || !user) return;
+    const ok = window.confirm("Supprimer définitivement toutes vos données (projets et messages) ? Cette action est irréversible.");
+    if (!ok) return;
+    await supabase.from("projects").delete().eq("user_id", user.id);
+    await supabase.from("contacts").delete().eq("user_id", user.id);
+    await supabase.auth.signOut();
+    window.location.href = "mailto:" + "rudychoufani98@gmail.com" +
+      "?subject=" + encodeURIComponent("Suppression de compte RGPD") +
+      "&body=" + encodeURIComponent("Bonjour, merci de supprimer définitivement mon compte (" + (user.email || "") + ") conformément au RGPD. Mes données (projets, messages) ont déjà été effacées depuis l'application.");
+    alert("Vos données ont été supprimées et vous êtes déconnecté. Un email de demande de suppression définitive du compte a été préparé.");
+  }
 
   function newProject() {
     const nom = window.prompt("Nom du nouveau projet immobilier :", "");
@@ -864,7 +900,7 @@ export default function Page() {
                   ? <span className="proj-chip"><span className="material-symbols-outlined">folder</span>{currentProject.nom}</span>
                   : <button className="auth-btn" onClick={newProject}><span className="material-symbols-outlined">add</span>Nouveau projet</button>}
                 <button className="auth-btn primary" onClick={saveCurrentProject}><span className="material-symbols-outlined">save</span>Sauvegarder</button>
-                <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} />
+                <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} onExport={exportMyData} onDelete={deleteMyAccount} />
               </>
             ) : (
               <button className="auth-btn primary" onClick={() => setAuthOpen(true)}><span className="material-symbols-outlined">login</span>Se connecter</button>
@@ -908,7 +944,7 @@ export default function Page() {
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveCurrentProject} />}
         {isAdmin && tab === "sources" && <Sources />}
         {tab === "carte" && <MarketMap onEstimateCity={() => setTab("estim")} />}
-        {tab === "contact" && <Contact user={user} isAdmin={isAdmin} />}
+        {tab === "contact" && <Contact user={user} isAdmin={isAdmin} onLegal={setLegalPage} />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
         ) : (
@@ -919,7 +955,7 @@ export default function Page() {
             {tab === "projets" && <MesProjets user={user} onOpen={openProject} />}
           </>
         )}
-        {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+        {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLegal={setLegalPage} />}
 
         <button className="btn-print" onClick={() => window.print()}>
           ⬇ Télécharger / Imprimer PDF
@@ -927,9 +963,17 @@ export default function Page() {
         </div>
 
         <footer>
-          EstimImmo &middot; Données : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.
+          <div className="footer-legal">
+            <button onClick={() => setLegalPage("mentions")}>Mentions légales</button>
+            <button onClick={() => setLegalPage("privacy")}>Politique de confidentialité</button>
+            <button onClick={() => setLegalPage("cgu")}>CGU</button>
+          </div>
+          <div className="footer-src">EstimImmo &middot; Données : DVF (DGFiP/Etalab), IGN, ADEME, INSEE. Estimation indicative, ne constitue pas une expertise.</div>
         </footer>
       </div>
+
+      <LegalModal page={legalPage} onClose={() => setLegalPage(null)} onNav={setLegalPage} />
+      <CookieConsent onOpenPrivacy={() => setLegalPage("privacy")} />
     </div>
   );
 }
@@ -1542,7 +1586,7 @@ function authErrorFr(msg) {
   return msg;
 }
 
-function AuthModal({ onClose }) {
+function AuthModal({ onClose, onLegal }) {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
@@ -1551,17 +1595,19 @@ function AuthModal({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [consent, setConsent] = useState(false);
 
   const strength = pwdStrength(pwd);
   const strengthLabel = ["Trop faible", "Faible", "Moyen", "Bon", "Fort"][strength];
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   const pwdMatch = pwd === pwd2;
-  const canSubmit = emailOk && (mode === "login" ? pwd.length > 0 : pwd.length >= 8 && pwdMatch);
+  const canSubmit = emailOk && (mode === "login" ? pwd.length > 0 : pwd.length >= 8 && pwdMatch && consent);
 
   async function submit() {
     if (!supabase) { setError("Service d'authentification non configure."); return; }
     if (mode === "signup" && pwd.length < 8) { setError("Choisis un mot de passe d'au moins 8 caracteres."); return; }
     if (mode === "signup" && !pwdMatch) { setError("Les deux mots de passe ne correspondent pas."); return; }
+    if (mode === "signup" && !consent) { setError("Merci d'accepter la politique de confidentialité et les CGU."); return; }
     setLoading(true); setError(""); setInfo("");
     try {
       if (mode === "signup") {
@@ -1621,6 +1667,13 @@ function AuthModal({ onClose }) {
               </div>
             )}
           </>
+        )}
+
+        {mode === "signup" && (
+          <label className="consent-check">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+            <span>J'accepte la <a onClick={() => onLegal && onLegal("privacy")}>politique de confidentialité</a> et les <a onClick={() => onLegal && onLegal("cgu")}>CGU</a>.</span>
+          </label>
         )}
 
         {error && <div className="error">{error}</div>}
@@ -1752,7 +1805,7 @@ function MesProjets({ user, onOpen }) {
 }
 
 /* ======================= USER MENU DROPDOWN ============================== */
-function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects }) {
+function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects, onExport, onDelete }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const initials = (user.email || "?").slice(0, 2).toUpperCase();
@@ -1817,6 +1870,19 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects 
           <button className="um-item" onClick={() => { onGoProjects(); setOpen(false); }}>
             <span className="um-item-icon">📁</span>
             <span className="um-item-label">Mes projets sauvegardés</span>
+          </button>
+
+          <div className="um-divider" />
+
+          {/* Confidentialité (RGPD) */}
+          <div className="um-section-label">Mes données (RGPD)</div>
+          <button className="um-item" onClick={() => { onExport && onExport(); setOpen(false); }}>
+            <span className="um-item-icon">⬇️</span>
+            <span className="um-item-label">Exporter mes données</span>
+          </button>
+          <button className="um-item um-item-danger" onClick={() => { setOpen(false); onDelete && onDelete(); }}>
+            <span className="um-item-icon">🗑️</span>
+            <span className="um-item-label">Supprimer mon compte</span>
           </button>
 
           <div className="um-divider" />
@@ -4151,15 +4217,17 @@ function SimulateurTravaux({ estValue, onTravaux, onGoToRenta, initialData, onDa
 }
 
 /* ======================= CONTACT ========================================= */
-function Contact({ user, isAdmin }) {
+function Contact({ user, isAdmin, onLegal }) {
   const [form, setForm] = useState({ nom: "", email: (user && user.email) || "", sujet: "Prendre RDV pour un bien", message: "" });
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState("");
   const [sending, setSending] = useState(false);
+  const [consent, setConsent] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   async function send() {
     if (!form.email.trim() || !form.message.trim()) { setErr("Email et message sont requis."); return; }
+    if (!consent) { setErr("Merci d'accepter le traitement de vos données pour être recontacté."); return; }
     setSending(true); setErr("");
     const { error } = await supabase.from("contacts").insert({
       user_id: (user && user.id) || null, nom: form.nom, email: form.email, sujet: form.sujet, message: form.message,
@@ -4226,6 +4294,10 @@ function Contact({ user, isAdmin }) {
           </select>
           <label>Ton message</label>
           <textarea rows={5} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Décris ton bien, ta demande, tes disponibilités pour un RDV..." style={{ width: "100%", padding: "11px 12px", background: "var(--panel2)", border: "1px solid var(--line)", borderRadius: 10, color: "var(--txt)", fontSize: 14, fontFamily: "inherit", resize: "vertical" }} />
+          <label className="consent-check">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+            <span>J'accepte que mon nom, email et message soient traités pour répondre à ma demande, conformément à la <a onClick={onLegal ? () => onLegal("privacy") : undefined}>politique de confidentialité</a>.</span>
+          </label>
           {err && <div className="error">{err}</div>}
           <button className="btn" onClick={send} disabled={sending}>{sending ? "Envoi..." : "Envoyer mon message"}</button>
         </>
