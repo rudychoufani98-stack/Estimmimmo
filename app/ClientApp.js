@@ -762,6 +762,44 @@ export default function Page() {
     projets: "Mes projets",
   };
 
+  const InheritBanner = () => {
+    const NAMES = { travaux: "Travaux", renta: "Rentabilité", capacite: "Capacité d'emprunt" };
+    if (!estValue) {
+      return (
+        <div className="inherit-banner empty">
+          <span className="material-symbols-outlined ib-ico">info</span>
+          <div className="ib-txt">
+            <b>Commencez par une estimation</b>
+            <span>Cet onglet utilise la valeur de votre bien pour tous ses calculs.</span>
+          </div>
+          <button className="ib-btn" onClick={() => setTab("estim")}>Estimer un bien</button>
+        </div>
+      );
+    }
+    return (
+      <div className="inherit-banner">
+        <span className="material-symbols-outlined ib-ico">link</span>
+        <div className="ib-flow">
+          <span className="ib-node done">Estimation</span>
+          <span className="material-symbols-outlined ib-arrow">chevron_right</span>
+          {tab === "renta" && travauxCost > 0 && (
+            <>
+              <span className="ib-node done">Travaux</span>
+              <span className="material-symbols-outlined ib-arrow">chevron_right</span>
+            </>
+          )}
+          <span className="ib-node current">{NAMES[tab]}</span>
+        </div>
+        <div className="ib-vals">
+          Valeur du bien : <b>{euro(estValue)}</b>
+          {estCity ? <> · {estCity}</> : null}
+          {tab === "renta" && travauxCost > 0 ? <> · Travaux : <b>{euro(travauxCost)}</b></> : null}
+        </div>
+        <button className="ib-btn" onClick={() => setTab("estim")}>Modifier</button>
+      </div>
+    );
+  };
+
   const navItem = (key, icon, label, lock) => (
     <button className={"sn-item" + (tab === key ? " active" : "")} onClick={() => setTab(key)}>
       <span className="material-symbols-outlined sn-ico">{icon}</span>
@@ -839,6 +877,7 @@ export default function Page() {
           <h1>{TAB_TITLES[tab] || "EstimImmo"}</h1>
           <p>{TAB_SUBS[tab] || ""}</p>
         </div>
+        {["travaux", "renta", "capacite"].includes(tab) && !locked && <InheritBanner />}
 
         {tab === "estim" && (
           <div className="intro">
