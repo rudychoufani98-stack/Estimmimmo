@@ -764,32 +764,43 @@ export default function Page() {
 
   const navItem = (key, icon, label, lock) => (
     <button className={"sn-item" + (tab === key ? " active" : "")} onClick={() => setTab(key)}>
-      <span className="sn-ico">{icon}</span>
+      <span className="material-symbols-outlined sn-ico">{icon}</span>
       <span className="sn-txt">{label}{lock && !isPremium ? " 🔒" : ""}</span>
     </button>
   );
+
+  const TAB_SUBS = {
+    estim: "Calculez la valeur de votre bien grâce aux données réelles DVF.",
+    travaux: "Simulez l'impact de vos travaux sur la valeur de votre bien.",
+    renta: "Évaluez votre rendement locatif et votre cashflow avec précision.",
+    capacite: "Précision bancaire basée sur les recommandations du HCSF (35 % d'endettement).",
+    carte: "Explorez les opportunités d'investissement en France.",
+    contact: "Une question ? Nos experts vous répondent.",
+    sources: "Les données officielles derrière chaque calcul.",
+    projets: "Retrouvez et comparez vos analyses sauvegardées.",
+  };
 
   return (
     <div className="shell">
       <aside className="sidenav">
         <div className="sn-logo">
-          <div className="sn-logo-ico">📊</div>
+          <div className="sn-logo-ico"><span className="material-symbols-outlined">analytics</span></div>
           <div>
             <h1>Estim<span>Immo</span></h1>
             <p>Expertise Immobilière</p>
           </div>
         </div>
         <nav className="sn-nav">
-          <div className="sn-label">Analyse de votre bien</div>
-          {navItem("estim", "🏠", "Estimation")}
-          {navItem("travaux", "🔧", "Travaux", true)}
-          {navItem("renta", "📊", "Rentabilité", true)}
-          {navItem("capacite", "🏦", "Capacité d'emprunt", true)}
-          {user && navItem("projets", "📁", "Mes projets", true)}
-          <div className="sn-label">Informations générales</div>
-          {navItem("carte", "🗺️", "Carte des marchés")}
-          {navItem("contact", "✉️", isAdmin ? "Contact (admin)" : "Contact")}
-          {isAdmin && navItem("sources", "📚", "Sources & Données")}
+          <div className="sn-label">Analyse</div>
+          {navItem("estim", "analytics", "Estimation")}
+          {navItem("travaux", "home_repair_service", "Travaux", true)}
+          {navItem("renta", "trending_up", "Rentabilité", true)}
+          {navItem("capacite", "account_balance", "Capacité d'emprunt", true)}
+          {user && navItem("projets", "folder_special", "Mes projets", true)}
+          <div className="sn-label">Informations</div>
+          {navItem("carte", "map", "Carte des marchés")}
+          {navItem("contact", "mail", isAdmin ? "Contact (admin)" : "Contact")}
+          {isAdmin && navItem("sources", "database", "Sources & Données")}
         </nav>
         <div className="sn-bottom">
           {!isPremium && (
@@ -824,6 +835,10 @@ export default function Page() {
         </header>
 
         <div className="wrap">
+        <div className="page-head">
+          <h1>{TAB_TITLES[tab] || "EstimImmo"}</h1>
+          <p>{TAB_SUBS[tab] || ""}</p>
+        </div>
 
         {tab === "estim" && (
           <div className="intro">

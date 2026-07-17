@@ -3,6 +3,7 @@
    + section compatibilité pour les composants récents
    ============================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
 :root{--accent:#0d9488;--accent-d:#0f766e;--accent-light:rgba(13,148,136,.10);--accent-glow:0 4px 20px rgba(13,148,136,.25);--gold:#d97706;--gold-light:rgba(217,119,6,.10);--bg:#f4f6f8;--panel:#ffffff;--panel2:#f9fafb;--line:#e5e7eb;--txt:#111827;--muted:#6b7280;--green:#16a34a;--green-light:rgba(22,163,74,.10);--warn:#d97706;--warn-light:rgba(217,119,6,.10);--bad:#dc2626;--bad-light:rgba(220,38,38,.10);--purple:#7c3aed;--radius:14px;--radius-sm:9px;--shadow-xs:0 1px 3px rgba(0,0,0,.06);--shadow-sm:0 2px 8px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);--shadow:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);--shadow-lg:0 8px 32px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.06);--transition:.17s cubic-bezier(.4,0,.2,1)}
 *,:after,:before{box-sizing:border-box}
@@ -849,3 +850,44 @@ h1,h2,h3,h4{color:var(--navy)}
 
 /* frais de notaire : carte propre */
 .notaire-box{background:#fff;border:1px solid var(--line);border-radius:12px}
+
+/* ============================================================
+   ICÔNES MATERIAL + EN-TÊTE DE PAGE + CORRECTIFS MOBILE
+   ============================================================ */
+.material-symbols-outlined{
+  font-family:'Material Symbols Outlined';
+  font-weight:normal;font-style:normal;line-height:1;
+  letter-spacing:normal;text-transform:none;display:inline-block;
+  white-space:nowrap;word-wrap:normal;direction:ltr;
+  font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+  font-size:20px;
+}
+.sn-ico.material-symbols-outlined{font-size:20px;width:22px;flex:0 0 22px;text-align:center}
+.sn-logo-ico .material-symbols-outlined{font-size:22px;color:var(--navy)}
+.sn-item.active .sn-ico{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+
+/* en-tête de page (maquette : headline-lg + sous-titre) */
+.page-head{margin:2px 0 20px}
+.page-head h1{margin:0 0 4px;font-family:'Manrope','Inter',sans-serif;font-size:28px;font-weight:800;letter-spacing:-.6px;color:var(--navy)}
+.page-head p{margin:0;font-size:14px;color:var(--muted)}
+
+/* le topbar garde un titre discret : le vrai titre vit dans la page */
+.tb-title p{display:none}
+.tb-title h2{font-size:15px;font-weight:700;color:var(--muted)}
+
+/* ---- MOBILE : correctifs réels ---- */
+@media (max-width:920px){
+  .sn-item{width:auto;flex:0 0 auto;flex-direction:column;gap:3px;padding:7px 9px;border-left:none;border-radius:8px;font-size:8.5px;letter-spacing:.02em}
+  .sn-ico.material-symbols-outlined{font-size:20px;width:auto;flex:none}
+  .sn-txt{max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sn-nav{align-items:center;width:100%;justify-content:space-between}
+  .topbar{min-height:52px;padding:6px 12px}
+  .tb-title h2{font-size:13px}
+  .shell-main .wrap{padding:14px 12px 30px}
+  .page-head h1{font-size:22px}
+  .hero .val{font-size:32px;letter-spacing:-1px}
+  .hero-range{flex-wrap:wrap;gap:12px}
+  .authbar .auth-btn{padding:7px 10px;font-size:12px}
+  .grid{grid-template-columns:1fr!important}
+  .market-grid{grid-template-columns:1fr!important}
+}
