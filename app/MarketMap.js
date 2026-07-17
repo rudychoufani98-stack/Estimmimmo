@@ -71,8 +71,20 @@ function CityDetail({ city, live, isMetro, zonesLoading, onBreakdown, onEstimate
       <h3 className="cd-name">{city.name}</h3>
 
       <div className="cd-score">
-        <span>Score d'investissement</span>
-        <b style={{ color: colorScale(score(city) / 100) }}>{score(city)}<small>/100</small></b>
+        <div className="cd-gauge">
+          <svg viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="27" fill="none" stroke="#e7e8e9" strokeWidth="6" />
+            <circle cx="32" cy="32" r="27" fill="none" stroke={colorScale(score(city) / 100)} strokeWidth="6" strokeLinecap="round"
+              strokeDasharray={(2 * Math.PI * 27).toFixed(1)}
+              strokeDashoffset={((2 * Math.PI * 27) * (1 - score(city) / 100)).toFixed(1)}
+              transform="rotate(-90 32 32)" />
+          </svg>
+          <div><b>{score(city)}</b><span>/100</span></div>
+        </div>
+        <div className="cd-score-txt">
+          <span>Score d'investissement</span>
+          <p>Pondération rendement, dynamique des prix et accessibilité.</p>
+        </div>
       </div>
 
       <div className="cd-refs">
