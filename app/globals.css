@@ -929,3 +929,33 @@ h1,h2,h3,h4{color:var(--navy)}
 .cashflow-band span:first-child{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .cashflow-band b{font-family:'Manrope',sans-serif;font-size:24px;font-weight:800}
 .cashflow-band>.material-symbols-outlined{font-size:30px}
+
+/* ============================================================
+   RENTABILITÉ — refonte façon maquette
+   ============================================================ */
+/* en-têtes de sections : fini les bandeaux colorés, place au style maquette */
+.renta-section-header{background:none!important;border:none!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;padding:0 0 13px!important;margin:0 0 16px!important;display:flex;align-items:center;gap:11px}
+.renta-section-icon{font-family:'Material Symbols Outlined';font-size:21px;color:var(--accent);background:none!important;width:auto!important;height:auto!important;line-height:1;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.renta-section-title{font-family:'Manrope','Inter',sans-serif;font-size:16.5px;font-weight:700;color:var(--navy);letter-spacing:-.2px}
+.renta-section-sub{font-size:12px;color:var(--muted);margin-top:1px}
+
+/* carte navy "Rendements calculés" */
+.renta-navy{background:var(--navy);border-radius:14px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(11,29,46,.18)}
+.renta-navy::after{content:"";position:absolute;top:-80px;right:-80px;width:210px;height:210px;border-radius:50%;background:rgba(55,104,84,.4);filter:blur(55px)}
+.rn-label{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:16px;position:relative;z-index:1}
+.rn-main{display:flex;align-items:center;justify-content:space-between;gap:14px;position:relative;z-index:1}
+.rn-main>div:first-child span{display:block;font-size:11.5px;color:rgba(255,255,255,.6);margin-bottom:2px}
+.rn-main>div:first-child b{font-family:'Manrope',sans-serif;font-size:34px;font-weight:800;color:#fff;letter-spacing:-1px}
+.rn-gauge{position:relative;width:64px;height:64px;flex:0 0 64px}
+.rn-gauge svg{width:64px;height:64px}
+.rn-gauge>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+.rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;border-top:1px solid rgba(255,255,255,.14);margin-top:16px;padding-top:14px;margin-bottom:14px;position:relative;z-index:1}
+.rn-grid span{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:2px}
+.rn-grid b{font-family:'Manrope',sans-serif;font-size:19px;font-weight:800;color:#fff}
+.renta-navy .cashflow-band{margin-bottom:0;position:relative;z-index:1}
+
+/* sous-onglets Airbnb : pills cohérentes */
+.airbnb-tabs{display:inline-flex;gap:4px;background:#f3f4f5;border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:16px}
+.abt{border:none;background:none;padding:9px 18px;border-radius:8px;font:700 11px 'Inter',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all .15s}
+.abt:hover{background:rgba(225,227,228,.5)}
+.abt.abt-active{background:#e1e3e4;color:var(--navy);box-shadow:0 1px 2px rgba(0,0,0,.08)}

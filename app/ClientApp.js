@@ -2657,7 +2657,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Section 1 — Acquisition */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-blue">
-            <span className="renta-section-icon">🏠</span>
+            <span className="renta-section-icon">home</span>
             <div>
               <div className="renta-section-title">Acquisition</div>
               <div className="renta-section-sub">{estValue ? "Prix pré-rempli depuis votre estimation." : "Saisissez le prix d'achat."}</div>
@@ -2683,7 +2683,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Section 2 — Revenus & charges */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-green">
-            <span className="renta-section-icon">💶</span>
+            <span className="renta-section-icon">euro</span>
             <div>
               <div className="renta-section-title">Revenus &amp; charges</div>
               <div className="renta-section-sub">Loyer, copropriété, taxe foncière, vacance</div>
@@ -2761,7 +2761,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Section 3 — Financement */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-purple">
-            <span className="renta-section-icon">🏦</span>
+            <span className="renta-section-icon">payments</span>
             <div>
               <div className="renta-section-title">Financement</div>
               <div className="renta-section-sub">Apport, durée, taux et assurance emprunteur</div>
@@ -2792,7 +2792,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Section 4 — Fiscalité */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-orange">
-            <span className="renta-section-icon">📋</span>
+            <span className="renta-section-icon">balance</span>
             <div>
               <div className="renta-section-title">Fiscalité</div>
               <div className="renta-section-sub">IR + prélèvements sociaux 17,2% sur revenus locatifs</div>
@@ -2819,7 +2819,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Section 5 — Revente */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-teal">
-            <span className="renta-section-icon">📈</span>
+            <span className="renta-section-icon">sell</span>
             <div>
               <div className="renta-section-title">Revente &amp; plus-value</div>
               <div className="renta-section-sub">Projection patrimoniale et TRI sur l'opération complète</div>
@@ -2852,7 +2852,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Score global */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-blue">
-            <span className="renta-section-icon">🎯</span>
+            <span className="renta-section-icon">speed</span>
             <div>
               <div className="renta-section-title">Score d'investissement</div>
               <div className="renta-section-sub">Synthèse globale de la qualité de l'opération</div>
@@ -2882,19 +2882,46 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
           <p className="hint">Score pondéré : rentabilité nette-nette (30%), TRI (30%), cashflow (25%), prix vs marché (15%).</p>
         </div>
 
-        {/* Rendements */}
-        <div className="card renta-section">
-          <div className="renta-section-header renta-header-green">
-            <span className="renta-section-icon">📊</span>
+        {/* Rendements — carte navy (maquette) */}
+        <div className="renta-navy">
+          <div className="rn-label">Rendements calculés</div>
+          <div className="rn-main">
             <div>
-              <div className="renta-section-title">Rendements</div>
-              <div className="renta-section-sub">Brut · Net · Cash-on-cash — mis à jour en temps réel</div>
+              <span>Rendement brut</span>
+              <b>{pct(yieldGross)}</b>
+            </div>
+            <div className="rn-gauge">
+              <svg viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="5" />
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#b6ebd2" strokeWidth="5" strokeLinecap="round"
+                  strokeDasharray={(2 * Math.PI * 28).toFixed(1)}
+                  strokeDashoffset={((2 * Math.PI * 28) * (1 - Math.min(1, Math.max(0, yieldGross / 10)))).toFixed(1)}
+                  transform="rotate(-90 32 32)" />
+              </svg>
+              <span>{yieldGross.toFixed(1).replace(".", ",")}%</span>
             </div>
           </div>
-          <div className="kpis">
-            <div className="kpi"><div className="k">Rentabilité brute</div><div className={"v " + yClass(yieldGross)}>{pct(yieldGross)}</div></div>
-            <div className="kpi"><div className="k">Rentabilité nette</div><div className={"v " + yClass(yieldNet)}>{pct(yieldNet)}</div></div>
-            <div className="kpi"><div className="k">Rendement / apport</div><div className={"v " + cClass(cashOnCash)}>{pct(cashOnCash)}</div></div>
+          <div className="rn-grid">
+            <div><span>Rendement net</span><b>{pct(yieldNet)}</b></div>
+            <div><span>Rendement / apport</span><b>{pct(cashOnCash)}</b></div>
+          </div>
+          <div className={"cashflow-band " + (mCashflowAT >= 0 ? "ok" : "ko")}>
+            <div>
+              <span>Cashflow mensuel (après impôt)</span>
+              <b>{mCashflowAT >= 0 ? "+" : "−"}{euro0(Math.abs(mCashflowAT))} €</b>
+            </div>
+            <span className="material-symbols-outlined">{mCashflowAT >= 0 ? "trending_up" : "trending_down"}</span>
+          </div>
+        </div>
+
+        {/* Détail de l'opération */}
+        <div className="card renta-section">
+          <div className="renta-section-header">
+            <span className="renta-section-icon">receipt_long</span>
+            <div>
+              <div className="renta-section-title">Détail de l'opération</div>
+              <div className="renta-section-sub">Coût total et crédit immobilier</div>
+            </div>
           </div>
 
           <div className="section-t">Coût total de l'opération</div>
@@ -2918,18 +2945,11 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Cashflow */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-purple">
-            <span className="renta-section-icon">💰</span>
+            <span className="renta-section-icon">account_balance_wallet</span>
             <div>
               <div className="renta-section-title">Cashflow mensuel</div>
               <div className="renta-section-sub">Flux de trésorerie avant et après impôt</div>
             </div>
-          </div>
-          <div className={"cashflow-band " + (mCashflowAT >= 0 ? "ok" : "ko")}>
-            <div>
-              <span>Cashflow mensuel (après impôt)</span>
-              <b>{mCashflowAT >= 0 ? "+" : "−"}{euro0(Math.abs(mCashflowAT))} €</b>
-            </div>
-            <span className="material-symbols-outlined">{mCashflowAT >= 0 ? "trending_up" : "trending_down"}</span>
           </div>
           <div className="kpis" style={{ marginBottom: 16 }}>
             <div className="kpi"><div className="k">Cashflow / mois (av. impôt)</div><div className={"v " + cClass(mCashflow)}>{mCashflow >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflow))} €</div></div>
@@ -2951,7 +2971,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* Fiscalité & net-net */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-orange">
-            <span className="renta-section-icon">🧾</span>
+            <span className="renta-section-icon">balance</span>
             <div>
               <div className="renta-section-title">Impôt &amp; rentabilité nette-nette</div>
               <div className="renta-section-sub">Régime {regimeLabel} · TMI {Math.round(v("tmi") * 100)}%</div>
@@ -3004,7 +3024,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
         {/* TRI & revente */}
         <div className="card renta-section">
           <div className="renta-section-header renta-header-teal">
-            <span className="renta-section-icon">🚀</span>
+            <span className="renta-section-icon">sell</span>
             <div>
               <div className="renta-section-title">Revente &amp; plus-value à {horizon} ans</div>
               <div className="renta-section-sub">TRI · patrimoine net créé · simulation complète</div>
