@@ -687,6 +687,7 @@ export default function Page() {
   const [saveMsg, setSaveMsg] = useState("");
   const [currentProject, setCurrentProject] = useState(null); // { id, nom } du projet en cours
   const [legalPage, setLegalPage] = useState(null); // "mentions" | "privacy" | "cgu"
+  const [nameModal, setNameModal] = useState(null); // { title, sub, value, confirmLabel, onConfirm }
 
   function flash(m) { setSaveMsg(m); setTimeout(() => setSaveMsg(""), 3500); }
 
@@ -725,10 +726,16 @@ export default function Page() {
   }
 
   function newProject() {
-    const nom = window.prompt("Nom du nouveau projet immobilier :", "");
-    if (!nom) return;
-    setCurrentProject({ id: null, nom });
-    flash("📁 Projet « " + nom + " » créé — sauvegarde quand tu veux");
+    setNameModal({
+      title: "Nouveau projet immobilier",
+      sub: "Donnez un nom à votre projet pour retrouver toutes ses analyses au même endroit.",
+      value: "",
+      confirmLabel: "Créer le projet",
+      onConfirm: (nom) => {
+        setCurrentProject({ id: null, nom });
+        flash("📁 Projet « " + nom + " » créé — sauvegarde quand tu veux");
+      },
+    });
   }
 
   function openProject(p) {
@@ -743,11 +750,21 @@ export default function Page() {
 
   async function saveCurrentProject() {
     if (!supabase || !user) return;
-    let nom = currentProject && currentProject.nom;
+    const nom = currentProject && currentProject.nom;
     if (!nom) {
-      nom = window.prompt("Nom du projet :", (estimData && estimData.res && estimData.res.location && estimData.res.location.area) || "Mon projet");
-      if (!nom) return;
+      setNameModal({
+        title: "Sauvegarder le projet",
+        sub: "Nommez ce projet pour le retrouver dans « Mes projets ».",
+        value: (estimData && estimData.res && estimData.res.location && estimData.res.location.area) || "Mon projet",
+        confirmLabel: "Sauvegarder",
+        onConfirm: (n) => { setCurrentProject({ id: null, nom: n }); doSaveProject(n); },
+      });
+      return;
     }
+    doSaveProject(nom);
+  }
+
+  async function doSaveProject(nom) {
     const data = { type: "projet", estim: estimData, travaux: travauxData, renta: rentaData };
     if (currentProject && currentProject.id) {
       const { error } = await supabase.from("projects").update({ nom, data, updated_at: new Date().toISOString() }).eq("id", currentProject.id);
@@ -974,6 +991,7 @@ export default function Page() {
 
       <LegalModal page={legalPage} onClose={() => setLegalPage(null)} onNav={setLegalPage} />
       <CookieConsent onOpenPrivacy={() => setLegalPage("privacy")} />
+      {nameModal && <NameModal {...nameModal} onClose={() => setNameModal(null)} />}
     </div>
   );
 }
@@ -1586,6 +1604,33 @@ function authErrorFr(msg) {
   return msg;
 }
 
+function NameModal({ title, sub, value, confirmLabel, onConfirm, onClose }) {
+  const [name, setName] = useState(value || "");
+  const ref = useRef(null);
+  useEffect(() => { const t = setTimeout(() => ref.current && ref.current.select(), 60); return () => clearTimeout(t); }, []);
+  function confirm() {
+    const n = name.trim();
+    if (!n) return;
+    onConfirm(n);
+    onClose();
+  }
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal name-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="nm-icon"><span className="material-symbols-outlined">create_new_folder</span></div>
+        <h2>{title}</h2>
+        {sub && <p className="nm-sub">{sub}</p>}
+        <input ref={ref} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Appartement Paris 11e"
+          onKeyDown={(e) => { if (e.key === "Enter") confirm(); if (e.key === "Escape") onClose(); }} />
+        <div className="nm-actions">
+          <button className="nm-cancel" onClick={onClose}>Annuler</button>
+          <button className="nm-confirm" onClick={confirm} disabled={!name.trim()}>{confirmLabel || "Valider"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthModal({ onClose, onLegal }) {
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
@@ -1822,7 +1867,7 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
         <span className="um-avatar">{initials}</span>
         <span className="um-name">{user.email.split("@")[0]}</span>
         <span className={"um-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
-        <span className="um-caret">{open ? "▲" : "▼"}</span>
+        <span className="material-symbols-outlined um-caret">{open ? "expand_less" : "expand_more"}</span>
       </button>
 
       {open && (
@@ -1833,7 +1878,7 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
             <div>
               <div className="um-header-name">{user.email.split("@")[0]}</div>
               <div className="um-header-email">{user.email}</div>
-              {isAdmin && <div className="um-admin-tag">👑 Admin</div>}
+              {isAdmin && <div className="um-admin-tag"><span className="material-symbols-outlined">shield_person</span> Admin</div>}
             </div>
           </div>
 
@@ -1851,13 +1896,13 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
 
           {isPremium ? (
             <a className="um-item um-item-link" href="https://billing.stripe.com/p/login/6oU3cx2wsdCKedEbEw0Jq00" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-              <span className="um-item-icon">💳</span>
+              <span className="material-symbols-outlined um-item-icon">credit_card</span>
               <span className="um-item-label">Gérer mon abonnement</span>
-              <span className="um-item-arrow">↗</span>
+              <span className="material-symbols-outlined um-item-arrow">open_in_new</span>
             </a>
           ) : (
             <button className="um-item um-item-upgrade" onClick={() => { onUpgrade(); setOpen(false); }}>
-              <span className="um-item-icon">⚡</span>
+              <span className="material-symbols-outlined um-item-icon">bolt</span>
               <span className="um-item-label">Passer à Premium</span>
               <span className="um-upgrade-price">9,90€/mois</span>
             </button>
@@ -1868,7 +1913,7 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
           {/* Navigation */}
           <div className="um-section-label">Mon espace</div>
           <button className="um-item" onClick={() => { onGoProjects(); setOpen(false); }}>
-            <span className="um-item-icon">📁</span>
+            <span className="material-symbols-outlined um-item-icon">folder_special</span>
             <span className="um-item-label">Mes projets sauvegardés</span>
           </button>
 
@@ -1877,11 +1922,11 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
           {/* Confidentialité (RGPD) */}
           <div className="um-section-label">Mes données (RGPD)</div>
           <button className="um-item" onClick={() => { onExport && onExport(); setOpen(false); }}>
-            <span className="um-item-icon">⬇️</span>
+            <span className="material-symbols-outlined um-item-icon">download</span>
             <span className="um-item-label">Exporter mes données</span>
           </button>
           <button className="um-item um-item-danger" onClick={() => { setOpen(false); onDelete && onDelete(); }}>
-            <span className="um-item-icon">🗑️</span>
+            <span className="material-symbols-outlined um-item-icon">delete</span>
             <span className="um-item-label">Supprimer mon compte</span>
           </button>
 
@@ -1890,16 +1935,16 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
           {/* Aide */}
           <div className="um-section-label">Support</div>
           <a className="um-item um-item-link" href="mailto:rudychoufani98@gmail.com" onClick={() => setOpen(false)}>
-            <span className="um-item-icon">✉️</span>
+            <span className="material-symbols-outlined um-item-icon">mail</span>
             <span className="um-item-label">Contacter le support</span>
-            <span className="um-item-arrow">↗</span>
+            <span className="material-symbols-outlined um-item-arrow">open_in_new</span>
           </a>
 
           <div className="um-divider" />
 
           {/* Déconnexion */}
           <button className="um-item um-item-logout" onClick={() => { onLogout(); setOpen(false); }}>
-            <span className="um-item-icon">🚪</span>
+            <span className="material-symbols-outlined um-item-icon">logout</span>
             <span className="um-item-label">Se déconnecter</span>
           </button>
         </div>

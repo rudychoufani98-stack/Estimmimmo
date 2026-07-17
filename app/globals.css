@@ -1156,3 +1156,30 @@ h1,h2,h3,h4{color:var(--navy)}
 /* item "supprimer mon compte" en rouge */
 .um-item-danger{color:#b91c1c}
 .um-item-danger:hover{background:#fee2e2}
+
+/* ============================================================
+   MENU COMPTE — icônes Material + fenêtre "Nouveau projet"
+   ============================================================ */
+.um-caret.material-symbols-outlined{font-size:18px;color:var(--muted)}
+.um-item-icon.material-symbols-outlined{font-size:19px;color:var(--muted);width:22px;flex:0 0 22px;text-align:center}
+.um-item:hover .um-item-icon{color:var(--navy)}
+.um-item-upgrade .um-item-icon{color:#1d4f3d}
+.um-item-danger .um-item-icon{color:#b91c1c}
+.um-item-arrow.material-symbols-outlined{font-size:15px}
+.um-admin-tag{display:inline-flex;align-items:center;gap:4px}
+.um-admin-tag .material-symbols-outlined{font-size:12px}
+
+/* fenêtre de nommage de projet */
+.name-modal{max-width:440px;text-align:center;padding:26px 24px}
+.nm-icon{width:52px;height:52px;border-radius:14px;background:var(--mint);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.nm-icon .material-symbols-outlined{font-size:27px;color:var(--navy)}
+.name-modal h2{margin:0 0 6px;font-family:'Manrope',sans-serif;font-size:19px;font-weight:800;color:var(--navy)}
+.nm-sub{margin:0 0 16px;font-size:13px;color:var(--muted);line-height:1.5}
+.name-modal input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font-size:15px;color:var(--txt);outline:none;transition:all .13s;text-align:center;font-family:'Manrope',sans-serif;font-weight:600}
+.name-modal input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(182,235,210,.55)}
+.nm-actions{display:flex;gap:10px;margin-top:18px}
+.nm-cancel{flex:1;background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px;font:700 13px 'Inter',sans-serif;color:var(--muted);cursor:pointer;transition:all .13s}
+.nm-cancel:hover{background:#edeeef;color:var(--navy)}
+.nm-confirm{flex:2;background:var(--accent);border:none;border-radius:11px;padding:12px;font:800 13px 'Inter',sans-serif;color:#fff;cursor:pointer;transition:all .13s;box-shadow:0 2px 8px rgba(55,104,84,.25)}
+.nm-confirm:hover:not(:disabled){background:var(--accent-d)}
+.nm-confirm:disabled{opacity:.5;cursor:not-allowed}
