@@ -1041,10 +1041,16 @@ function CapaciteEmprunt({ estValue }) {
           <h2>Votre capacité</h2>
           <div className="sub">Mise à jour en temps réel</div>
 
-          <div className="hero">
-            <div className="lbl">Capacité d'emprunt</div>
+          <div className="hero navy">
+            <div className="lbl">Capacité d'emprunt totale estimée</div>
             <div className="val">{euro(loan)}</div>
-            <div className="range">Budget total avec apport : {euro(budget)}</div>
+            <div className="hero-range">
+              <div><span>Mensualité max.</span><b>{euro0(maxMensualite)} € /mois</b></div>
+              <div className="hr-sep" />
+              <div><span>Coût du crédit</span><b>{euro(totalInterest)}</b></div>
+              <div className="hr-sep" />
+              <div><span>Budget total (apport incl.)</span><b>{euro(budget)}</b></div>
+            </div>
           </div>
 
           <div className="kpis">
@@ -1052,6 +1058,27 @@ function CapaciteEmprunt({ estValue }) {
             <div className="kpi"><div className="k">Prix de bien max</div><div className="v g">{euro0(maxPrice)} EUR</div></div>
             <div className="kpi"><div className="k">Apport</div><div className="v">{euro0(v("apport"))} EUR</div></div>
           </div>
+
+          <div className="section-t">Répartition du coût total</div>
+          {(() => {
+            const insTotal = mInsurance * n;
+            const tot = loan + totalInterest + insTotal || 1;
+            const p = (x) => Math.max(2, Math.round((x / tot) * 100));
+            return (
+              <>
+                <div className="cost-bar">
+                  <div className="cb-cap" style={{ width: p(loan) + "%" }} />
+                  <div className="cb-int" style={{ width: p(totalInterest) + "%" }} />
+                  <div className="cb-ins" style={{ width: p(insTotal) + "%" }} />
+                </div>
+                <div className="cost-legend">
+                  <div><span className="cl-dot cb-cap" />Capital emprunté<b>{euro(loan)}</b></div>
+                  <div><span className="cl-dot cb-int" />Intérêts ({v("rate").toString().replace(".", ",")} %)<b>{euro(totalInterest)}</b></div>
+                  <div><span className="cl-dot cb-ins" />Assurance emprunteur<b>{euro(insTotal)}</b></div>
+                </div>
+              </>
+            );
+          })()}
 
           <div className="section-t">Detail</div>
           <div className="line-items">
@@ -2896,6 +2923,13 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
               <div className="renta-section-title">Cashflow mensuel</div>
               <div className="renta-section-sub">Flux de trésorerie avant et après impôt</div>
             </div>
+          </div>
+          <div className={"cashflow-band " + (mCashflowAT >= 0 ? "ok" : "ko")}>
+            <div>
+              <span>Cashflow mensuel (après impôt)</span>
+              <b>{mCashflowAT >= 0 ? "+" : "−"}{euro0(Math.abs(mCashflowAT))} €</b>
+            </div>
+            <span className="material-symbols-outlined">{mCashflowAT >= 0 ? "trending_up" : "trending_down"}</span>
           </div>
           <div className="kpis" style={{ marginBottom: 16 }}>
             <div className="kpi"><div className="k">Cashflow / mois (av. impôt)</div><div className={"v " + cClass(mCashflow)}>{mCashflow >= 0 ? "+" : "-"}{euro0(Math.abs(mCashflow))} €</div></div>

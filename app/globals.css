@@ -891,3 +891,41 @@ h1,h2,h3,h4{color:var(--navy)}
   .grid{grid-template-columns:1fr!important}
   .market-grid{grid-template-columns:1fr!important}
 }
+
+/* ============================================================
+   ÉLÉMENTS SIGNATURE DES MAQUETTES (héros navy, pills, cashflow)
+   ============================================================ */
+/* héro navy (Capacité, Travaux) */
+.hero.navy{background:var(--navy);border-color:var(--navy);position:relative;overflow:hidden}
+.hero.navy::after{content:"";position:absolute;top:-90px;right:-90px;width:230px;height:230px;border-radius:50%;background:rgba(55,104,84,.35);filter:blur(60px)}
+.hero.navy .lbl{color:var(--mint)}
+.hero.navy .val{color:#fff}
+.hero.navy .loc{color:rgba(255,255,255,.6)}
+.hero.navy .hero-range{border-top-color:rgba(255,255,255,.15)}
+.hero.navy .hero-range span{color:rgba(255,255,255,.55)}
+.hero.navy .hero-range b{color:#fff}
+.hero.navy .hr-sep{background:rgba(255,255,255,.15)}
+
+/* répartition du coût total (barre empilée) */
+.cost-bar{display:flex;height:38px;border-radius:10px;overflow:hidden;margin:6px 0 12px}
+.cb-cap{background:var(--navy)}
+.cb-int{background:var(--accent)}
+.cb-ins{background:var(--mint)}
+.cost-legend{display:flex;flex-direction:column;gap:7px;margin-bottom:8px}
+.cost-legend>div{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--txt)}
+.cost-legend b{margin-left:auto;font-family:'Manrope',sans-serif}
+.cl-dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+
+/* sélecteur de mode Rentabilité : pills façon maquette */
+.subtabs{display:inline-flex;gap:4px;background:#f3f4f5;border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px}
+.subtab{border:none;background:none;padding:9px 20px;border-radius:8px;font:700 11px 'Inter',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all .15s}
+.subtab:hover{background:rgba(225,227,228,.5)}
+.subtab.active{background:#e1e3e4;color:var(--navy);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* bandeau cashflow menthe (maquette Rentabilité) */
+.cashflow-band{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.cashflow-band.ok{background:var(--mint);color:#1d4f3d}
+.cashflow-band.ko{background:#fee2e2;color:#991b1b}
+.cashflow-band span:first-child{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.cashflow-band b{font-family:'Manrope',sans-serif;font-size:24px;font-weight:800}
+.cashflow-band>.material-symbols-outlined{font-size:30px}
