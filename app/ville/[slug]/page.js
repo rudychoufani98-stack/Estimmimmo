@@ -18,7 +18,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `Prix immobilier ${city.name} ${YEAR} : ${prix} (données DVF) | EstimImmo`,
     description: `Prix au m² à ${city.name} d'après les ventes réelles DVF : ${prix}. Évolution, rentabilité locative et estimation gratuite de votre bien à ${city.name}.`,
-    alternates: { canonical: `https://estimmimmo.rudychoufani98.workers.dev/ville/${slug}` },
+    alternates: { canonical: `https://estmimmo.fr/ville/${slug}` },
   };
 }
 
@@ -40,7 +40,7 @@ export default async function VillePage({ params }) {
   const trend = stats.trendPct != null ? stats.trendPct : city.y1;
   const related = relatedCities(city, 10);
   const rdt = city.rdt;
-  const APP = "https://estimmimmo.rudychoufani98.workers.dev/";
+  const APP = "https://estmimmo.fr/";
 
   return (
     <main className="seo-page">

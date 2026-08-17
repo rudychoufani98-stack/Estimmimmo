@@ -1,6 +1,6 @@
 import { SEO_CITIES } from "../lib/cities";
 
-const BASE = "https://estimmimmo.rudychoufani98.workers.dev";
+const BASE = "https://estmimmo.fr";
 
 export default function sitemap() {
   const now = new Date();

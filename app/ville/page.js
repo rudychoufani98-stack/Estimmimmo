@@ -4,7 +4,7 @@ import { SEO_CITIES } from "../../lib/cities";
 export const metadata = {
   title: "Prix immobilier par ville en France (données DVF réelles) | EstimImmo",
   description: "Prix au m² dans plus de 150 villes et communes françaises, d'après les ventes réelles DVF. Consultez le prix immobilier de votre ville et estimez votre bien gratuitement.",
-  alternates: { canonical: "https://estimmimmo.rudychoufani98.workers.dev/ville" },
+  alternates: { canonical: "https://estmimmo.fr/ville" },
 };
 
 export default function VilleHub() {
@@ -21,7 +21,7 @@ export default function VilleHub() {
       <header className="seo-hero">
         <h1>Prix immobilier par ville en France</h1>
         <p className="seo-sub">Le prix au m² de plus de <b>150 villes et communes</b>, calculé à partir des <b>ventes réelles DVF</b>. Cliquez sur votre ville, ou estimez directement votre bien.</p>
-        <a className="seo-cta" href="https://estimmimmo.rudychoufani98.workers.dev/">Estimer mon bien gratuitement</a>
+        <a className="seo-cta" href="https://estmimmo.fr/">Estimer mon bien gratuitement</a>
       </header>
 
       {groups.map(([dept, list]) => (
@@ -37,7 +37,7 @@ export default function VilleHub() {
 
       <footer className="seo-foot">
         <p>Sources : DVF (DGFiP/Etalab), IGN. Prix médians indicatifs, mis à jour automatiquement.</p>
-        <a href="https://estimmimmo.rudychoufani98.workers.dev/">EstimImmo — accueil</a>
+        <a href="https://estmimmo.fr/">EstimImmo — accueil</a>
       </footer>
     </main>
   );
