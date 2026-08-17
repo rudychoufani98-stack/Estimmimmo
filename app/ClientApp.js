@@ -981,6 +981,7 @@ export default function Page() {
 
         <footer>
           <div className="footer-legal">
+            <a href="/ville">Prix immobilier par ville</a>
             <button onClick={() => setLegalPage("mentions")}>Mentions légales</button>
             <button onClick={() => setLegalPage("privacy")}>Politique de confidentialité</button>
             <button onClick={() => setLegalPage("cgu")}>CGU</button>
