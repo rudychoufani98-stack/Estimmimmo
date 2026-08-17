@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import MarketMap from "./MarketMap";
 import { LegalModal, CookieConsent } from "./Legal";
+import Dictionnaire from "./Dictionnaire";
 
 // Comptes proprietaire -> acces premium complet automatique
 const ADMIN_EMAILS = ["rudychoufani98@gmail.com"];
@@ -810,6 +811,7 @@ export default function Page() {
     renta: "Rentabilité locative",
     capacite: "Capacité d'emprunt",
     carte: "Carte des marchés",
+    dico: "Dictionnaire de l'immobilier",
     contact: "Contact",
     sources: "Sources & Données",
     projets: "Mes projets",
@@ -866,6 +868,7 @@ export default function Page() {
     renta: "Évaluez votre rendement locatif et votre cashflow avec précision.",
     capacite: "Précision bancaire basée sur les recommandations du HCSF (35 % d'endettement).",
     carte: "Explorez les opportunités d'investissement en France.",
+    dico: "Tous les termes, taxes et lois de l'immobilier en France, expliqués simplement.",
     contact: "Une question ? Nos experts vous répondent.",
     sources: "Les données officielles derrière chaque calcul.",
     projets: "Retrouvez et comparez vos analyses sauvegardées.",
@@ -889,6 +892,7 @@ export default function Page() {
           {user && navItem("projets", "folder_special", "Mes projets", true)}
           <div className="sn-label">Informations</div>
           {navItem("carte", "map", "Carte des marchés")}
+          {navItem("dico", "menu_book", "Dictionnaire immo")}
           {navItem("contact", "mail", isAdmin ? "Contact (admin)" : "Contact")}
           {isAdmin && navItem("sources", "database", "Sources & Données")}
         </nav>
@@ -961,6 +965,7 @@ export default function Page() {
         {tab === "estim" && <Estimation onEstimate={handleEstimate} onGoToCapacite={() => setTab("capacite")} user={user} onLogin={() => setAuthOpen(true)} initialProject={loadProject} onLoaded={() => setLoadProject(null)} onEstimData={setEstimData} onSaveBien={saveCurrentProject} />}
         {isAdmin && tab === "sources" && <Sources />}
         {tab === "carte" && <MarketMap onEstimateCity={() => setTab("estim")} />}
+        {tab === "dico" && <Dictionnaire />}
         {tab === "contact" && <Contact user={user} isAdmin={isAdmin} onLegal={setLegalPage} />}
         {locked || (tab === "projets" && !isPremium) ? (
           <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
