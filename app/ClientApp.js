@@ -3055,7 +3055,7 @@ function Rentabilite({ estValue, estCity, estCityRaw, travauxCost, initialData, 
             <div className="rn-gauge">
               <svg viewBox="0 0 64 64">
                 <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="5" />
-                <circle cx="32" cy="32" r="28" fill="none" stroke="#b6ebd2" strokeWidth="5" strokeLinecap="round"
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#93c5fd" strokeWidth="5" strokeLinecap="round"
                   strokeDasharray={(2 * Math.PI * 28).toFixed(1)}
                   strokeDashoffset={((2 * Math.PI * 28) * (1 - Math.min(1, Math.max(0, yieldGross / 10)))).toFixed(1)}
                   transform="rotate(-90 32 32)" />

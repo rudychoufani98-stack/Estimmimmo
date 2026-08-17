@@ -700,13 +700,13 @@ to{box-shadow:0 0 0 0 rgba(22,163,74,0)}
    (sidebar navy + sauge, Manrope pour les titres)
    ============================================================ */
 :root{
-  --accent:#376854;
-  --accent-d:#2c5443;
-  --accent-light:rgba(55,104,84,.10);
-  --accent-glow:0 4px 18px rgba(55,104,84,.25);
-  --navy:#041627;
+  --accent:#2563eb;
+  --accent-d:#1d4ed8;
+  --accent-light:rgba(37,99,235,.10);
+  --accent-glow:0 4px 18px rgba(37,99,235,.30);
+  --navy:#0b1d2e;
   --navy-2:#1a2b3c;
-  --mint:#b9eed6;
+  --mint:#dbe7fd;
   --bg:#f8f9fa;
   --panel2:#f3f4f5;
   --line:#e3e5e8;
@@ -725,7 +725,7 @@ h1,h2,h3,h4,.cd-name,.mr-head,.baro-head{font-family:'Manrope','Inter',system-ui
 .sidenav{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--navy);display:flex;flex-direction:column;padding:22px 12px 16px;z-index:100}
 .sn-logo{padding:0 10px;margin-bottom:26px}
 .sn-logo h1{margin:0;font-size:21px;font-weight:800;color:#fff;letter-spacing:-.4px}
-.sn-logo h1 span{color:var(--mint)}
+.sn-logo h1 span{color:#5b9bff}
 .sn-logo p{margin:2px 0 0;font-size:9.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.45)}
 .sn-nav{flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 .sn-label{font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.38);margin:16px 10px 6px}
@@ -773,7 +773,7 @@ header.top{display:none}
    ============================================================ */
 :root{
   --navy:#0b1d2e;            /* primary-container des maquettes */
-  --mint:#b6ebd2;
+  --mint:#dbe7fd;
   --line:#dcdee3;
   --muted:#44474c;
 }
@@ -804,7 +804,7 @@ header.top{display:none}
 /* titres navy */
 h1,h2,h3,h4{color:var(--navy)}
 .sn-logo h1,.sn-logo p{color:#fff}
-.sn-logo h1 span{color:var(--mint)}
+.sn-logo h1 span{color:#5b9bff}
 
 @media (max-width:920px){
   .shell-main{margin-left:0}
@@ -819,7 +819,7 @@ h1,h2,h3,h4{color:var(--navy)}
 .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
 .hero .lbl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#74777d}
 .conf-pill{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:4px 11px;border-radius:20px;white-space:nowrap}
-.conf-pill.g{background:var(--mint);color:#1d4f3d}
+.conf-pill.g{background:var(--mint);color:#1d4ed8}
 .conf-pill.w{background:#fef3c7;color:#92400e}
 .conf-pill.b{background:#fee2e2;color:#991b1b}
 .hero .val{font-family:'Manrope','Inter',sans-serif;font-size:46px;font-weight:800;letter-spacing:-1.5px;line-height:1.1;color:var(--navy);margin:2px 0 2px}
@@ -840,7 +840,7 @@ h1,h2,h3,h4{color:var(--navy)}
 /* liste des ajustements avec pastilles ✓/− */
 .line-items .li .lbl{display:flex;align-items:center;gap:8px}
 .li-ico{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 18px}
-.li-ico.pos{background:var(--mint);color:#1d4f3d}
+.li-ico.pos{background:var(--mint);color:#1d4ed8}
 .li-ico.neg{background:#fee2e2;color:#991b1b}
 
 /* tableau comparables : zèbre + en-têtes capitales */
@@ -924,7 +924,7 @@ h1,h2,h3,h4{color:var(--navy)}
 
 /* bandeau cashflow menthe (maquette Rentabilité) */
 .cashflow-band{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:12px;padding:14px 16px;margin-bottom:14px}
-.cashflow-band.ok{background:var(--mint);color:#1d4f3d}
+.cashflow-band.ok{background:var(--mint);color:#1d4ed8}
 .cashflow-band.ko{background:#fee2e2;color:#991b1b}
 .cashflow-band span:first-child{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .cashflow-band b{font-family:'Manrope',sans-serif;font-size:24px;font-weight:800}
@@ -1024,7 +1024,7 @@ h1,h2,h3,h4{color:var(--navy)}
 .um-avatar{width:30px;height:30px;border-radius:50%;background:var(--mint);color:var(--navy);font:800 11px 'Inter',sans-serif;display:flex;align-items:center;justify-content:center}
 .um-name{font-weight:700;font-size:12.5px;color:var(--navy)}
 .um-badge{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#edeeef;color:var(--muted);border-radius:20px;padding:3px 8px}
-.um-badge.premium{background:var(--mint);color:#1d4f3d}
+.um-badge.premium{background:var(--mint);color:#1d4ed8}
 .um-caret{font-size:8px;color:var(--muted)}
 .um-dropdown{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 40px rgba(11,29,46,.16);padding:0 0 8px;overflow:hidden;min-width:290px}
 .um-header{display:flex;gap:12px;align-items:center;background:var(--navy);padding:16px;margin:0}
@@ -1038,11 +1038,11 @@ h1,h2,h3,h4{color:var(--navy)}
 .um-plan-name{font-weight:800;font-size:12.5px;color:var(--navy)}
 .um-plan-desc{font-size:10.5px;color:var(--muted);line-height:1.35}
 .um-plan-badge{font-size:9px;font-weight:800;text-transform:uppercase;background:#e1e3e4;color:var(--muted);border-radius:20px;padding:3px 9px;white-space:nowrap}
-.um-plan-badge.active{background:var(--mint);color:#1d4f3d}
+.um-plan-badge.active{background:var(--mint);color:#1d4ed8}
 .um-item{display:flex;align-items:center;gap:10px;width:calc(100% - 12px);margin:2px 6px;background:none;border:none;border-radius:10px;padding:10px;font:600 12.5px 'Inter',sans-serif;color:var(--txt);cursor:pointer;text-decoration:none;transition:background .12s}
 .um-item:hover{background:#edeeef}
-.um-item-upgrade{background:var(--mint);color:#1d4f3d;font-weight:800}
-.um-item-upgrade:hover{background:#a5e3c4}
+.um-item-upgrade{background:var(--mint);color:#1d4ed8;font-weight:800}
+.um-item-upgrade:hover{background:#c3d8fb}
 .um-upgrade-price{margin-left:auto;font-weight:800;font-size:11.5px}
 .um-item-arrow{margin-left:auto;color:var(--muted)}
 
@@ -1053,7 +1053,7 @@ h1,h2,h3,h4{color:var(--navy)}
 .inherit-banner .ib-ico{color:var(--accent);font-size:21px}
 .ib-flow{display:flex;align-items:center;gap:4px}
 .ib-node{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:20px;padding:4px 11px}
-.ib-node.done{background:var(--mint);color:#1d4f3d}
+.ib-node.done{background:var(--mint);color:#1d4ed8}
 .ib-node.current{background:var(--navy);color:#fff}
 .ib-arrow{font-size:15px;color:var(--accent)}
 .ib-vals{font-size:13px;color:var(--txt)}
@@ -1163,7 +1163,7 @@ h1,h2,h3,h4{color:var(--navy)}
 .um-caret.material-symbols-outlined{font-size:18px;color:var(--muted)}
 .um-item-icon.material-symbols-outlined{font-size:19px;color:var(--muted);width:22px;flex:0 0 22px;text-align:center}
 .um-item:hover .um-item-icon{color:var(--navy)}
-.um-item-upgrade .um-item-icon{color:#1d4f3d}
+.um-item-upgrade .um-item-icon{color:#1d4ed8}
 .um-item-danger .um-item-icon{color:#b91c1c}
 .um-item-arrow.material-symbols-outlined{font-size:15px}
 .um-admin-tag{display:inline-flex;align-items:center;gap:4px}
@@ -1183,3 +1183,8 @@ h1,h2,h3,h4{color:var(--navy)}
 .nm-confirm{flex:2;background:var(--accent);border:none;border-radius:11px;padding:12px;font:800 13px 'Inter',sans-serif;color:#fff;cursor:pointer;transition:all .13s;box-shadow:0 2px 8px rgba(55,104,84,.25)}
 .nm-confirm:hover:not(:disabled){background:var(--accent-d)}
 .nm-confirm:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---- passage à l'identité bleue : cashflow positif en vert (sémantique) ---- */
+.cashflow-band.ok{background:#dcfce7;color:#15803d}
+.sn-item.active{color:#93c5fd}
+.sn-item.active .sn-ico{color:#93c5fd}
