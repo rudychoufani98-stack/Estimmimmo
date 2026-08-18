@@ -1263,3 +1263,35 @@ h1,h2,h3,h4{color:var(--navy)}
 .dico-card p{margin:0;font-size:13.5px;line-height:1.6;color:var(--txt)}
 .dico-empty{color:var(--muted);font-size:14px;padding:20px 0}
 .dico-note{margin-top:22px;font-size:12px;color:var(--muted);font-style:italic;line-height:1.5}
+
+/* ---- badge "gratuit" sidebar (remplace le bouton Premium) ---- */
+.sn-free{display:inline-flex;align-items:center;gap:6px;background:rgba(147,197,253,.15);color:#93c5fd;border-radius:8px;padding:7px 12px;font:800 10.5px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+
+/* ============================================================
+   LEAD — bloc "être rappelé par un courtier"
+   ============================================================ */
+.lead-card{margin-top:16px;background:linear-gradient(135deg,var(--navy),#12314d);border-radius:16px;padding:20px;color:#fff;box-shadow:0 8px 24px rgba(11,29,46,.22)}
+.lead-head{display:flex;gap:13px;align-items:flex-start;margin-bottom:14px}
+.lead-head>.material-symbols-outlined{font-size:26px;color:#93c5fd;flex:0 0 26px}
+.lead-head b{font-family:'Manrope',sans-serif;font-size:16px;font-weight:800;display:block;margin-bottom:3px}
+.lead-head p{margin:0;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.75)}
+.lead-head b em,.lead-head p b{color:#93c5fd;font-style:normal}
+.lead-cta{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;font:800 14px 'Inter',sans-serif;cursor:pointer;transition:background .15s;box-shadow:0 4px 14px rgba(37,99,235,.35)}
+.lead-cta:hover:not(:disabled){background:#1d4ed8}
+.lead-cta:disabled{opacity:.6;cursor:not-allowed}
+.lead-cta .material-symbols-outlined{font-size:19px}
+.lead-form{display:flex;flex-direction:column;gap:4px}
+.lead-form label{color:rgba(255,255,255,.8);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:6px}
+.lead-form input[type=text],.lead-form input[type=email],.lead-form .row input{width:100%;padding:10px 12px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:14px;outline:none}
+.lead-form input::placeholder{color:rgba(255,255,255,.4)}
+.lead-form input:focus{border-color:#93c5fd;background:rgba(255,255,255,.14)}
+.lead-form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lead-form .consent-check{margin-top:10px}
+.lead-form .consent-check span{color:rgba(255,255,255,.8);font-size:11.5px}
+.lead-form .consent-check input{accent-color:#93c5fd}
+.lead-form .error{color:#fecaca;background:rgba(220,38,38,.2);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-top:8px}
+.lead-form .hint{color:rgba(255,255,255,.55)!important}
+.lead-done{display:flex;align-items:center;gap:14px}
+.lead-done>.material-symbols-outlined{font-size:34px;color:#93c5fd}
+.lead-done b{font-family:'Manrope',sans-serif;font-size:16px;display:block;margin-bottom:3px}
+.lead-done p{margin:0;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.75)}

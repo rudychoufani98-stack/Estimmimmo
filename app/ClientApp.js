@@ -796,8 +796,7 @@ export default function Page() {
 
   async function logout() { if (supabase) await supabase.auth.signOut(); }
 
-  const PREMIUM_TABS = ["travaux", "renta", "capacite"];
-  const locked = PREMIUM_TABS.includes(tab) && !isPremium;
+  const locked = false; // tout est gratuit
   const isAdmin = !!(user && ADMIN_EMAILS.includes((user.email || "").toLowerCase()));
 
   function handleEstimate(val, city) {
@@ -858,7 +857,7 @@ export default function Page() {
   const navItem = (key, icon, label, lock) => (
     <button className={"sn-item" + (tab === key ? " active" : "")} onClick={() => setTab(key)}>
       <span className="material-symbols-outlined sn-ico">{icon}</span>
-      <span className="sn-txt">{label}{lock && !isPremium ? " 🔒" : ""}</span>
+      <span className="sn-txt">{label}</span>
     </button>
   );
 
@@ -886,10 +885,10 @@ export default function Page() {
         <nav className="sn-nav">
           <div className="sn-label">Analyse</div>
           {navItem("estim", "analytics", "Estimation")}
-          {navItem("travaux", "home_repair_service", "Travaux", true)}
-          {navItem("renta", "trending_up", "Rentabilité", true)}
-          {navItem("capacite", "account_balance", "Capacité d'emprunt", true)}
-          {user && navItem("projets", "folder_special", "Mes projets", true)}
+          {navItem("travaux", "home_repair_service", "Travaux")}
+          {navItem("renta", "trending_up", "Rentabilité")}
+          {navItem("capacite", "account_balance", "Capacité d'emprunt")}
+          {user && navItem("projets", "folder_special", "Mes projets")}
           <div className="sn-label">Informations</div>
           {navItem("carte", "map", "Carte des marchés")}
           {navItem("dico", "menu_book", "Dictionnaire immo")}
@@ -897,11 +896,7 @@ export default function Page() {
           {isAdmin && navItem("sources", "database", "Sources & Données")}
         </nav>
         <div className="sn-bottom">
-          {!isPremium && (
-            <button className="sn-premium" onClick={() => (user ? goStripe(user) : setAuthOpen(true))}>
-              ⭐ Passer à Premium
-            </button>
-          )}
+          <span className="sn-free">100 % gratuit</span>
           <p className="sn-data">Données : DVF (DGFiP/Etalab), IGN, ADEME, Banque de France.</p>
         </div>
       </aside>
@@ -921,7 +916,7 @@ export default function Page() {
                   ? <span className="proj-chip"><span className="material-symbols-outlined">folder</span>{currentProject.nom}</span>
                   : <button className="auth-btn" onClick={newProject}><span className="material-symbols-outlined">add</span>Nouveau projet</button>}
                 <button className="auth-btn primary" onClick={saveCurrentProject}><span className="material-symbols-outlined">save</span>Sauvegarder</button>
-                <UserMenu user={user} isPremium={isPremium} isAdmin={isAdmin} onLogout={logout} onUpgrade={() => goStripe(user)} onGoProjects={() => setTab("projets")} onExport={exportMyData} onDelete={deleteMyAccount} />
+                <UserMenu user={user} isAdmin={isAdmin} onLogout={logout} onGoProjects={() => setTab("projets")} onExport={exportMyData} onDelete={deleteMyAccount} />
               </>
             ) : (
               <button className="auth-btn primary" onClick={() => setAuthOpen(true)}><span className="material-symbols-outlined">login</span>Se connecter</button>
@@ -967,16 +962,10 @@ export default function Page() {
         {tab === "carte" && <MarketMap onEstimateCity={() => setTab("estim")} />}
         {tab === "dico" && <Dictionnaire />}
         {tab === "contact" && <Contact user={user} isAdmin={isAdmin} onLegal={setLegalPage} />}
-        {locked || (tab === "projets" && !isPremium) ? (
-          <Paywall isLoggedIn={!!user} onLogin={() => setAuthOpen(true)} user={user} />
-        ) : (
-          <>
-            {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} initialData={loadTravaux} onData={setTravauxData} onLoaded={() => setLoadTravaux(null)} />}
-            {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} initialData={loadRenta} onData={setRentaData} onLoaded={() => setLoadRenta(null)} />}
-            {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
-            {tab === "projets" && <MesProjets user={user} onOpen={openProject} />}
-          </>
-        )}
+        {tab === "travaux" && <SimulateurTravaux estValue={estValue} onTravaux={setTravauxCost} onGoToRenta={() => setTab("renta")} initialData={loadTravaux} onData={setTravauxData} onLoaded={() => setLoadTravaux(null)} />}
+        {tab === "renta" && <Rentabilite estValue={estValue} estCity={CITY_TO_AIRBNB[estCity] || null} estCityRaw={estCity} travauxCost={travauxCost} initialData={loadRenta} onData={setRentaData} onLoaded={() => setLoadRenta(null)} />}
+        {tab === "capacite" && <CapaciteEmprunt estValue={estValue} />}
+        {tab === "projets" && <MesProjets user={user} onOpen={openProject} />}
         {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLegal={setLegalPage} />}
 
         <button className="btn-print" onClick={() => window.print()}>
@@ -1215,10 +1204,88 @@ function CapaciteEmprunt({ estValue }) {
           {verdict && <div className={"badge " + vClass}>{verdict}</div>}
           <p className="hint" style={{ marginTop: 10 }}>Estimation indicative. Les banques tiennent aussi compte du reste a vivre, du saut de charge, de la stabilite professionnelle et du profil global. Durée de pret en general limitee a 25 ans.</p>
         </div>
+
+        <LeadForm loan={loan} maxMensualite={maxMensualite} />
       </div>
     </div>
     <NegoTips />
     </>
+  );
+}
+
+/* ======================= LEAD : crédit + assurance emprunteur ============ */
+function LeadForm({ loan, maxMensualite }) {
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ nom: "", tel: "", email: "" });
+  const [consent, setConsent] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState("");
+  const [sending, setSending] = useState(false);
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
+
+  async function submit() {
+    if (!f.tel.trim()) { setErr("Votre téléphone est nécessaire pour être rappelé."); return; }
+    if (!consent) { setErr("Merci d'accepter d'être recontacté."); return; }
+    setSending(true); setErr("");
+    const message = [
+      `📞 Tél : ${f.tel}`,
+      `💶 Capacité d'emprunt estimée : ${euro(loan)}`,
+      `📅 Mensualité max : ${euro0(maxMensualite)} €/mois`,
+      `✉️ Email : ${f.email || "non fourni"}`,
+    ].join("\n");
+    const { error } = await supabase.from("contacts").insert({
+      user_id: null, nom: f.nom || "Lead crédit", email: f.email || "lead@estmimmo.fr",
+      sujet: "🔥 LEAD — Crédit + assurance emprunteur", message,
+    });
+    setSending(false);
+    if (error) { setErr("Erreur : " + error.message); return; }
+    setSent(true);
+  }
+
+  if (sent) {
+    return (
+      <div className="lead-card lead-done">
+        <span className="material-symbols-outlined">verified</span>
+        <div>
+          <b>Demande envoyée !</b>
+          <p>Un courtier partenaire vous rappelle sous 24 h pour vous obtenir le meilleur taux — crédit et assurance emprunteur. C'est gratuit et sans engagement.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="lead-card">
+      <div className="lead-head">
+        <span className="material-symbols-outlined">savings</span>
+        <div>
+          <b>Obtenez le meilleur taux pour ce crédit</b>
+          <p>Un courtier partenaire compare les banques et votre assurance emprunteur — <b>gratuit, sans engagement</b>. Économies possibles : plusieurs milliers d'euros.</p>
+        </div>
+      </div>
+
+      {!open ? (
+        <button className="lead-cta" onClick={() => setOpen(true)}>
+          <span className="material-symbols-outlined">call</span> Être rappelé gratuitement
+        </button>
+      ) : (
+        <div className="lead-form">
+          <div className="row">
+            <div><label>Prénom</label><input value={f.nom} onChange={(e) => set("nom", e.target.value)} placeholder="Prénom" /></div>
+            <div><label>Téléphone *</label><input value={f.tel} onChange={(e) => set("tel", e.target.value)} placeholder="06 12 34 56 78" /></div>
+          </div>
+          <label>Email (optionnel)</label>
+          <input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="vous@email.com" />
+          <label className="consent-check">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+            <span>J'accepte d'être recontacté par un courtier partenaire au sujet de mon financement (crédit et assurance).</span>
+          </label>
+          {err && <div className="error">{err}</div>}
+          <button className="lead-cta" onClick={submit} disabled={sending}>{sending ? "Envoi…" : "Recevoir mes offres gratuites"}</button>
+          <p className="hint" style={{ textAlign: "center", marginTop: 8 }}>🔒 Vos données ne servent qu'à vous mettre en relation avec un courtier. Aucun spam.</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1746,15 +1813,6 @@ function AuthModal({ onClose, onLegal }) {
   );
 }
 
-const STRIPE_LINK = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "https://buy.stripe.com/6oU3cx2wsdCKedEbEw0Jq00";
-
-function goToStripe(user) {
-  if (!STRIPE_LINK) { alert("Le paiement n'est pas encore configure."); return; }
-  const sep = STRIPE_LINK.includes("?") ? "&" : "?";
-  const url = `${STRIPE_LINK}${sep}client_reference_id=${encodeURIComponent(user.id)}&prefilled_email=${encodeURIComponent(user.email || "")}`;
-  window.location.href = url;
-}
-
 function LoginGate({ onLogin }) {
   return (
     <div className="card paywall">
@@ -1768,30 +1826,6 @@ function LoginGate({ onLogin }) {
         <li>Sauvegarde de tes biens et projets</li>
       </ul>
       <button className="btn" onClick={onLogin}>Creer un compte / se connecter</button>
-    </div>
-  );
-}
-
-function Paywall({ isLoggedIn, onLogin, user }) {
-  return (
-    <div className="card paywall">
-      <div className="paywall-ico">🔒</div>
-      <h2>Passe Premium pour débloquer</h2>
-      <p className="paywall-txt">
-        L'<b>estimation</b> est incluse avec ton compte. Pour la <b>rentabilité</b>, les <b>travaux</b>, la <b>capacité d'emprunt</b> et la <b>sauvegarde de projets</b>, passe Premium.
-      </p>
-      <div className="paywall-price">7,90 EUR<span>/mois</span></div>
-      <ul className="paywall-list">
-        <li>Analyse de rentabilité complète (fiscalité, TRI, cashflow)</li>
-        <li>Simulateur de travaux &amp; capacité d'emprunt</li>
-        <li>Projets immobiliers illimites, sauvegardes</li>
-      </ul>
-      {isLoggedIn ? (
-        <button className="btn" onClick={() => goToStripe(user)}>💳 Passer Premium — 7,90 EUR/mois</button>
-      ) : (
-        <button className="btn" onClick={onLogin}>Se connecter / creer un compte</button>
-      )}
-      <p className="hint" style={{ textAlign: "center", marginTop: 10 }}>🔒 Paiement sécurise par Stripe. Annulable a tout moment.</p>
     </div>
   );
 }
@@ -1856,7 +1890,7 @@ function MesProjets({ user, onOpen }) {
 }
 
 /* ======================= USER MENU DROPDOWN ============================== */
-function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects, onExport, onDelete }) {
+function UserMenu({ user, isAdmin, onLogout, onGoProjects, onExport, onDelete }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const initials = (user.email || "?").slice(0, 2).toUpperCase();
@@ -1872,7 +1906,6 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
       <button className="um-trigger" onClick={() => setOpen(o => !o)}>
         <span className="um-avatar">{initials}</span>
         <span className="um-name">{user.email.split("@")[0]}</span>
-        <span className={"um-badge" + (isPremium ? " premium" : "")}>{isPremium ? "★ Premium" : "Gratuit"}</span>
         <span className="material-symbols-outlined um-caret">{open ? "expand_less" : "expand_more"}</span>
       </button>
 
@@ -1887,32 +1920,6 @@ function UserMenu({ user, isPremium, isAdmin, onLogout, onUpgrade, onGoProjects,
               {isAdmin && <div className="um-admin-tag"><span className="material-symbols-outlined">shield_person</span> Admin</div>}
             </div>
           </div>
-
-          <div className="um-divider" />
-
-          {/* Abonnement */}
-          <div className="um-section-label">Mon abonnement</div>
-          <div className="um-plan-box">
-            <div className="um-plan-left">
-              <div className="um-plan-name">{isPremium ? "Plan Premium" : "Plan Gratuit"}</div>
-              <div className="um-plan-desc">{isPremium ? "Accès illimité à toutes les fonctionnalités" : "Estimation uniquement — passez à Premium pour débloquer tout"}</div>
-            </div>
-            <span className={"um-plan-badge" + (isPremium ? " active" : "")}>{isPremium ? "Actif" : "Limité"}</span>
-          </div>
-
-          {isPremium ? (
-            <a className="um-item um-item-link" href="https://billing.stripe.com/p/login/6oU3cx2wsdCKedEbEw0Jq00" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-              <span className="material-symbols-outlined um-item-icon">credit_card</span>
-              <span className="um-item-label">Gérer mon abonnement</span>
-              <span className="material-symbols-outlined um-item-arrow">open_in_new</span>
-            </a>
-          ) : (
-            <button className="um-item um-item-upgrade" onClick={() => { onUpgrade(); setOpen(false); }}>
-              <span className="material-symbols-outlined um-item-icon">bolt</span>
-              <span className="um-item-label">Passer à Premium</span>
-              <span className="um-upgrade-price">9,90€/mois</span>
-            </button>
-          )}
 
           <div className="um-divider" />
 
