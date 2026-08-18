@@ -12,6 +12,10 @@
     "binding": "ASSETS"
   },
   "workers_dev": true,
+  "routes": [
+    { "pattern": "estmimmo.fr", "custom_domain": true },
+    { "pattern": "www.estmimmo.fr", "custom_domain": true }
+  ],
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
